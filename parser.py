@@ -18,8 +18,6 @@ def parse_ip_packet(packet):
         try:
             ssid = packet.info.decode("utf-8")
             # Test what info is in packet! TODO remove this print after testing
-            # TODO how to get fields_desc ?
-            print(packet.network_stats())
         except UnicodeDecodeError:
             pass
         if ssid:
