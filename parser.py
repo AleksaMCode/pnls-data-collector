@@ -25,6 +25,7 @@ def parse_ip_packet(packet):
         if ssid:
             # Prepare data record
             data = {
+                "mac": packet.addr2,
                 "ssid": ssid,
                 "timestamp": datetime.utcfromtimestamp(float(packet.time)).strftime(
                     TIMESTAMP_FORMAT
