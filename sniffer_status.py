@@ -1,5 +1,5 @@
-import datetime
 import time
+from datetime import datetime
 
 from firebase_admin import db
 
