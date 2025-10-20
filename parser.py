@@ -5,13 +5,16 @@ from firebase_admin import db
 from scapy.layers.dot11 import Dot11ProbeReq
 
 from settings import FIREBASE_NODE, TIMESTAMP_FORMAT
+from util import is_working_hours
 
 
 def parse_ip_packet(packet):
     """
-    Filters the packet and broadcasts sniffed data (SSID + timestamp) through a websocket.
+    Filters the packet and broadcasts sniffed data (MAC + SSID + timestamp) through a Firebase Realtime DB.
     """
-    # TODO add time checker here - only capture data between 7 AM and 6 PM
+    # Only capture data between 7 AM and 6 PM
+    if not is_working_hours():
+        return
     # Filter only Probe Request and ignore Probe Requests with wildcard in the SSID field.
     if packet.haslayer(Dot11ProbeReq):
         ssid = None
@@ -37,7 +40,7 @@ def parse_ip_packet(packet):
             except Exception as e:
                 print(f"Firebase update failed: {e}")
 
-            # Save locally
+            # Save locally for backup
             try:
                 with open("data.json", "a", encoding="utf-8") as f:
                     f.write(json.dumps(data) + "\n")
