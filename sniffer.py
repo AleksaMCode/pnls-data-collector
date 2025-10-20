@@ -44,9 +44,7 @@ def check_interface_mode():
     """
     global INTERFACE
     for default_interface in INTERFACES:
-        interfaces_to_try = [f"{default_interface}mon", default_interface]
-
-        for interface in interfaces_to_try:
+        for interface in [f"{default_interface}mon", default_interface]:
             try:
                 interface_info = subprocess.run(
                     ["iwconfig", interface], capture_output=True, text=True
