@@ -1,0 +1,5 @@
+scapy
+yaspin
+firebase-admin
+black
+isort
