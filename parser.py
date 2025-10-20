@@ -34,7 +34,9 @@ def parse_ip_packet(packet):
 
             # Send to Firebase DB
             try:
-                db.reference(f"/{FIREBASE_NODE}/data").update(data)
+                db.reference(
+                    f"/{FIREBASE_NODE}-{datetime.now().strftime(TIMESTAMP_FORMAT.split(' ')[0])}/data"
+                ).push(data)
             except Exception as e:
                 print(f"Firebase update failed: {e}")
 
