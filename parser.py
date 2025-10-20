@@ -17,7 +17,6 @@ def parse_ip_packet(packet):
         ssid = None
         try:
             ssid = packet.info.decode("utf-8")
-            # Test what info is in packet! TODO remove this print after testing
         except UnicodeDecodeError:
             pass
         if ssid:
@@ -28,7 +27,6 @@ def parse_ip_packet(packet):
                 "timestamp": datetime.utcfromtimestamp(float(packet.time)).strftime(
                     TIMESTAMP_FORMAT
                 )[:-3],
-                # TODO add MAC address
             }
 
             # Send to Firebase DB
