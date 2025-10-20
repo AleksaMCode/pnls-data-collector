@@ -14,7 +14,7 @@ def send_status():
             ).update(
                 {
                     "status": "working",
-                    "timestamp": datetime.datetime.now().strftime(TIMESTAMP_FORMAT),
+                    "timestamp": datetime.now().strftime(TIMESTAMP_FORMAT),
                 }
             )
             time.sleep(FIREBASE_TIMEOUT_STATUS)
