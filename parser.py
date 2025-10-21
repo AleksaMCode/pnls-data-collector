@@ -1,10 +1,11 @@
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from firebase_admin import db
 from scapy.layers.dot11 import Dot11ProbeReq
 
-from settings import FIREBASE_NODE, TIMESTAMP_FORMAT
+from settings import FIREBASE_NODE, TIMESTAMP_FORMAT, TIMEZONE
 from util import is_working_hours
 
 
@@ -27,9 +28,9 @@ def parse_ip_packet(packet):
             data = {
                 "mac": packet.addr2,
                 "ssid": ssid,
-                "timestamp": datetime.utcfromtimestamp(float(packet.time)).strftime(
-                    TIMESTAMP_FORMAT
-                )[:-3],
+                "timestamp": datetime.fromtimestamp(
+                    float(packet.time), tz=ZoneInfo(TIMEZONE)
+                ).strftime(TIMESTAMP_FORMAT)[:-3],
             }
 
             # Send to Firebase DB
