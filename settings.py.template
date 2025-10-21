@@ -5,6 +5,8 @@ INTERFACES = ["wlan1", "wlan0"]
 
 TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
+TIMEZONE = "Europe/Paris"
+
 SSID_FILTER = []
 
 FIREBASE_CREDENTIALS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "firebase_credentials.json")
