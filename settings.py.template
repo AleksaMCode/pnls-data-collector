@@ -1,3 +1,5 @@
+import os
+
 # Test if WLAN1 is available first, only use WLAN0 as backup
 INTERFACES = ["wlan1", "wlan0"]
 
@@ -5,7 +7,7 @@ TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 SSID_FILTER = []
 
-FIREBASE_CREDENTIALS = "firebase_credentials.json"
+FIREBASE_CREDENTIALS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "firebase_credentials.json")
 
 FIREBASE_DB_URL = "firebase_db_url"
 
