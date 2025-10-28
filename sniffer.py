@@ -69,8 +69,8 @@ def check_interface_mode():
 def start():
     if not check_interface_mode():
         print("Failed to start the sniffer due to missing monitor interface.")
-        # 126 - Command invoked cannot execute
-        sys.exit(126)
+        # Force reboot if there is no monitor mode (see #1 for more info)
+        subprocess.run(["sudo", "reboot"])
 
     status_thread = threading.Thread(target=send_status, daemon=False)
     status_thread.start()
