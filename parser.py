@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -43,7 +44,13 @@ def parse_ip_packet(packet):
 
             # Save locally for backup
             try:
-                with open("data.json", "a", encoding="utf-8") as f:
+                with open(
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)), "data.json"
+                    ),
+                    "a",
+                    encoding="utf-8",
+                ) as f:
                     f.write(json.dumps(data) + "\n")
             except Exception as e:
                 print(f"Local JSON append failed: {e}")
