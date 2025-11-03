@@ -1,6 +1,9 @@
 # Redis files
 *.rdb
 
+# Local copy of capured data
+data.json
+
 # Log files
 *.log
 
