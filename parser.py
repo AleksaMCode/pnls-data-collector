@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from firebase_admin import db
 from scapy.layers.dot11 import Dot11ProbeReq
 
-from settings import FIREBASE_NODE, TIMESTAMP_FORMAT, TIMEZONE
+from settings import FIREBASE_NODE, MAC_FILTER, TIMESTAMP_FORMAT, TIMEZONE
 from util import is_working_hours
 
 
@@ -24,7 +24,7 @@ def parse_ip_packet(packet):
             ssid = packet.info.decode("utf-8")
         except UnicodeDecodeError:
             pass
-        if ssid:
+        if ssid and packet.addr2 not in MAC_FILTER:
             # Prepare data record
             data = {
                 "mac": packet.addr2,
