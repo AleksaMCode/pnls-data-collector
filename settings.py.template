@@ -1,6 +1,6 @@
 import os
 
-# Test if WLAN1 is available first, only use WLAN0 as backup
+# Test if WLAN1 is available first, only use WLAN0 as backup (only true for RPi devices)
 INTERFACES = ["wlan1", "wlan0"]
 
 TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
@@ -18,3 +18,6 @@ FIREBASE_NODE = "RPI-1"
 
 # Send status update every 10 minutes
 FIREBASE_TIMEOUT_STATUS = 60 * 10
+
+# Example MAC address format: xx:xx:xx:xx:xx:xx
+MAC_FILTER = []
