@@ -21,3 +21,5 @@ FIREBASE_TIMEOUT_STATUS = 60 * 10
 
 # Example MAC address format: xx:xx:xx:xx:xx:xx
 MAC_FILTER = []
+
+RSA_KEY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public_key.pem")
