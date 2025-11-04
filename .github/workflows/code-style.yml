@@ -28,7 +28,7 @@ jobs:
           pip install black isort
 
       - name: Run isort check
-        run: isort --profile black --check-only .
+        run: isort --check-only .
 
       - name: Run black check
         run: black --check .
