@@ -1,4 +1,4 @@
-name: PNLS collector test
+name: PNLS collector tests
 
 on:
   push:
@@ -22,19 +22,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
-
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        python -m pip install pycryptodome
+      run: python -m pip install --upgrade pip && python -m pip install pycryptodome
+
+    - name: Prepare settings
+      run: cp settings.py.template settings.py
 
     - name: Run tests (unittest discover)
       run: python -m unittest discover -v
