@@ -1,0 +1,5 @@
+firebase-admin
+pycryptodome
+SQLAlchemy
+python-dotenv
+psycopg2-binary
