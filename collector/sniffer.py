@@ -8,10 +8,9 @@ from urllib.error import HTTPError
 import firebase_admin
 from firebase_admin import credentials
 from scapy.sendrecv import AsyncSniffer
-from yaspin import yaspin
-
 from settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, INTERFACES
 from sniffer_status import send_status
+from yaspin import yaspin
 
 INTERFACE = ""
 
