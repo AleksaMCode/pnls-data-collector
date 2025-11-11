@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 import firebase_admin
 from firebase_admin import credentials
@@ -14,13 +14,19 @@ firebase_admin.initialize_app(
 
 LATEST_IMPORT = get_latest_import_date() + timedelta(days=1)
 
+
 def transfer_all_data_from_firebase_to_db():
     data = fetch_all_data(LATEST_IMPORT)
     import_data(data)
 
+
 def transfer_data():
+    """
+    Transfer data for day after latest_import only.
+    """
     data = fetch_data(LATEST_IMPORT)
     import_data(data)
 
+
 if __name__ == "__main__":
-    transfer_all_data_from_firebase_to_db()
+    transfer_data()

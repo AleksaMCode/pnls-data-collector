@@ -1,9 +1,9 @@
 from datetime import date, datetime
 
-from core.orm.models import Device
 from firebase_admin import db
-from settings import TIMESTAMP_FORMAT
 
+from core.orm.models import Device
+from settings import TIMESTAMP_FORMAT
 from util import extract_device_name
 
 
