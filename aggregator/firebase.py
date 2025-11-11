@@ -1,9 +1,9 @@
 from datetime import date, datetime
 
-from firebase_admin import db
-
 from core.orm.models import Device
+from firebase_admin import db
 from settings import TIMESTAMP_FORMAT
+
 from util import extract_device_name
 
 
@@ -51,7 +51,9 @@ def fetch_data(target_date: date):
 
     for device in Device:
         # e.g. "RPI-1-2025-10-31"
-        node_key = f"{device.value}-{target_date.strftime(TIMESTAMP_FORMAT.split(' ')[0])}"
+        node_key = (
+            f"{device.value}-{target_date.strftime(TIMESTAMP_FORMAT.split(' ')[0])}"
+        )
         node_value = ref.child(node_key).get()
         if not node_value:
             continue
