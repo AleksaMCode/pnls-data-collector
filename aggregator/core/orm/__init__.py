@@ -1,30 +1,4 @@
 import os
 
-from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-if os.getenv("ENV") == "test":
-    load_dotenv(".env.test")
-else:
-    load_dotenv()
-
-connection_url = (
-    f"postgresql://{os.getenv("DB_USER")}"
-    f":{os.getenv("DB_PASS")}@{os.getenv("DB_URL")}:{os.getenv("DB_PORT")}"
-    f"/{os.getenv("DB_NAME")}"
-)
-
-db = create_engine(connection_url)
-
-Base = declarative_base()
-
-SessionFactory = sessionmaker(
-    bind=db,
-    autoflush=False,
-    autocommit=False,
-    expire_on_commit=False,
-)
-
-_session = SessionFactory
+if os.getenv("ENV") != "test":
+    from ._init_runtime import _session
