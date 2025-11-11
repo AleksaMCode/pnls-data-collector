@@ -26,13 +26,7 @@ def fetch_all_data(start_date: date):
         data_entries = node_value.get("data", {})
         for entry_key, entry_value in data_entries.items():
             ts_str = entry_value.get("timestamp")
-            if not ts_str:
-                continue
-
-            try:
-                ts = datetime.strptime(ts_str, TIMESTAMP_FORMAT).date()
-            except ValueError:
-                continue
+            ts = datetime.strptime(ts_str, TIMESTAMP_FORMAT).date()
 
             if start_date <= ts <= today:
                 results.append(
