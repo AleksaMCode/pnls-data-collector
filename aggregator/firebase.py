@@ -6,6 +6,7 @@ from core.orm.models import Device
 from settings import TIMESTAMP_FORMAT
 from util import extract_device_name
 
+RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
 
 def fetch_all_data(start_date: date):
     """
@@ -63,7 +64,7 @@ def fetch_data(target_date: date):
             results.append(
                 {
                     "device": device.value,
-                    "mac": entry_value.get("mac"),
+                    "mac": decrypt_data(RSA_KEY, entry_value.get("mac")),
                     "ssid": entry_value.get("ssid"),
                     "timestamp": entry_value.get("timestamp"),
                 }
