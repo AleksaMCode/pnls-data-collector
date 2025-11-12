@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import desc, func
+from yaspin import yaspin
 
 from aggregator import settings, util
 
@@ -33,6 +34,7 @@ def get_total_captured_ssid_count():
         return db.query(func.count(SSID.id)).scalar()
 
 
+@yaspin(text="Importing data from Firebase to local database...")
 def import_data(data):
     with _session() as db:
         # Cache existing SSIDs and MACs for fast lookup

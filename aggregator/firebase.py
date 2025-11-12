@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 from firebase_admin import db
+from yaspin import yaspin
 
 from aggregator.core.orm.helpers import (
     get_total_captured_info_count,
@@ -16,6 +17,7 @@ from .util import extract_device_name
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
 
 
+@yaspin(text="Fetching data from Firebase...")
 def fetch_all_data(start_date: date):
     """
     Fetch all data from Firebase Realtime DB from `start_date` up to and including today.
@@ -50,6 +52,7 @@ def fetch_all_data(start_date: date):
     return results
 
 
+@yaspin(text="Fetching data from Firebase...")
 def fetch_data(target_date: date):
     """
     Fetch data from Firebase only for specific device-date nodes for `target_date`.
@@ -81,6 +84,7 @@ def fetch_data(target_date: date):
     return results
 
 
+@yaspin(text="Publishing stats data to Firebase...")
 def publish_stats_data():
     node = "stats"
     timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
