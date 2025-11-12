@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 from firebase_admin import db
 from scapy.layers.dot11 import Dot11ProbeReq
-from settings import FIREBASE_NODE, MAC_FILTER, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
+from .settings import FIREBASE_NODE, MAC_FILTER, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
 
 from util.util import encrypt_data, is_working_hours, load_rsa_key_from_file
 

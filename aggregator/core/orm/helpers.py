@@ -1,11 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 
-from core.orm import _session
-from core.orm.models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
-from settings import MAC_FILTER, TIMESTAMP_FORMAT
-from util import clean_string
+from . import _session
+from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
+from aggregator import settings, util
 
 
 def get_latest_import_date():
@@ -17,6 +16,19 @@ def get_latest_import_date():
             .timestamp
         )
 
+def get_total_captured_info_count():
+    with _session() as db:
+        return db.query(func.sum(ImportsInfo.captured)).scalar()
+
+
+def get_total_captured_mac_count():
+    with _session() as db:
+        return db.query(func.count(MAC.id)).scalar()
+
+
+def get_total_captured_ssid_count():
+    with _session() as db:
+        return db.query(func.count(SSID.id)).scalar()
 
 def import_data(data):
     with _session() as db:
@@ -27,11 +39,10 @@ def import_data(data):
         captured_records = []
         for record in data:
             device_name = record.get("device")
-            ssid_str = clean_string(record.get("ssid"))
-            # TODO Decrypt the MAC address here
+            ssid_str = util.clean_string(record.get("ssid"))
             mac_str = record.get("mac")
 
-            if mac_str in MAC_FILTER:
+            if mac_str in settings.MAC_FILTER:
                 continue
 
             timestamp_str = record.get("timestamp")
@@ -39,7 +50,7 @@ def import_data(data):
             if not ssid_str or not mac_str or not timestamp_str:
                 continue
 
-            ts = datetime.strptime(timestamp_str, TIMESTAMP_FORMAT)
+            ts = datetime.strptime(timestamp_str, settings.TIMESTAMP_FORMAT)
 
             ssid_id = ssid_map.get(ssid_str)
             if not ssid_id:

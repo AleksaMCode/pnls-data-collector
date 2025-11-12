@@ -2,9 +2,15 @@ from datetime import date, datetime
 
 from firebase_admin import db
 
-from core.orm.models import Device
-from settings import TIMESTAMP_FORMAT
-from util import extract_device_name
+from aggregator.core.orm.helpers import (
+    get_total_captured_info_count,
+    get_total_captured_mac_count,
+    get_total_captured_ssid_count,
+)
+from aggregator.core.orm.models import Device
+from .settings import TIMESTAMP_FORMAT, RSA_KEY_PATH
+from .util import extract_device_name
+from util.util import decrypt_data, is_working_hours, load_rsa_key_from_file
 
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
 
@@ -71,3 +77,29 @@ def fetch_data(target_date: date):
             )
 
     return results
+
+def publish_stats_data():
+    node = "stats"
+    timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
+
+    try:
+        db.reference(f"/{node}/total_count").update(
+            {
+                "count": get_total_captured_info_count(),
+                "timestamp": timestamp,
+            }
+        )
+        db.reference(f"/{node}/mac_count").update(
+            {
+                "count": get_total_captured_mac_count(),
+                "timestamp": timestamp,
+            }
+        )
+        db.reference(f"/{node}/ssid_count").update(
+            {
+                "count": get_total_captured_ssid_count(),
+                "timestamp": timestamp,
+            }
+        )
+    except Exception as e:
+        print(f"Firebase update failed: {e}")

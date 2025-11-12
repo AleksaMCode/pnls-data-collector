@@ -2,14 +2,15 @@ import subprocess
 import sys
 import threading
 from http.client import HTTPException
-from parser import parse_ip_packet
 from urllib.error import HTTPError
 
 import firebase_admin
 from firebase_admin import credentials
 from scapy.sendrecv import AsyncSniffer
-from settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, INTERFACES
-from sniffer_status import send_status
+
+from .parser import parse_ip_packet
+from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, INTERFACES
+from .sniffer_status import send_status
 from yaspin import yaspin
 
 INTERFACE = ""
