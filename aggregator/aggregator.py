@@ -1,8 +1,10 @@
 from datetime import timedelta
+
 import firebase_admin
 from firebase_admin import credentials
 
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
+
 from .firebase import fetch_all_data, fetch_data, publish_stats_data
 from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL
 
@@ -26,6 +28,7 @@ def transfer_data():
     data = fetch_data(LATEST_IMPORT)
     import_data(data)
     publish_stats_data()
+
 
 if __name__ == "__main__":
     transfer_data()

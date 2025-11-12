@@ -2,9 +2,10 @@ from datetime import datetime
 
 from sqlalchemy import desc, func
 
+from aggregator import settings, util
+
 from . import _session
 from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
-from aggregator import settings, util
 
 
 def get_latest_import_date():
@@ -15,6 +16,7 @@ def get_latest_import_date():
             .first()
             .timestamp
         )
+
 
 def get_total_captured_info_count():
     with _session() as db:
@@ -29,6 +31,7 @@ def get_total_captured_mac_count():
 def get_total_captured_ssid_count():
     with _session() as db:
         return db.query(func.count(SSID.id)).scalar()
+
 
 def import_data(data):
     with _session() as db:

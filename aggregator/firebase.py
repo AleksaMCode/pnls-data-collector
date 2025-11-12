@@ -8,11 +8,13 @@ from aggregator.core.orm.helpers import (
     get_total_captured_ssid_count,
 )
 from aggregator.core.orm.models import Device
-from .settings import TIMESTAMP_FORMAT, RSA_KEY_PATH
-from .util import extract_device_name
 from util.util import decrypt_data, is_working_hours, load_rsa_key_from_file
 
+from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT
+from .util import extract_device_name
+
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
+
 
 def fetch_all_data(start_date: date):
     """
@@ -77,6 +79,7 @@ def fetch_data(target_date: date):
             )
 
     return results
+
 
 def publish_stats_data():
     node = "stats"
