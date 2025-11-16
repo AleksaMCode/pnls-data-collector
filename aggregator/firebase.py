@@ -86,27 +86,23 @@ def fetch_data(target_date: date):
 
 @yaspin(text="Publishing stats data to Firebase...")
 def publish_stats_data():
+    """
+    Publishes key statistics to Firebase.
+    """
     node = "stats"
     timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
 
+    stats = {
+            "total_count": get_total_captured_info_count(),
+            "mac_count": get_total_captured_mac_count(),
+            "ssid_count": get_total_captured_ssid_count(),
+        }
+
     try:
-        db.reference(f"/{node}/total_count").update(
-            {
-                "count": get_total_captured_info_count(),
-                "timestamp": timestamp,
-            }
-        )
-        db.reference(f"/{node}/mac_count").update(
-            {
-                "count": get_total_captured_mac_count(),
-                "timestamp": timestamp,
-            }
-        )
-        db.reference(f"/{node}/ssid_count").update(
-            {
-                "count": get_total_captured_ssid_count(),
-                "timestamp": timestamp,
-            }
-        )
+        for key, count in stats.items():
+            db.reference(f"/{node}/{key}").update(
+                    {"count": count, "timestamp": timestamp}
+                )
+        print(f"Published stats data to Firebase")
     except Exception as e:
-        print(f"Firebase update failed: {e}")
+        print(f"Publishing stats data to Firebase failed: {e}")
