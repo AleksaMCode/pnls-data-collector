@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import desc, func
+from tqdm import tqdm
 from yaspin import yaspin
 
 from aggregator import settings, util
@@ -43,7 +44,7 @@ def import_data(data):
             mac_map = {m.mac: m.id for m in db.query(MAC).all()}
 
             captured_records = []
-            for record in data:
+            for record in tqdm(data, desc="Importing records", unit="record"):
                 device_name = record.get("device")
                 ssid_str = util.clean_string(record.get("ssid"))
                 mac_str = record.get("mac")
