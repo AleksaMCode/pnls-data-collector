@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from firebase_admin import db
 from yaspin import yaspin
@@ -9,9 +10,9 @@ from aggregator.core.orm.helpers import (
     get_total_captured_ssid_count,
 )
 from aggregator.core.orm.models import Device
-from util.util import decrypt_data, is_working_hours, load_rsa_key_from_file
+from util.util import decrypt_data, load_rsa_key_from_file
 
-from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT
+from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
 from .util import extract_device_name
 
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
@@ -90,7 +91,7 @@ def publish_stats_data():
     Publishes key statistics to Firebase.
     """
     node = "stats"
-    timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
+    timestamp = datetime.now(ZoneInfo(TIMEZONE)).strftime(TIMESTAMP_FORMAT)
 
     stats = {
         "total_count": get_total_captured_info_count(),
