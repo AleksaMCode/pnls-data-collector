@@ -72,8 +72,8 @@ def fetch_data(target_date: date):
         try:
             # e.g. "RPI-1-2025-10-31"
             node_key = (
-            f"{device.value}-{target_date.strftime(TIMESTAMP_FORMAT.split(' ')[0])}"
-        )
+                f"{device.value}-{target_date.strftime(TIMESTAMP_FORMAT.split(' ')[0])}"
+            )
             node_value = fetch_firebase_node(node_key)
             if not node_value:
                 continue
