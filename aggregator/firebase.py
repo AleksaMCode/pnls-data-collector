@@ -78,7 +78,7 @@ def fetch_data(target_date: date):
             if not node_value:
                 continue
         except Exception as e:
-            print(f"Firebase exception occurred: {e}")
+            print(f"Firebase exception occurred: {str(e)}")
 
         data_entries = node_value.get("data", {})
         for entry_value in data_entries.values():
@@ -115,4 +115,4 @@ def publish_stats_data():
             )
         print(f"Published stats data to Firebase")
     except Exception as e:
-        print(f"Publishing stats data to Firebase failed: {e}")
+        print(f"Publishing stats data to Firebase failed: {str(e)}")
