@@ -2,6 +2,7 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from firebase_admin import db
+from tenacity import retry, stop_after_attempt, wait_random
 from yaspin import yaspin
 
 from aggregator.core.orm.helpers import (
@@ -16,6 +17,12 @@ from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
 from .util import extract_device_name
 
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
+
+
+@retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=2))
+def fetch_firebase_node(node: str):
+    ref = db.reference("/")
+    return ref.child(node).get()
 
 
 @yaspin(text="Fetching data from Firebase...")
@@ -59,17 +66,19 @@ def fetch_data(target_date: date):
     Fetch data from Firebase only for specific device-date nodes for `target_date`.
     Returns a list of entries.
     """
-    ref = db.reference("/")
     results = []
 
     for device in Device:
-        # e.g. "RPI-1-2025-10-31"
-        node_key = (
-            f"{device.value}-{target_date.strftime(TIMESTAMP_FORMAT.split(' ')[0])}"
-        )
-        node_value = ref.child(node_key).get()
-        if not node_value:
-            continue
+        try:
+            # e.g. "RPI-1-2025-10-31"
+            node_key = (
+                f"{device.value}-{target_date.strftime(TIMESTAMP_FORMAT.split(' ')[0])}"
+            )
+            node_value = fetch_firebase_node(node_key)
+            if not node_value:
+                continue
+        except Exception as e:
+            print(f"Firebase exception occurred: {e}")
 
         data_entries = node_value.get("data", {})
         for entry_value in data_entries.values():
