@@ -93,16 +93,16 @@ def publish_stats_data():
     timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
 
     stats = {
-            "total_count": get_total_captured_info_count(),
-            "mac_count": get_total_captured_mac_count(),
-            "ssid_count": get_total_captured_ssid_count(),
-        }
+        "total_count": get_total_captured_info_count(),
+        "mac_count": get_total_captured_mac_count(),
+        "ssid_count": get_total_captured_ssid_count(),
+    }
 
     try:
         for key, count in stats.items():
             db.reference(f"/{node}/{key}").update(
-                    {"count": count, "timestamp": timestamp}
-                )
+                {"count": count, "timestamp": timestamp}
+            )
         print(f"Published stats data to Firebase")
     except Exception as e:
         print(f"Publishing stats data to Firebase failed: {e}")
