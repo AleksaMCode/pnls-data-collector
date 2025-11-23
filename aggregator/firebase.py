@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 
 from firebase_admin import db
 from tenacity import retry, stop_after_attempt, wait_random
+from tqdm import tqdm
 from yaspin import yaspin
 
 from aggregator.core.orm.helpers import (
@@ -81,7 +82,11 @@ def fetch_data(target_date: date):
             print(f"Firebase exception occurred: {str(e)}")
 
         data_entries = node_value.get("data", {})
-        for entry_value in data_entries.values():
+        for entry_value in tqdm(
+            data_entries.values(),
+            desc=f"Fetching data records for {device.value}",
+            unit="record",
+        ):
             results.append(
                 {
                     "device": device.value,
