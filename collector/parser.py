@@ -49,7 +49,7 @@ def parse_ip_packet(packet):
                     f"/{FIREBASE_NODE}-{datetime.now().strftime(TIMESTAMP_FORMAT.split(' ')[0])}/data"
                 ).push(data)
             except Exception as e:
-                print(f"Firebase update failed: {e}")
+                print(f"Firebase update failed: {str(e)}")
 
             # Save locally for backup
             try:
@@ -62,4 +62,4 @@ def parse_ip_packet(packet):
                 ) as f:
                     f.write(json.dumps(data) + "\n")
             except Exception as e:
-                print(f"Local JSON append failed: {e}")
+                print(f"Local JSON append failed: {str(e)}")
