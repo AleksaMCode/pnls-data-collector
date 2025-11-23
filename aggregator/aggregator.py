@@ -13,11 +13,11 @@ firebase_admin.initialize_app(
     {"databaseURL": FIREBASE_DB_URL},
 )
 
-LATEST_IMPORT = get_latest_import_date() + timedelta(days=1)
+IMPORT_DATE = get_latest_import_date() + timedelta(days=1)
 
 
 def transfer_all_data_from_firebase_to_db():
-    data = fetch_all_data(LATEST_IMPORT)
+    data = fetch_all_data(IMPORT_DATE)
     import_data(data)
 
 
@@ -25,7 +25,7 @@ def transfer_data():
     """
     Transfer data for day after latest_import only.
     """
-    data = fetch_data(LATEST_IMPORT)
+    data = fetch_data(IMPORT_DATE)
     import_data(data)
     publish_stats_data()
 
