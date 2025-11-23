@@ -13,7 +13,7 @@ connection_url = (
     f"/{os.getenv("DB_NAME")}"
 )
 
-db = create_engine(connection_url)
+db = create_engine(connection_url, pool_pre_ping=True)
 
 Base = declarative_base()
 
