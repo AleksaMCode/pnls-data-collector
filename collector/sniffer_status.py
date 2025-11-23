@@ -3,7 +3,7 @@ from datetime import datetime
 
 from firebase_admin import db
 
-from settings import FIREBASE_NODE, FIREBASE_TIMEOUT_STATUS, TIMESTAMP_FORMAT
+from .settings import FIREBASE_NODE, FIREBASE_TIMEOUT_STATUS, TIMESTAMP_FORMAT
 
 
 def send_status():

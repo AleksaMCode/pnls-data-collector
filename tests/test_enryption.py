@@ -2,7 +2,7 @@ import unittest
 
 from Crypto.PublicKey import RSA
 
-from util import base64_decode, base64_encode, decrypt_data, encrypt_data
+from util.util import base64_decode, base64_encode, decrypt_data, encrypt_data
 
 
 class TestRSAEncryption(unittest.TestCase):

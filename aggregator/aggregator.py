@@ -1,0 +1,34 @@
+from datetime import timedelta
+
+import firebase_admin
+from firebase_admin import credentials
+
+from aggregator.core.orm.helpers import get_latest_import_date, import_data
+
+from .firebase import fetch_all_data, fetch_data, publish_stats_data
+from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL
+
+firebase_admin.initialize_app(
+    credentials.Certificate(FIREBASE_CREDENTIALS),
+    {"databaseURL": FIREBASE_DB_URL},
+)
+
+IMPORT_DATE = get_latest_import_date() + timedelta(days=1)
+
+
+def transfer_all_data_from_firebase_to_db():
+    data = fetch_all_data(IMPORT_DATE)
+    import_data(data)
+
+
+def transfer_data():
+    """
+    Transfer data for day after latest_import only.
+    """
+    data = fetch_data(IMPORT_DATE)
+    import_data(data)
+    publish_stats_data()
+
+
+if __name__ == "__main__":
+    transfer_data()

@@ -6,8 +6,15 @@ from zoneinfo import ZoneInfo
 from firebase_admin import db
 from scapy.layers.dot11 import Dot11ProbeReq
 
-from settings import FIREBASE_NODE, MAC_FILTER, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
-from util import encrypt_data, is_working_hours, load_rsa_key_from_file
+from util.util import encrypt_data, is_working_hours, load_rsa_key_from_file
+
+from .settings import (
+    FIREBASE_NODE,
+    MAC_FILTER,
+    RSA_KEY_PATH,
+    TIMESTAMP_FORMAT,
+    TIMEZONE,
+)
 
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
 
@@ -17,7 +24,7 @@ def parse_ip_packet(packet):
     Filters the packet and broadcasts sniffed data (MAC + SSID + timestamp) through a Firebase Realtime DB.
     """
     # Only capture data between 7 AM and 6 PM
-    if not is_working_hours():
+    if not is_working_hours(TIMEZONE):
         return
     # Filter only Probe Request and ignore Probe Requests with wildcard in the SSID field.
     if packet.haslayer(Dot11ProbeReq):

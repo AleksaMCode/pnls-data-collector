@@ -5,10 +5,8 @@ from zoneinfo import ZoneInfo
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 
-from settings import TIMEZONE
 
-
-def is_working_hours(tz=TIMEZONE):
+def is_working_hours(tz="Europe/Paris"):
     """
     Returns True if the current time is between 7 AM and 6 PM.
     """
