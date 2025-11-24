@@ -2,6 +2,8 @@ import os
 
 TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
+TIMEZONE = "Europe/Paris"
+
 FIREBASE_CREDENTIALS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "firebase_credentials.json")
 
 FIREBASE_DB_URL = "firebase_db_url"
