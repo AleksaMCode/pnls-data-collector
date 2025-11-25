@@ -9,9 +9,13 @@ from firebase_admin import credentials
 from scapy.sendrecv import AsyncSniffer
 from yaspin import yaspin
 
+from util.logger import get_logger
+
 from .parser import parse_ip_packet
 from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, INTERFACES
 from .sniffer_status import send_status
+
+logger = get_logger(__name__)
 
 INTERFACE = ""
 
@@ -57,19 +61,23 @@ def check_interface_mode():
                     ]
                     if interface_mode.strip() == "Monitor":
                         INTERFACE = interface
+                        logger.info(f"Interface `{interface}` is in Monitor mode.")
                         return True
                     else:
-                        print(f"Interface `{interface}` not in Monitor mode.")
-            except:
-                print("An Exception occurred during checking interface mode.")
+                        logger.warning(f"Interface `{interface}` not in Monitor mode.")
+            except Exception as e:
+                logger.error(
+                    f"An Exception occurred during checking interface mode - {str(e)}"
+                )
 
     return False
 
 
 def start():
     if not check_interface_mode():
-        print("Failed to start the sniffer due to missing monitor interface.")
+        logger.warning("Failed to start the sniffer due to missing monitor interface.")
         # Force reboot if there is no monitor mode (see #1 for more info)
+        logger.info("Force reboot of the RPi device.")
         subprocess.run(["sudo", "reboot"])
 
     status_thread = threading.Thread(target=send_status, daemon=False)
@@ -77,21 +85,21 @@ def start():
 
     while True:
         try:
-            print("Capture packets from Wi-Fi traffic.")
+            logger.info("Start capturing packets from Wi-Fi traffic.")
             # Capture the Wi-Fi packets.
             capture_traffic(status_thread)
         except (HTTPException, HTTPError) as e:
-            print(f"HTTP Exception: {str(e)}")
+            logger.error(f"HTTP Exception: {str(e)}")
         except KeyboardInterrupt as e:
-            print("Sniffer stopped forcefully.")
+            logger.warning("Sniffer stopped forcefully.")
             # 130 - Script terminated by Control-C
             sys.exit(130)
         except Exception as e:
-            print(str(e))
+            logger.error(str(e))
         finally:
-            print("Sniffer has been stopped.")
+            logger.info("Sniffer has been stopped.")
 
-        print("Starting the sniffer again.")
+        logger.info("Starting the sniffer again.")
 
 
 if __name__ == "__main__":
