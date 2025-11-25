@@ -35,6 +35,7 @@ def fetch_all_data(start_date: date):
     Fetch all data from Firebase Realtime DB from `start_date` up to and including today.
     Returns a list of entries.
     """
+    logger.info("Started fetching data from Firebase.")
     ref = db.reference("/")
     data = ref.get()
 
@@ -61,6 +62,7 @@ def fetch_all_data(start_date: date):
                     }
                 )
 
+    logger.info("Finished fetching data from Firebase.")
     return results
 
 
@@ -70,6 +72,7 @@ def fetch_data(target_date: date):
     Fetch data from Firebase only for specific device-date nodes for `target_date`.
     Returns a list of entries.
     """
+    logger.info("Started fetching data from Firebase.")
     results = []
 
     for device in Device:
@@ -99,6 +102,7 @@ def fetch_data(target_date: date):
                 }
             )
 
+    logger.info("Finished fetching data from Firebase.")
     return results
 
 
@@ -121,6 +125,6 @@ def publish_stats_data():
             db.reference(f"/{node}/{key}").update(
                 {"count": count, "timestamp": timestamp}
             )
-        logger.info(f"Published stats data to Firebase")
+        logger.info(f"Published stats data to Firebase.")
     except Exception as e:
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")

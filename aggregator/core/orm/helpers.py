@@ -14,6 +14,7 @@ logger = get_logger(__name__)
 
 
 def get_latest_import_date():
+    logger.info("Getting latest import date from the DB.")
     with _session() as db:
         return (
             db.query(ImportsInfo)
@@ -24,22 +25,26 @@ def get_latest_import_date():
 
 
 def get_total_captured_info_count():
+    logger.info("Getting total captured info count from the DB.")
     with _session() as db:
         return db.query(func.sum(ImportsInfo.captured)).scalar()
 
 
 def get_total_captured_mac_count():
+    logger.info("Getting total captured mac count from the DB.")
     with _session() as db:
         return db.query(func.count(MAC.id)).scalar()
 
 
 def get_total_captured_ssid_count():
+    logger.info("Getting total captured ssid count from the DB.")
     with _session() as db:
         return db.query(func.count(SSID.id)).scalar()
 
 
 @yaspin(text="Importing data from Firebase to local database...")
 def import_data(data):
+    logger.info("Starting import of data from Firebase to local database.")
     with _session() as db:
         try:
             # Cache existing SSIDs and MACs for fast lookup
