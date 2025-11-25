@@ -5,12 +5,16 @@ from tqdm import tqdm
 from yaspin import yaspin
 
 from aggregator import settings, util
+from util.logger import get_logger
 
 from . import _session
 from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
 
+logger = get_logger(__name__)
+
 
 def get_latest_import_date():
+    logger.info("Getting latest import date from the DB.")
     with _session() as db:
         return (
             db.query(ImportsInfo)
@@ -21,22 +25,26 @@ def get_latest_import_date():
 
 
 def get_total_captured_info_count():
+    logger.info("Getting total captured info count from the DB.")
     with _session() as db:
         return db.query(func.sum(ImportsInfo.captured)).scalar()
 
 
 def get_total_captured_mac_count():
+    logger.info("Getting total captured mac count from the DB.")
     with _session() as db:
         return db.query(func.count(MAC.id)).scalar()
 
 
 def get_total_captured_ssid_count():
+    logger.info("Getting total captured ssid count from the DB.")
     with _session() as db:
         return db.query(func.count(SSID.id)).scalar()
 
 
 @yaspin(text="Importing data from Firebase to local database...")
 def import_data(data):
+    logger.info("Starting import of data from Firebase to local database.")
     with _session() as db:
         try:
             # Cache existing SSIDs and MACs for fast lookup
@@ -79,7 +87,7 @@ def import_data(data):
                     db.query(LocationMapping).filter_by(device=device_name).first()
                 )
                 if not mapping:
-                    print(
+                    logger.warning(
                         f"No location mapping found for device {device_name}, skipping record."
                     )
                     continue
@@ -92,7 +100,7 @@ def import_data(data):
                 )
         except Exception as e:
             db.rollback()
-            print(f"Error occurred during data import - {str(e)}")
+            logger.error(f"Error occurred during data import - {str(e)}")
             return
 
         if captured_records:
@@ -100,7 +108,7 @@ def import_data(data):
             db.add(ImportsInfo(captured=len(captured_records)))
             try:
                 db.commit()
-                print(f"Imported {len(captured_records)} new captured records.")
+                logger.info(f"Imported {len(captured_records)} new captured records.")
             except Exception as e:
                 db.rollback()
-                print(f"Failed to add new captured records - {str(e)}")
+                logger.error(f"Failed to add new captured records - {str(e)}")

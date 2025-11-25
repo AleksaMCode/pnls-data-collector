@@ -12,10 +12,13 @@ from aggregator.core.orm.helpers import (
     get_total_captured_ssid_count,
 )
 from aggregator.core.orm.models import Device
+from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
 from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
 from .util import extract_device_name
+
+logger = get_logger(__name__)
 
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
 
@@ -32,11 +35,12 @@ def fetch_all_data(start_date: date):
     Fetch all data from Firebase Realtime DB from `start_date` up to and including today.
     Returns a list of entries.
     """
+    logger.info("Started fetching data from Firebase.")
     ref = db.reference("/")
     data = ref.get()
 
     if not data:
-        print("No data found in Firebase.")
+        logger.info("No data found in Firebase.")
         return []
 
     today = date.today()
@@ -58,6 +62,7 @@ def fetch_all_data(start_date: date):
                     }
                 )
 
+    logger.info("Finished fetching data from Firebase.")
     return results
 
 
@@ -67,6 +72,7 @@ def fetch_data(target_date: date):
     Fetch data from Firebase only for specific device-date nodes for `target_date`.
     Returns a list of entries.
     """
+    logger.info("Started fetching data from Firebase.")
     results = []
 
     for device in Device:
@@ -79,7 +85,7 @@ def fetch_data(target_date: date):
             if not node_value:
                 continue
         except Exception as e:
-            print(f"Firebase exception occurred: {str(e)}")
+            logger.error(f"Firebase exception occurred: {str(e)}")
 
         data_entries = node_value.get("data", {})
         for entry_value in tqdm(
@@ -96,6 +102,7 @@ def fetch_data(target_date: date):
                 }
             )
 
+    logger.info("Finished fetching data from Firebase.")
     return results
 
 
@@ -118,6 +125,6 @@ def publish_stats_data():
             db.reference(f"/{node}/{key}").update(
                 {"count": count, "timestamp": timestamp}
             )
-        print(f"Published stats data to Firebase")
+        logger.info(f"Published stats data to Firebase.")
     except Exception as e:
-        print(f"Publishing stats data to Firebase failed: {str(e)}")
+        logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
