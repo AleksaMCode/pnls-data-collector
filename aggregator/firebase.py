@@ -133,4 +133,4 @@ def publish_stats_data():
 def delete_all():
     ref = db.reference("/")
     ref.delete()
-    logger.error("Deleted all data from Firebase.")
+    logger.info("Deleted all data from Firebase.")
