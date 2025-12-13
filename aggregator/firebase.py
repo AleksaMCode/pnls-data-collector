@@ -143,6 +143,6 @@ def delete_all_by_nodes():
         logger.info(f"No data found in Firebase.")
     else:
         for key in top_level_nodes.keys():
-            print(f"Deleting node: {key}")
+            logger.info(f"Deleting node: {key}")
             ref.child(key).delete()
         logger.info(f"Deleted all data from Firebase.")
