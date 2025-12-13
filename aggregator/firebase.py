@@ -134,3 +134,15 @@ def delete_all():
     ref = db.reference("/")
     ref.delete()
     logger.info("Deleted all data from Firebase.")
+
+
+def delete_all_by_nodes():
+    ref = db.reference("/")
+    top_level_nodes = ref.get(shallow=True)
+    if not top_level_nodes:
+        logger.info(f"No data found in Firebase.")
+    else:
+        for key in top_level_nodes.keys():
+            print(f"Deleting node: {key}")
+            ref.child(key).delete()
+        logger.info(f"Deleted all data from Firebase.")

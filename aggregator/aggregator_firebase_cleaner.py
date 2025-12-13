@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 
-from .firebase import delete_all
+from .firebase import delete_all_by_nodes
 from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL
 
 firebase_admin.initialize_app(
@@ -10,4 +10,4 @@ firebase_admin.initialize_app(
 )
 
 if __name__ == "__main__":
-    delete_all()
+    delete_all_by_nodes()
