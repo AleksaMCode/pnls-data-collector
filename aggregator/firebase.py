@@ -15,7 +15,7 @@ from aggregator.core.orm.models import Device
 from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
-from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
+from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE, FIREBASE_STATISTICS_NODE
 from .util import extract_device_name
 
 logger = get_logger(__name__)
@@ -111,7 +111,6 @@ def publish_stats_data():
     """
     Publishes key statistics to Firebase.
     """
-    node = "stats"
     timestamp = datetime.now(ZoneInfo(TIMEZONE)).strftime(TIMESTAMP_FORMAT)
 
     stats = {
@@ -122,7 +121,7 @@ def publish_stats_data():
 
     try:
         for key, count in stats.items():
-            db.reference(f"/{node}/{key}").update(
+            db.reference(f"/{FIREBASE_STATISTICS_NODE}/{key}").update(
                 {"count": count, "timestamp": timestamp}
             )
         logger.info(f"Published stats data to Firebase.")

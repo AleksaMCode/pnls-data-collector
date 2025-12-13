@@ -8,6 +8,8 @@ FIREBASE_CREDENTIALS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 
 FIREBASE_DB_URL = "firebase_db_url"
 
+FIREBASE_STATISTICS_NODE = "stats"
+
 MAC_FILTER = []
 
 RSA_KEY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "private_key.pem")
