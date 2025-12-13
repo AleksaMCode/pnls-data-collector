@@ -15,7 +15,7 @@ from aggregator.core.orm.models import Device
 from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
-from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE, FIREBASE_STATISTICS_NODE
+from .settings import FIREBASE_STATISTICS_NODE, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
 from .util import extract_device_name
 
 logger = get_logger(__name__)
@@ -144,6 +144,7 @@ def delete_all_by_nodes():
         logger.info(f"No data found in Firebase.")
     else:
         for key in top_level_nodes.keys():
-            logger.info(f"Deleting node: {key}")
-            ref.child(key).delete()
+            if key != FIREBASE_STATISTICS_NODE:
+                logger.info(f"Deleting node: {key}")
+                ref.child(key).delete()
         logger.info(f"Deleted all data from Firebase.")
