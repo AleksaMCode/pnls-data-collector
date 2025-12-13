@@ -130,12 +130,14 @@ def publish_stats_data():
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
 
 
+@yaspin("Deleting all data from Firebase...")
 def delete_all():
     ref = db.reference("/")
     ref.delete()
     logger.info("Deleted all data from Firebase.")
 
 
+@yaspin("Deleting all data from Firebase...")
 def delete_all_by_nodes():
     ref = db.reference("/")
     top_level_nodes = ref.get(shallow=True)
