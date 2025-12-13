@@ -15,7 +15,7 @@ from aggregator.core.orm.models import Device
 from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
-from .settings import RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
+from .settings import FIREBASE_STATISTICS_NODE, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
 from .util import extract_device_name
 
 logger = get_logger(__name__)
@@ -111,7 +111,6 @@ def publish_stats_data():
     """
     Publishes key statistics to Firebase.
     """
-    node = "stats"
     timestamp = datetime.now(ZoneInfo(TIMEZONE)).strftime(TIMESTAMP_FORMAT)
 
     stats = {
@@ -122,9 +121,30 @@ def publish_stats_data():
 
     try:
         for key, count in stats.items():
-            db.reference(f"/{node}/{key}").update(
+            db.reference(f"/{FIREBASE_STATISTICS_NODE}/{key}").update(
                 {"count": count, "timestamp": timestamp}
             )
         logger.info(f"Published stats data to Firebase.")
     except Exception as e:
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
+
+
+@yaspin("Deleting all data from Firebase...")
+def delete_all():
+    ref = db.reference("/")
+    ref.delete()
+    logger.info("Deleted all data from Firebase.")
+
+
+@yaspin("Deleting all data from Firebase...")
+def delete_all_by_nodes():
+    ref = db.reference("/")
+    top_level_nodes = ref.get(shallow=True)
+    if not top_level_nodes:
+        logger.info(f"No data found in Firebase.")
+    else:
+        for key in top_level_nodes.keys():
+            if key != FIREBASE_STATISTICS_NODE:
+                logger.info(f"Deleting node: {key}")
+                ref.child(key).delete()
+        logger.info(f"Deleted all data from Firebase.")
