@@ -128,3 +128,9 @@ def publish_stats_data():
         logger.info(f"Published stats data to Firebase.")
     except Exception as e:
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
+
+
+def delete_all():
+    ref = db.reference("/")
+    ref.delete()
+    logger.error("Deleted all data from Firebase.")
