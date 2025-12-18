@@ -47,6 +47,7 @@ def fetch_all_data(start_date: date):
     results = []
 
     for node_key, node_value in data.items():
+        device_name = extract_device_name(node_key)
         data_entries = node_value.get("data", {})
         for entry_key, entry_value in data_entries.items():
             ts_str = entry_value.get("timestamp")
@@ -55,7 +56,7 @@ def fetch_all_data(start_date: date):
             if start_date <= ts <= today:
                 results.append(
                     {
-                        "device": extract_device_name(node_key),
+                        "device": device_name,
                         "mac": entry_value.get("mac"),
                         "ssid": entry_value.get("ssid"),
                         "timestamp": ts_str,
