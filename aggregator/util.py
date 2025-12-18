@@ -7,6 +7,8 @@ def extract_device_name(node_key: str) -> str:
     Example: "RPI-1-2025-10-31" → "RPI-1"
     """
     match = re.match(r"^(.*)-\d{4}-\d{2}-\d{2}$", node_key)
+    if not match:
+        raise AttributeError(f"Node key '{node_key}' is not a valid Firebase node key.")
     return match.group(1)
 
 
