@@ -1,0 +1,4 @@
+pycryptodome
+# tqdm and yaspin added as it is used in util but not directly in tests
+tqdm
+yaspin
