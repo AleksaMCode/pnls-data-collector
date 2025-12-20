@@ -2,7 +2,8 @@ services:
   postgres:
     image: postgres:latest
     container_name: postgres
-    network_mode: host
+    networks:
+      - pnls
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -21,7 +22,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin4
-    network_mode: host
+    networks:
+      - pnls
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
