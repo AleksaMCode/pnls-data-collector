@@ -7,7 +7,7 @@ class TestUtils(unittest.TestCase):
 
     def test_extract_device_name(self):
         self.assertEqual(extract_device_name("RPI-1-2025-10-31"), "RPI-1")
-        self.assertEqual(extract_device_name("RPI-2-2021-05-15"), "RPI-2")
+        self.assertEqual(extract_device_name("RPI-2-2025-12-15"), "RPI-2")
 
         with self.assertRaises(AttributeError):
             self.assertEqual(extract_device_name("RPI-1"), "RPI-1")
@@ -30,6 +30,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(clean_string("\x00hello\x7f"), "hello")
         self.assertEqual(clean_string("\x00\x01\x02"), "")
         self.assertEqual(clean_string(""), "")
+        self.assertNotEqual(clean_string("SSID "), "SSID")
+        self.assertEqual(clean_string(" SSID "), " SSID ")
 
 
 if __name__ == "__main__":
