@@ -46,9 +46,9 @@ def import_data_local(file_name):
                 record["mac"] = decrypt_data(rsa_key, record.get("mac"))
                 record["device"] = file_name[:5]
                 data.append(record)
+
+        import_data(data, False)
     except Exception as e:
         logger.error(
             f"An error occurred during data import from a file '{file_name}'. - {str(e)}"
         )
-
-    import_data(data, False)
