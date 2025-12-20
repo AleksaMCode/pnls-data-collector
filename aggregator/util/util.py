@@ -7,7 +7,6 @@ from util.util import decrypt_data, load_rsa_key_from_file
 # Fix for pipeline. See #38
 if os.getenv("ENV") != "test":
     from tqdm import tqdm
-    from aggregator.core.orm.helpers import import_data
     from aggregator.settings import RSA_KEY_PATH
 
 
@@ -30,7 +29,7 @@ def clean_string(s: str) -> str:
     return re.sub(r"[\x00-\x1F\x7F-\x9F]", "", s)
 
 
-def import_data_local(file_name):
+def parse_data_local(file_name):
     """
     Import of device local data to local database.
     The filename should be in a specific format - e.g. RPI-1*.json.
@@ -49,7 +48,7 @@ def import_data_local(file_name):
                 record["device"] = file_name[:5]
                 data.append(record)
 
-        import_data(data, False)
+        return data
     except Exception as e:
         logger.error(
             f"An error occurred during data import from a file '{file_name}'. - {str(e)}"
