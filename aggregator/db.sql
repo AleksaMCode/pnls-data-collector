@@ -84,6 +84,7 @@ ORDER BY lm.device;
 ALTER TABLE imports_info
 ADD COLUMN captured INTEGER DEFAULT 0;
 
+-- This is uber specific view for CERN Computer Sec Team (not needed otherwise).
 CREATE VIEW public.latest_mac_info_for_cern_like_ssid AS
 WITH RankedEntries AS (
   SELECT *,
@@ -95,3 +96,9 @@ WITH RankedEntries AS (
 SELECT ssid, mac, location, timestamp
 FROM RankedEntries
 WHERE rn = 1;
+
+CREATE VIEW daily_captured_counts AS
+SELECT DATE(timestamp) AS day, COUNT(*) AS captured_count
+FROM captured_info
+GROUP BY day
+ORDER BY day;
