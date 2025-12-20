@@ -1,12 +1,15 @@
 import json
+import os
 import re
 
-from tqdm import tqdm
-from yaspin import yaspin
-
-from aggregator.core.orm.helpers import import_data
 from aggregator.settings import RSA_KEY_PATH
 from util.util import decrypt_data, load_rsa_key_from_file
+
+# Fix for pipeline. See #38
+if os.getenv("ENV") != "test":
+    from aggregator.core.orm.helpers import import_data
+    from tqdm import tqdm
+    from yaspin import yaspin
 
 from . import logger
 
