@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 from sqlalchemy import desc, func
@@ -7,9 +6,7 @@ from yaspin import yaspin
 
 from aggregator import settings, util
 from util.logger import get_logger
-from util.util import decrypt_data, load_rsa_key_from_file
 
-from ...settings import RSA_KEY_PATH
 from ...util import util
 from . import _session
 from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
@@ -120,30 +117,3 @@ def import_data(data, firebase_import: bool = True):
             except Exception as e:
                 db.rollback()
                 logger.error(f"Failed to add new captured records - {str(e)}")
-
-
-@yaspin(text="Importing data from device to local database...")
-def import_data_local(file_name):
-    """
-    Import of device local data to local database.
-    The filename should be in a specific format - e.g. RPI-1*.json.
-    """
-    logger.info("Starting import of local data from device.")
-    # Added another RSA_KEY here to avoid circular import. Good enough for now.
-    # TODO Maybe fix this another way #techdept
-    rsa_key = load_rsa_key_from_file(RSA_KEY_PATH)
-    data = []
-    try:
-        with open(file_name, "r") as file:
-            for record in tqdm(file, desc="Importing records", unit="record"):
-                record = json.loads(record.strip())
-                record["ssid"] = util.clean_string(record["ssid"])
-                record["mac"] = decrypt_data(rsa_key, record.get("mac"))
-                record["device"] = file_name[:5]
-                data.append(record)
-    except Exception as e:
-        logger.error(
-            f"An error occurred during data import from a file '{file_name}'. - {str(e)}"
-        )
-
-    import_data(data, False)

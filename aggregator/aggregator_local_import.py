@@ -1,6 +1,6 @@
 import argparse
 
-from aggregator.core.orm.helpers import import_data_local
+from aggregator.util.util import import_data_local
 
 
 def parse_args():
