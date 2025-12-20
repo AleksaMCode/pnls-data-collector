@@ -31,7 +31,7 @@ def clean_string(s: str) -> str:
 
 def parse_data_local(file_name):
     """
-    Import of device local data to local database.
+    Parse device local data.
     The filename should be in a specific format - e.g. RPI-1*.json.
     """
     logger.info("Starting import of local data from device.")
