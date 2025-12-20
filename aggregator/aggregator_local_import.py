@@ -1,6 +1,7 @@
 import argparse
 
-from aggregator.util.util import import_data_local
+from aggregator.core.orm.helpers import import_data
+from aggregator.util.util import parse_data_local
 
 
 def parse_args():
@@ -16,4 +17,5 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    import_data_local(args.file)
+    data = parse_data_local(args.file)
+    import_data(data, False)
