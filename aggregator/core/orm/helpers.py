@@ -7,6 +7,7 @@ from yaspin import yaspin
 from aggregator import settings, util
 from util.logger import get_logger
 
+from ...util import util
 from . import _session
 from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
 
@@ -43,7 +44,7 @@ def get_total_captured_ssid_count():
 
 
 @yaspin(text="Importing data from Firebase to local database...")
-def import_data(data):
+def import_data(data, firebase_import: bool = True):
     logger.info("Starting import of data from Firebase to local database.")
     with _session() as db:
         try:
@@ -105,7 +106,11 @@ def import_data(data):
 
         if captured_records:
             db.add_all(captured_records)
-            db.add(ImportsInfo(captured=len(captured_records)))
+            # Only update stats when importing from Firebase.
+            # For import of local data manually update stats.
+            # TODO Maybe fix this (automate stats update) in the future #techdebt
+            if firebase_import:
+                db.add(ImportsInfo(captured=len(captured_records)))
             try:
                 db.commit()
                 logger.info(f"Imported {len(captured_records)} new captured records.")
