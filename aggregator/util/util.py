@@ -6,9 +6,8 @@ from util.util import decrypt_data, load_rsa_key_from_file
 
 # Fix for pipeline. See #38
 if os.getenv("ENV") != "test":
-    from aggregator.core.orm.helpers import import_data
     from tqdm import tqdm
-    from yaspin import yaspin
+    from aggregator.core.orm.helpers import import_data
     from aggregator.settings import RSA_KEY_PATH
 
 
@@ -31,7 +30,6 @@ def clean_string(s: str) -> str:
     return re.sub(r"[\x00-\x1F\x7F-\x9F]", "", s)
 
 
-@yaspin(text="Importing data from device to local database...")
 def import_data_local(file_name):
     """
     Import of device local data to local database.
