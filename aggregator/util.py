@@ -14,4 +14,4 @@ def extract_device_name(node_key: str) -> str:
 
 def clean_string(s: str) -> str:
     # Remove NULL and control characters, but keep UTF-8 characters
-    return re.sub(r"[\x00-\x1F\x7F-\x9F]", "", s).strip()
+    return re.sub(r"[\x00-\x1F\x7F-\x9F]", "", s)
