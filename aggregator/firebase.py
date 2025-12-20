@@ -16,7 +16,7 @@ from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
 from .settings import FIREBASE_STATISTICS_NODE, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
-from .util import extract_device_name
+from .util.util import extract_device_name
 
 logger = get_logger(__name__)
 

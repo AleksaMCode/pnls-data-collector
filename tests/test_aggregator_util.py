@@ -1,6 +1,6 @@
 import unittest
 
-from aggregator.util import clean_string, extract_device_name
+from aggregator.util.util import clean_string, extract_device_name
 
 
 class TestUtils(unittest.TestCase):

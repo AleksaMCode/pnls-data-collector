@@ -10,7 +10,7 @@ from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
 from ...settings import RSA_KEY_PATH
-from ...util import clean_string
+from ...util import util
 from . import _session
 from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
 
@@ -137,7 +137,7 @@ def import_data_local(file_name):
         with open(file_name, "r") as file:
             for record in tqdm(file, desc="Importing records", unit="record"):
                 record = json.loads(record.strip())
-                record["ssid"] = clean_string(record["ssid"])
+                record["ssid"] = util.clean_string(record["ssid"])
                 record["mac"] = decrypt_data(rsa_key, record.get("mac"))
                 record["device"] = file_name[:5]
                 data.append(record)
