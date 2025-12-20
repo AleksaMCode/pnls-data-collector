@@ -34,3 +34,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+volumes:
+  pnls:
+
+networks:
+  pnls:
+    name: pnls
+    driver: bridge
