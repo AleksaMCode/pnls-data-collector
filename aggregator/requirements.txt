@@ -6,3 +6,4 @@ psycopg2-binary
 yaspin
 tenacity
 tqdm
+pymongo
