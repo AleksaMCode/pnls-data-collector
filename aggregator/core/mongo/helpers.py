@@ -47,7 +47,7 @@ def insert_from_firebase_to_mongo(data: dict):
         memory_file = io.BytesIO(device_data_bytes)
         try:
             file_id = bucket.upload_from_stream(
-                f"{Device(key).name}-{datetime.today().strftime(TIMESTAMP_FORMAT.split(' ')[0])}",
+                f"{Device(key).value}-{datetime.today().strftime(TIMESTAMP_FORMAT.split(' ')[0])}",
                 memory_file,
             )
             logger.info(
