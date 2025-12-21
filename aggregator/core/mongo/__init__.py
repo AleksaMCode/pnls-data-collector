@@ -5,9 +5,7 @@ if os.getenv("ENV") != "test":
     import gridfs
     import pymongo
     from dotenv import load_dotenv
-
-
-load_dotenv()
+    load_dotenv()
 
 connection_url = (
     f"mongodb://{os.getenv("MONGO_USERNAME")}"
