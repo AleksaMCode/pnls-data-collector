@@ -4,7 +4,6 @@ import gridfs
 import pymongo
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 connection_url = (
