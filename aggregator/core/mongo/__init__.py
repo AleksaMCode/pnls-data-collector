@@ -1,8 +1,11 @@
 import os
 
-import gridfs
-import pymongo
 from dotenv import load_dotenv
+
+# Pipeline fix. See #45
+if os.getenv("ENV") != "test":
+    import gridfs
+    import pymongo
 
 load_dotenv()
 
