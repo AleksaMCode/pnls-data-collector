@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
@@ -149,3 +150,46 @@ def delete_all_by_nodes():
                 logger.info(f"Deleting node: {key}")
                 ref.child(key).delete()
         logger.info(f"Deleted all data from Firebase.")
+
+
+def download_today() -> dict:
+    """
+    Downloads data from Firebase that was stored today.
+    """
+    device_data = defaultdict(list)
+
+    for device in Device:
+        try:
+            # e.g. "RPI-1-2025-10-31"
+            node_key = f"{device.value}-{datetime.today().strftime(TIMESTAMP_FORMAT.split(' ')[0])}"
+            node_value = fetch_firebase_node(node_key)
+            if not node_value:
+                continue
+        except Exception as e:
+            logger.error(f"Firebase exception occurred: {str(e)}")
+
+        data_entries = node_value.get("data", {})
+        device_data[device].append(data_entries)
+
+    return device_data
+
+
+@yaspin("Downloading all data from Firebase...")
+def download_all() -> dict:
+    ref = db.reference("/")
+    top_level_nodes = ref.get(shallow=True)
+    device_data = defaultdict(list)
+
+    if not top_level_nodes:
+        logger.info(f"No data found in Firebase.")
+    else:
+        for key in top_level_nodes.keys():
+            if key != FIREBASE_STATISTICS_NODE:
+                device = extract_device_name(key)
+                if Device(device) in Device.__members__.values():
+                    node_data = ref.child(key).get()
+                    # data = node_data.get("data", {})
+                    device_data[device].append(node_data)
+        logger.info(f"Downloaded all data from Firebase.")
+
+    return device_data
