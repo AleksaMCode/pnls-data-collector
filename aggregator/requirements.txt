@@ -7,3 +7,4 @@ yaspin
 tenacity
 tqdm
 pymongo
+sentry_sdk
