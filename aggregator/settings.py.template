@@ -13,3 +13,6 @@ FIREBASE_STATISTICS_NODE = "stats"
 MAC_FILTER = []
 
 RSA_KEY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "private_key.pem")
+
+# Project uses CERN's Mattermost
+SLACK_WEBHOOK_URL = "mattermost_webhook_url"
