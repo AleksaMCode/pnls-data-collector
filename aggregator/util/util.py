@@ -2,15 +2,13 @@ import json
 import os
 import re
 
-import requests
-
 from util.util import decrypt_data, load_rsa_key_from_file
 
 # Fix for pipeline. See #38
 if os.getenv("ENV") != "test":
     from tqdm import tqdm
     from aggregator.settings import RSA_KEY_PATH, SLACK_WEBHOOK_URL
-
+    import requests
 
 from . import logger
 
