@@ -4,7 +4,7 @@ from datetime import datetime
 
 import sentry_sdk
 from dotenv import load_dotenv
-from sentry_sdk.integrations.logging import LoggingIntegrations
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 load_dotenv()
 
