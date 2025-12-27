@@ -25,7 +25,7 @@ logging.basicConfig(
 sentry_logging = LoggingIntegration(level=logging.INFO, event_level=logging.WARNING)
 
 sentry_sdk.init(
-    dsn=os.getenv("SENTRY_SDK"),
+    dsn=os.getenv("SENTRY_DSN"),
     integrations=[sentry_logging],
     traces_sample_rate=1.0,
     enable_logs=True,
