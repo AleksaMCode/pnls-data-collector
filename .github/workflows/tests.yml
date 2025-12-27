@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.12" ]
+        python-version: [ "3.13" ]
 
     env:
       ENV: test
@@ -26,7 +26,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: python -m pip install --upgrade pip && python -m pip install pycryptodome
+      run: python -m pip install --upgrade pip && python -m pip install pycryptodome, sentry_sdk
 
     - name: Run tests (unittest discover)
       run: python -m unittest discover -v
