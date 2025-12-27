@@ -7,8 +7,8 @@ from util.util import decrypt_data, load_rsa_key_from_file
 # Fix for pipeline. See #38
 if os.getenv("ENV") != "test":
     from tqdm import tqdm
-    from aggregator.settings import RSA_KEY_PATH
-
+    from aggregator.settings import RSA_KEY_PATH, SLACK_WEBHOOK_URL
+    import requests
 
 from . import logger
 
@@ -52,4 +52,23 @@ def parse_data_local(file_name):
     except Exception as e:
         logger.error(
             f"An error occurred during data import from a file '{file_name}'. - {str(e)}"
+        )
+
+
+def send_webhook_message(message: str):
+    """
+    Sends a message to a Slack like app (Mattermost) via webhook.
+    """
+    data = {"text": message}
+
+    response = requests.post(
+        SLACK_WEBHOOK_URL,
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},
+        timeout=10,
+    )
+
+    if response.status_code != 200:
+        raise ValueError(
+            f"Request to Mattermost returned an error {response.status_code}, the response is:\n{response.text}"
         )
