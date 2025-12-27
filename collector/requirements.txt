@@ -2,3 +2,4 @@ scapy
 yaspin
 firebase-admin
 pycryptodome
+sentry_sdk
