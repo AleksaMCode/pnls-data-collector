@@ -7,7 +7,7 @@ from firebase_admin import credentials
 
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
 from util.logger import get_logger
-from util.util import is_working_hours
+from util.util import is_after_six
 
 from .firebase import fetch_all_data, fetch_data, publish_stats_data
 from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, TIMEZONE
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     log = get_logger(__name__)
     # Exit if it is still working hours.
     # This was added to fix power outage issue. See #59
-    if is_working_hours(TIMEZONE):
+    if is_after_six(TIMEZONE):
         sys.exit(0)
     else:
         transfer_data_all()
