@@ -14,6 +14,14 @@ def is_working_hours(tz="Europe/Paris"):
     return time(7, 0) <= now <= time(18, 0)
 
 
+def is_after_six(tz="Europe/Paris"):
+    """
+    Returns True if the current time after 6 PM.
+    """
+    now = datetime.now(ZoneInfo(tz)).time()
+    return now > time(18, 0)
+
+
 def load_rsa_key_from_file(rsa_key):
     """
     Return load private or public RSA key.
