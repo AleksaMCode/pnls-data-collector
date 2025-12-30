@@ -1,34 +1,60 @@
-from datetime import timedelta
+import sys
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import firebase_admin
 from firebase_admin import credentials
 
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
+from util.logger import get_logger
+from util.util import is_working_hours
 
 from .firebase import fetch_all_data, fetch_data, publish_stats_data
-from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL
+from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, TIMEZONE
 
 firebase_admin.initialize_app(
     credentials.Certificate(FIREBASE_CREDENTIALS),
     {"databaseURL": FIREBASE_DB_URL},
 )
 
-IMPORT_DATE = get_latest_import_date() + timedelta(days=1)
+IMPORT_DATE_START = get_latest_import_date() + timedelta(days=1)
+
+# If server doesn't run for multiple days, there is import for more than one day
+IMPORT_DATES = [
+    IMPORT_DATE_START + timedelta(days=n)
+    for n in range(
+        (datetime.now(ZoneInfo(TIMEZONE)).date() - IMPORT_DATE_START).days + 1
+    )
+]
 
 
 def transfer_all_data_from_firebase_to_db():
-    data = fetch_all_data(IMPORT_DATE)
+    data = fetch_all_data(IMPORT_DATE_START)
     import_data(data)
 
 
-def transfer_data():
+def transfer_data(import_date: date):
     """
-    Transfer data for day after latest_import only.
+    Transfer data for `import_date` date.
     """
-    data = fetch_data(IMPORT_DATE)
+    data = fetch_data(import_date)
     import_data(data)
     publish_stats_data()
 
 
+def transfer_data_all():
+    """
+    Transfer data for days after latest_import.
+    """
+    for import_date in IMPORT_DATES:
+        transfer_data(import_date)
+
+
 if __name__ == "__main__":
-    transfer_data()
+    log = get_logger(__name__)
+    # Exit if it is still working hours.
+    # This was added to fix power outage issue. See #59
+    if is_working_hours(TIMEZONE):
+        sys.exit(0)
+    else:
+        transfer_data_all()
