@@ -86,6 +86,7 @@ def fetch_data(target_date: date):
             )
             node_value = fetch_firebase_node(node_key)
             if not node_value:
+                logger.warning(f"No node '{node_key}' found in Firebase DB.")
                 continue
         except Exception as e:
             logger.error(f"Firebase exception occurred: {str(e)}")
