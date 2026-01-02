@@ -5,6 +5,7 @@ from datetime import datetime
 import sentry_sdk
 from dotenv import load_dotenv
 from sentry_sdk.integrations.logging import LoggingIntegration
+from tenacity import retry, stop_after_attempt, wait_random
 
 load_dotenv()
 
@@ -24,13 +25,19 @@ logging.basicConfig(
 
 sentry_logging = LoggingIntegration(level=logging.INFO, event_level=logging.WARNING)
 
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    integrations=[sentry_logging],
-    traces_sample_rate=1.0,
-    enable_logs=True,
-    attach_stacktrace=True,
-)
+
+@retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=2))
+def sentry_init():
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        integrations=[sentry_logging],
+        traces_sample_rate=1.0,
+        enable_logs=True,
+        attach_stacktrace=True,
+    )
+
+
+sentry_init()
 
 
 def get_logger(name: str):
