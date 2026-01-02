@@ -1,0 +1,13 @@
+#!/bin/bash
+
+PROJECT_DIR="PROJECT_DIR"
+
+cd "$PROJECT_DIR" || exit 1
+
+# Loop until there is an internet connection
+until ping -c 1 cern.ch &> /dev/null; do
+  sleep 5
+done
+
+source aggregator/.venv/bin/activate
+python3 -m aggregator.aggregator
