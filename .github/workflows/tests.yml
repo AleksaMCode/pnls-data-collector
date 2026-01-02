@@ -1,4 +1,4 @@
-name: Collector Tests
+name: PNLS-DC Tests
 
 on:
   push:
