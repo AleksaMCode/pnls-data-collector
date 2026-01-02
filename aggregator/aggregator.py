@@ -17,6 +17,8 @@ firebase_admin.initialize_app(
     {"databaseURL": FIREBASE_DB_URL},
 )
 
+log = get_logger(__name__)
+
 IMPORT_DATE_START = get_latest_import_date() + timedelta(days=1)
 
 # If server doesn't run for multiple days, there is import for more than one day
@@ -47,14 +49,16 @@ def transfer_data_all():
     Transfer data for days after latest_import.
     """
     for import_date in IMPORT_DATES:
+        log.info(f"Transfer data from {import_date}.")
         transfer_data(import_date)
 
 
 if __name__ == "__main__":
-    log = get_logger(__name__)
     # Exit if it is still working hours.
     # This was added to fix power outage issue. See #59
-    if is_after_six(TIMEZONE):
+    if not is_after_six(TIMEZONE):
+        log.info("Aggregator can only run after 18:00.")
         sys.exit(0)
     else:
+        log.info("Starting aggregator.")
         transfer_data_all()
