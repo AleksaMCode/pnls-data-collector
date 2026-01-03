@@ -13,6 +13,7 @@ from .settings import (
     FIREBASE_NODE,
     MAC_FILTER,
     RSA_KEY_PATH,
+    SSID_FILTER,
     TIMESTAMP_FORMAT,
     TIMEZONE,
 )
@@ -36,7 +37,7 @@ def parse_ip_packet(packet):
             ssid = packet.info.decode("utf-8")
         except UnicodeDecodeError:
             pass
-        if ssid and packet.addr2 not in MAC_FILTER:
+        if ssid not in SSID_FILTER and packet.addr2 not in MAC_FILTER:
             # Prepare data record
             data = {
                 "mac": encrypt_data(RSA_KEY, packet.addr2),
