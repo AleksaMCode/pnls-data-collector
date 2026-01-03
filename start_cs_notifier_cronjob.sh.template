@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# Abs path to project dir
-PROJECT_DIR="PROJECT_DIR"
+PROJECT_DIR="collector_status_notifier_abs_path"
 
 cd "$PROJECT_DIR" || exit 1
 
@@ -10,5 +9,4 @@ until ping -c 1 cern.ch &> /dev/null; do
   sleep 5
 done
 
-source aggregator/.venv/bin/activate
-python3 -m aggregator.aggregator
+go run .
