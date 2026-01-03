@@ -27,10 +27,10 @@ def parse_ip_packet(packet):
     """
     Filters the packet and broadcasts sniffed data (MAC + SSID + timestamp) through a Firebase Realtime DB.
     """
-    # Only capture data between 7 AM and 6 PM
+    # Only capture data between 7 AM and 6 PM.
     if not is_working_hours(TIMEZONE):
         return
-    # Filter only Probe Request and ignore Probe Requests with wildcard in the SSID field.
+    # Filter only Probe Request.
     if packet.haslayer(Dot11ProbeReq):
         ssid = None
         try:
@@ -41,7 +41,7 @@ def parse_ip_packet(packet):
             # Prepare data record
             data = {
                 "mac": encrypt_data(RSA_KEY, packet.addr2),
-                "ssid": ssid,
+                "ssid": "*" if not ssid else ssid,
                 "timestamp": datetime.fromtimestamp(
                     float(packet.time), tz=ZoneInfo(TIMEZONE)
                 ).strftime(TIMESTAMP_FORMAT)[:-3],
