@@ -1,4 +1,4 @@
-name: PNLS-DC Tests
+name: PNLS-DC Python Tests
 
 on:
   push:

@@ -1,5 +1,8 @@
 # Preferred Network List Sniffer Data Collector - PNLS-DC
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Python 3.13.7](https://img.shields.io/badge/python-3.13.7-blue.svg)](https://www.python.org/downloads/release/python-3137/)
-![Tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/tests.yml/badge.svg?branch=master)
+[![Code style (Python): black](https://img.shields.io/badge/code%20style%20(python)-black-000000.svg)](https://github.com/psf/black)
+[![Go 1.25.5](https://img.shields.io/badge/go-1.25.5-cyan.svg)](https://go.dev/dl/)
+[![Code style (Go): gofumpt](https://img.shields.io/badge/code%20style%20(go)-gofumpt%20-00FFFF.svg)](https://github.com/mvdan/gofumpt)
+![Python tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/python-tests.yml/badge.svg?branch=master)
+![Go tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/go-tests.yml/badge.svg?branch=master)

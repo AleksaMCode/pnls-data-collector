@@ -1,4 +1,4 @@
-name: Code Style Check
+name: Python Code Style Check
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install formatting tools
         run: |
