@@ -21,10 +21,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd collector
+        cd collector_status_notifier
         go mod tidy
 
     - name: Run tests
       run: |
-        cd collector
+        cd collector_status_notifier
         go test -v
