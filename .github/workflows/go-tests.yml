@@ -1,0 +1,32 @@
+name: PNLS-DC Go Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.25.5'
+
+    - name: Install dependencies
+      run: |
+        cd collector
+        go mod tidy
+
+    - name: Run tests
+      run: |
+        cd collector
+        go test -v
