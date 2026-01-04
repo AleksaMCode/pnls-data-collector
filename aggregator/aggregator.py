@@ -6,6 +6,7 @@ import firebase_admin
 from firebase_admin import credentials
 
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
+from aggregator.mattermost import publish_to_channel
 from util.logger import get_logger
 from util.util import is_after_six
 
@@ -40,8 +41,14 @@ def transfer_data(import_date: date):
     Transfer data for `import_date` date.
     """
     data = fetch_data(import_date)
-    import_data(data)
-    publish_stats_data()
+    count = import_data(data)
+    stats = publish_stats_data(count)
+    if stats:
+        # Publish message to Mattermost
+        try:
+            publish_to_channel(stats, count)
+        except Exception as e:
+            logger.error(f"Publishing stats data to Mattermost failed: {str(e)}")
 
 
 def transfer_data_all():

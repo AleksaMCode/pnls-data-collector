@@ -44,7 +44,11 @@ def get_total_captured_ssid_count():
 
 
 @yaspin(text="Importing data from Firebase to local database...")
-def import_data(data, firebase_import: bool = True):
+def import_data(data, firebase_import: bool = True) -> int:
+    """
+    Imports data from Firebase to local database.
+    Returns count of new Probe Requests imported from Firebase.
+    """
     logger.info("Starting import of data from Firebase to local database.")
     with _session() as db:
         try:
@@ -102,7 +106,7 @@ def import_data(data, firebase_import: bool = True):
         except Exception as e:
             db.rollback()
             logger.error(f"Error occurred during data import - {str(e)}")
-            return
+            return 0
 
         if captured_records:
             db.add_all(captured_records)
@@ -114,6 +118,10 @@ def import_data(data, firebase_import: bool = True):
             try:
                 db.commit()
                 logger.info(f"Imported {len(captured_records)} new captured records.")
+                return len(captured_records)
             except Exception as e:
                 db.rollback()
                 logger.error(f"Failed to add new captured records - {str(e)}")
+                return 0
+        else:
+            return 0
