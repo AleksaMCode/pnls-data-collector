@@ -16,7 +16,6 @@ from aggregator.core.orm.models import Device
 from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
-from .mattermost import publish_to_channel
 from .settings import FIREBASE_STATISTICS_NODE, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
 from .util.util import extract_device_name
 
@@ -114,6 +113,7 @@ def fetch_data(target_date: date):
 def publish_stats_data():
     """
     Publishes key statistics to Firebase.
+    Returns stats data.
     """
     timestamp = datetime.now(ZoneInfo(TIMEZONE)).strftime(TIMESTAMP_FORMAT)
 
@@ -129,15 +129,9 @@ def publish_stats_data():
                 {"count": count, "timestamp": timestamp}
             )
         logger.info(f"Published stats data to Firebase.")
+        return stats
     except Exception as e:
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
-
-    # TODO Maybe move this part to another function outside of firebase - in that case this function needs to return data
-    # Publish message to Mattermost
-    try:
-        publish_to_channel(stats)
-    except Exception as e:
-        logger.error(f"Publishing stats data to Mattermost failed: {str(e)}")
 
 
 @yaspin("Deleting all data from Firebase...")
