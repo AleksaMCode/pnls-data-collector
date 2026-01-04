@@ -92,37 +92,47 @@ func checkFirebaseAndSendMessage(client *db.Client, ctx context.Context) {
 	// Get today's date in YYYY-MM-DD format (for the device nodes)
 	today := time.Now().Format(strings.Split(TIMESTAMP_FORMAT, " ")[0])
 
-	ref := client.NewRef(FIREBASE_BASE_PATH)
+	rootRef := client.NewRef(FIREBASE_BASE_PATH)
 
-	// Get the data from Firebase (this fetches all top-level nodes, which are the devices)
-	// TODO Update this so it only fetches needed nodes instead of all
-	var rootData map[string]any
-	if err := ref.Get(ctx, &rootData); err != nil {
-		log.Printf("Error fetching root data from Firebase: %v", err)
-		return
-	}
+	// Iterate through each device
+	for _, device := range Devices {
+		// Build node name: RPI-1-2026-01-02
+		nodeName := fmt.Sprintf("%s-%s", device, today)
 
-	// Iterate through each device node (e.g., RPI-1-2026-01-02)
-	for deviceKey, deviceData := range rootData {
-		// Check if the device key contains today's date and is from a known device
-		if !validateFirebaseNode(deviceKey, today) {
+		if !validateFirebaseNode(nodeName, today) {
+			log.Printf("The node name `%s` isn't properly formatted.", nodeName)
 			continue
 		}
 
-		deviceMap, _ := deviceData.(map[string]any)
-		status, _ := deviceMap["status"].(map[string]any)
+		log.Println(nodeName)
+		ref := rootRef.Child(nodeName)
+
+		var deviceData map[string]any
+		if err := ref.Get(ctx, &deviceData); err != nil {
+			log.Printf("Error fetching node %s: %v", nodeName, err)
+			continue
+		}
+
+		// Handle the edge case when data is missing.
+		if deviceData != nil {
+			message := fmt.Sprintf("Device `%s` has no data for today (%s)", device, today)
+			log.Print(message)
+			sendMattermostMessage(message)
+			continue
+		}
+
+		status, _ := deviceData["status"].(map[string]any)
 		timestamp, _ := status["timestamp"].(string)
 		timestampTime, _ := time.Parse(TIMESTAMP_FORMAT, timestamp)
-		deviceName := deviceKey[:5]
 
 		// Check if the timestamp is older than `FIREBASE_TIMEOUT` minutes
 		// Devices update status every 10 minutes and we check every 11 minutes so have a buffer of 60 seconds just in case
 		if time.Since(timestampTime) > FIREBASE_TIMEOUT*time.Minute {
-			message := fmt.Sprintf("Device %s hasn't been updated in the last %d minutes! Last update: %s", deviceName, FIREBASE_TIMEOUT, timestamp)
+			message := fmt.Sprintf("Device `%s` hasn't been updated in the last %d minutes! Last update: %s", device, FIREBASE_TIMEOUT, timestamp)
 			log.Print(message)
 			sendMattermostMessage(message)
 		} else {
-			log.Printf("Device %s was recently updated at %s", deviceName, timestamp)
+			log.Printf("Device `%s` was recently updated at %s", device, timestamp)
 		}
 	}
 }
