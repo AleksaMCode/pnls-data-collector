@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date, datetime
 
 from sqlalchemy import desc, func
 from tqdm import tqdm
@@ -44,7 +44,9 @@ def get_total_captured_ssid_count():
 
 
 @yaspin(text="Importing data from Firebase to local database...")
-def import_data(data, firebase_import: bool = True, manual_import_date: date = None) -> int:
+def import_data(
+    data, firebase_import: bool = True, manual_import_date: date = None
+) -> int:
     """
     Imports data from Firebase to local database.
     Returns count of new Probe Requests imported from Firebase.
@@ -115,7 +117,11 @@ def import_data(data, firebase_import: bool = True, manual_import_date: date = N
             # TODO Maybe fix this (automate stats update) in the future #techdebt
             if firebase_import:
                 if manual_import_date:
-                    db.add(ImportsInfo(captured=len(captured_records), timestamp=manual_import_date))
+                    db.add(
+                        ImportsInfo(
+                            captured=len(captured_records), timestamp=manual_import_date
+                        )
+                    )
                 else:
                     db.add(ImportsInfo(captured=len(captured_records)))
             try:
