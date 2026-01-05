@@ -59,7 +59,7 @@ def send_webhook_message(message: str):
     """
     Sends a message to a Slack like app (Mattermost) via webhook.
     """
-    data = {"text": message}
+    data = {"text": message, "username": "Aggregator"}
 
     response = requests.post(
         SLACK_WEBHOOK_URL,
@@ -72,3 +72,5 @@ def send_webhook_message(message: str):
         raise ValueError(
             f"Request to Mattermost returned an error {response.status_code}, the response is:\n{response.text}"
         )
+    else:
+        logger.info("Slack webhook message sent to Mattermost.")
