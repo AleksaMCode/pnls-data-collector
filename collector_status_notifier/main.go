@@ -36,7 +36,7 @@ func loadEnvVariables() {
 
 func initLogging() {
 	log.SetOutput(&lumberjack.Logger{
-		Filename:   "consumer_status_notifier.log",
+		Filename:   LOG_FILE,
 		MaxSize:    1_000, // Max size in MB before rotating
 		MaxBackups: 3,
 		MaxAge:     28,
@@ -70,13 +70,15 @@ func main() {
 		log.Fatalf("Error getting database client: %v", err)
 	}
 
+	// Check before sleep
+	checkDevicesStatus(client, ctx)
+
 	// Periodically check the Firebase database every `FIREBASE_TIMEOUT` minutes
 	ticker := time.NewTicker(FIREBASE_TIMEOUT * time.Minute)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		log.Println("Checking devices status...")
-		checkFirebaseAndSendMessage(client, ctx)
+		checkDevicesStatus(client, ctx)
 	}
 }
 
@@ -88,7 +90,12 @@ func getAbsoluteFirebasePath(credentialsFile string) (string, error) {
 	return absPath, nil
 }
 
-func checkFirebaseAndSendMessage(client *db.Client, ctx context.Context) {
+func checkDevicesStatus(client *db.Client, ctx context.Context) {
+	log.Println("Checking devices status...")
+	validateDeviceDataFirebase(client, ctx)
+}
+
+func validateDeviceDataFirebase(client *db.Client, ctx context.Context) {
 	// Get today's date in YYYY-MM-DD format (for the device nodes)
 	today := time.Now().Format(strings.Split(TIMESTAMP_FORMAT, " ")[0])
 
@@ -104,7 +111,6 @@ func checkFirebaseAndSendMessage(client *db.Client, ctx context.Context) {
 			continue
 		}
 
-		log.Println(nodeName)
 		ref := rootRef.Child(nodeName)
 
 		var deviceData map[string]any
@@ -114,7 +120,7 @@ func checkFirebaseAndSendMessage(client *db.Client, ctx context.Context) {
 		}
 
 		// Handle the edge case when data is missing.
-		if deviceData != nil {
+		if deviceData == nil {
 			message := fmt.Sprintf("Device `%s` has no data for today (%s)", device, today)
 			log.Print(message)
 			sendMattermostMessage(message)
