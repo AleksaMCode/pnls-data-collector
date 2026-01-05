@@ -92,10 +92,10 @@ func getAbsoluteFirebasePath(credentialsFile string) (string, error) {
 
 func checkDevicesStatus(client *db.Client, ctx context.Context) {
 	log.Println("Checking devices status...")
-	queryDeviceDataFirebase(client, ctx)
+	validateDeviceDataFirebase(client, ctx)
 }
 
-func queryDeviceDataFirebase(client *db.Client, ctx context.Context) {
+func validateDeviceDataFirebase(client *db.Client, ctx context.Context) {
 	// Get today's date in YYYY-MM-DD format (for the device nodes)
 	today := time.Now().Format(strings.Split(TIMESTAMP_FORMAT, " ")[0])
 
@@ -111,7 +111,6 @@ func queryDeviceDataFirebase(client *db.Client, ctx context.Context) {
 			continue
 		}
 
-		log.Println(nodeName)
 		ref := rootRef.Child(nodeName)
 
 		var deviceData map[string]any
