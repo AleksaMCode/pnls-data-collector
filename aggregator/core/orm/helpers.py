@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 from sqlalchemy import desc, func
+from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
 from yaspin import yaspin
 
@@ -14,6 +15,7 @@ from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
 logger = get_logger(__name__)
 
 
+@retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=1, min=30, max=90))
 def get_latest_import_date():
     logger.info("Getting latest import date from the DB.")
     with _session() as db:
