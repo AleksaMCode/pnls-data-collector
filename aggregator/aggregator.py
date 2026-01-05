@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 IMPORT_DATE_START = get_latest_import_date() + timedelta(days=1)
 
-# If server doesn't run for multiple days, there is import for more than one day
+# If server doesn't run for multiple days, there is import for more than one day.
 IMPORT_DATES = [
     IMPORT_DATE_START + timedelta(days=n)
     for n in range(
@@ -32,21 +32,24 @@ IMPORT_DATES = [
 
 
 def transfer_all_data_from_firebase_to_db():
+    """
+    Imports data to local DB only for the next import date based on the information about import in the DB.
+    """
     data = fetch_all_data(IMPORT_DATE_START)
     import_data(data)
 
 
-def transfer_data(import_date: date):
+def transfer_data(import_date: date, manual_import=False):
     """
     Transfer data for `import_date` date.
     """
     data = fetch_data(import_date)
-    count = import_data(data)
-    stats = publish_stats_data(count)
+    count = import_data(data, firebase_import=True, manual_import= import_date if manual_import else None)
+    stats = publish_stats_data()
     if stats:
-        # Publish message to Mattermost
+        # Publish message to Mattermost.
         try:
-            publish_to_channel(stats, count)
+            publish_to_channel(stats, count, import_date if manual_import else None)
         except Exception as e:
             logger.error(f"Publishing stats data to Mattermost failed: {str(e)}")
 
