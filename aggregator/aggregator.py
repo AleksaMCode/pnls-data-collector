@@ -48,12 +48,11 @@ def transfer_data(import_date: date, manual_import=False):
         data, firebase_import=True, manual_import=import_date if manual_import else None
     )
     stats = publish_stats_data()
-    if stats:
-        # Publish message to Mattermost.
-        try:
-            publish_to_channel(stats, count, import_date if manual_import else None)
-        except Exception as e:
-            logger.error(f"Publishing stats data to Mattermost failed: {str(e)}")
+    # Publish message to Mattermost.
+    try:
+        publish_to_channel(stats, count, import_date if manual_import else None)
+    except Exception as e:
+        logger.error(f"Publishing stats data to Mattermost failed: {str(e)}")
 
 
 def transfer_data_all():
