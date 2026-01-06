@@ -8,6 +8,7 @@ const (
 	// Sleep time between checking devices Firebase status
 	FIREBASE_TIMEOUT = 11
 	LOG_FILE         = "consumer_status_notifier.log"
+	TIMEZONE         = "Europe/Paris"
 )
 
 const (

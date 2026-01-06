@@ -78,8 +78,20 @@ func main() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		checkDevicesStatus(client, ctx)
+		if isWorkingHours() {
+			checkDevicesStatus(client, ctx)
+		}
 	}
+}
+
+func isWorkingHours() bool {
+	location, err := time.LoadLocation(TIMEZONE)
+	if err != nil {
+		log.Fatalf("Error loading timezone: %v", err)
+	}
+	now := time.Now().In(location)
+	hour := now.Hour()
+	return hour >= 7 && hour < 18
 }
 
 func getAbsoluteFirebasePath(credentialsFile string) (string, error) {
