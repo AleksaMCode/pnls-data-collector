@@ -74,13 +74,12 @@ func main() {
 	checkDevicesStatus(client, ctx)
 
 	// Periodically check the Firebase database every `FIREBASE_TIMEOUT` minutes
-	ticker := time.NewTicker(FIREBASE_TIMEOUT * time.Second)
+	ticker := time.NewTicker(FIREBASE_TIMEOUT * time.Minute)
 	defer ticker.Stop()
 
 	for range ticker.C {
 		if isWorkingHours() {
 			checkDevicesStatus(client, ctx)
-		} else {
 		}
 	}
 }
