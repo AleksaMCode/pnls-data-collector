@@ -45,7 +45,9 @@ def transfer_data(import_date: date, manual_import=False):
     """
     data = fetch_data(import_date)
     count = import_data(
-        data, firebase_import=True, manual_import=import_date if manual_import else None
+        data,
+        firebase_import=True,
+        manual_import_date=import_date if manual_import else None,
     )
     stats = publish_stats_data()
     # Publish message to Mattermost.
