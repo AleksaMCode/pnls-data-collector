@@ -72,11 +72,10 @@ def fetch_all_data(start_date: date):
 def fetch_data(target_date: date):
     """
     Fetch data from Firebase only for specific device-date nodes for `target_date`.
-    Returns a list of entries.
+    Returns a list of entries (probe requests) captured on all the devices.
     """
     logger.info("Started fetching data from Firebase.")
     results = []
-
     for device in Device:
         try:
             # e.g. "RPI-1-2025-10-31"
@@ -89,10 +88,9 @@ def fetch_data(target_date: date):
                 continue
         except Exception as e:
             logger.error(f"Firebase exception occurred: {str(e)}")
-            logger.warning(
-                f"Failed to fetch data from Firebase for device `{device.value}`."
-            )
-            continue
+            msg = f"Failed to fetch data from Firebase for device `{device.value}` (node {node_key})."
+            logger.warning(msg)
+            raise Exception(f"{msg} Import of Firebase data failed.")
 
         data_entries = node_value.get("data", {})
         for entry_value in tqdm(
