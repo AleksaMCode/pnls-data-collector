@@ -3,7 +3,7 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from firebase_admin import db
-from tenacity import retry, stop_after_attempt, wait_random
+from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
 from yaspin import yaspin
 
@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=2))
+@retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=1, min=30, max=90))
 def fetch_firebase_node(node: str):
     ref = db.reference("/")
     return ref.child(node).get()
@@ -72,11 +72,10 @@ def fetch_all_data(start_date: date):
 def fetch_data(target_date: date):
     """
     Fetch data from Firebase only for specific device-date nodes for `target_date`.
-    Returns a list of entries.
+    Returns a list of entries (probe requests) captured on all the devices.
     """
     logger.info("Started fetching data from Firebase.")
     results = []
-
     for device in Device:
         try:
             # e.g. "RPI-1-2025-10-31"
@@ -89,6 +88,9 @@ def fetch_data(target_date: date):
                 continue
         except Exception as e:
             logger.error(f"Firebase exception occurred: {str(e)}")
+            msg = f"Failed to fetch data from Firebase for device `{device.value}` (node {node_key})."
+            logger.warning(msg)
+            raise Exception(f"{msg} Import of Firebase data failed.")
 
         data_entries = node_value.get("data", {})
         for entry_value in tqdm(
