@@ -104,10 +104,10 @@ func getAbsoluteFirebasePath(credentialsFile string) (string, error) {
 
 func checkDevicesStatus(client *db.Client, ctx context.Context) {
 	log.Println("Checking devices status...")
-	validateDeviceDataFirebase(client, ctx)
+	validateDeviceData(client, ctx)
 }
 
-func validateDeviceDataFirebase(client *db.Client, ctx context.Context) {
+func validateDeviceData(client *db.Client, ctx context.Context) {
 	// Get today's date in YYYY-MM-DD format (for the device nodes)
 	today := time.Now().Format(strings.Split(TIMESTAMP_FORMAT, " ")[0])
 
@@ -123,24 +123,24 @@ func validateDeviceDataFirebase(client *db.Client, ctx context.Context) {
 			continue
 		}
 
-		ref := rootRef.Child(nodeName)
+		// Only fetch the "status" child, not the whole node (see #105)
+		statusRef := rootRef.Child(nodeName).Child("status")
 
 		var deviceData map[string]any
-		if err := ref.Get(ctx, &deviceData); err != nil {
-			log.Printf("Error fetching node %s: %v", nodeName, err)
+		if err := statusRef.Get(ctx, &deviceData); err != nil {
+			log.Printf("Error fetching status for node %s: %v", nodeName, err)
 			continue
 		}
 
 		// Handle the edge case when data is missing.
 		if deviceData == nil {
-			message := fmt.Sprintf("Device `%s` has no data for today (%s)", device, today)
+			message := fmt.Sprintf("Device `%s` has no status for today (%s)", device, today)
 			log.Print(message)
 			sendMattermostMessage(message)
 			continue
 		}
 
-		status, _ := deviceData["status"].(map[string]any)
-		timestamp, _ := status["timestamp"].(string)
+		timestamp, _ := deviceData["timestamp"].(string)
 		timestampTime, _ := time.Parse(TIMESTAMP_FORMAT, timestamp)
 
 		// Check if the timestamp is older than `FIREBASE_TIMEOUT` minutes
@@ -175,7 +175,7 @@ func validateFirebaseNode(deviceKey, today string) bool {
 func sendMattermostMessage(message string) {
 	payload := map[string]any{
 		"text":     message,
-		"username": "Collector status notifier",
+		"username": SERVICE_NAME,
 		// Use Gopher as a bot icon
 		"icon_url": "https://raw.githubusercontent.com/golang-samples/gopher-vector/refs/heads/master/gopher.svg",
 	}
