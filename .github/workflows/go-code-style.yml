@@ -30,3 +30,4 @@ jobs:
       - name: Run gofumpt check
         run: |
           gofumpt -l -d collector_status_notifier/
+          gofumpt -l -d firebase_limit_notifier/

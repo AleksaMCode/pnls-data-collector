@@ -27,14 +27,18 @@ jobs:
       with:
         go-version: '1.25.5'
         cache: true
-        cache-dependency-path: collector_status_notifier/go.sum
+        cache-dependency-path: |
+         collector_status_notifier/go.sum
+         firebase_limit_notifier/go.sum
 
-    - name: Install dependencies
+    - name: Run collector_status_notifier tests
       run: |
         cd collector_status_notifier
         go mod download
+        go test -v
 
-    - name: Run tests
+    - name: Run firebase_limit_notifier tests
       run: |
-        cd collector_status_notifier
+        cd firebase_limit_notifier
+        go mod download
         go test -v
