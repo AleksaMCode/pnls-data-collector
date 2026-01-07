@@ -9,9 +9,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/db"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/go-analyze/charts"
 	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -20,6 +26,11 @@ import (
 var (
 	MATTERMOST_WEBHOOK_URL string
 	FIREBASE_DATABASE_URL  string
+	R2_ACCESS_KEY          string
+	R2_SECRET_KEY          string
+	R2_BUCKET_NAME         string
+	CLOUDFLARE_ACCOUNT_ID  string
+	R2_BUCKET_PUBLIC_URL   string
 )
 
 func loadEnvVariables() {
@@ -30,6 +41,12 @@ func loadEnvVariables() {
 
 	MATTERMOST_WEBHOOK_URL = os.Getenv("MATTERMOST_WEBHOOK_URL")
 	FIREBASE_DATABASE_URL = os.Getenv("FIREBASE_DATABASE_URL")
+
+	R2_ACCESS_KEY = os.Getenv("R2_ACCESS_KEY")
+	R2_SECRET_KEY = os.Getenv("R2_SECRET_KEY")
+	R2_BUCKET_NAME = os.Getenv("R2_BUCKET_NAME")
+	CLOUDFLARE_ACCOUNT_ID = os.Getenv("CLOUDFLARE_ACCOUNT_ID")
+	R2_BUCKET_PUBLIC_URL = os.Getenv("R2_BUCKET_PUBLIC_URL")
 }
 
 func initLogging() {
@@ -106,16 +123,131 @@ func checkUsage(client *db.Client, ctx context.Context) {
 		usage += size
 	}
 
-	message := fmt.Sprintf("A current Firebase Realtime DB usage is %.2f MB out of 1 GB (%.2f%%).", usage, usage/1_000*100)
-	sendMattermostMessage(message)
+	pieChart, err := generatePieChartInMemory(usage, 1_000-usage)
+	// If the generating of Pie chart has failed the message should still be sent to the Mattermost channel
+	// Same goes for the R2 upload. If the upload fails, the link will be empty.
+	publicURL := ""
+
+	if err != nil {
+		log.Printf("There was an error generating a pie chart: %v", err)
+	} else {
+		publicURL, err = uploadImageToR2(pieChart)
+		if err != nil {
+			log.Printf("There was an error uploading the the chart image to R2: %v", err)
+		}
+		log.Printf("Image with a pbulic Cloudflare R2 bucket link was created: %s", publicURL)
+	}
+	message := fmt.Sprintf("Current Firebase Realtime DB usage is %.2f MB out of 1 GB (%.2f%%).", usage, getPercentage(usage, FIREBASE_LIMIT_MB))
+	sendMattermostMessage(message, publicURL)
 }
 
-func sendMattermostMessage(message string) {
+func getPercentage(part float64, whole float64) float64 {
+	return part / whole * 100
+}
+
+func generatePieChartInMemory(used float64, free float64) ([]byte, error) {
+	values := []float64{used, free}
+	labels := []string{"Used", "Free"}
+
+	p, err := charts.PieRender(values,
+		charts.LegendOptionFunc(charts.LegendOption{
+			SeriesNames: labels,
+		}),
+		charts.TitleOptionFunc(charts.TitleOption{
+			Text: "PNLS-DC\nFirebase Realtime DB Usage",
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := p.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
+}
+
+func saveByteArrayToFile(filename string, pieChart []byte) {
+	err := os.WriteFile(filename, pieChart, 0o644)
+	if err != nil {
+		log.Fatalf("Failed to save pie chart: %v", err)
+	}
+	log.Printf("Pie chart saved to %s", filename)
+}
+
+func newR2Client() *s3.Client {
+	cfg, err := config.LoadDefaultConfig(
+		context.TODO(),
+		config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(
+				R2_ACCESS_KEY,
+				R2_SECRET_KEY,
+				"",
+			),
+		),
+		config.WithRegion("auto"), // Required by SDK but not used by R2
+	)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", CLOUDFLARE_ACCOUNT_ID))
+	})
+	return client
+}
+
+func uploadImageToR2(image []byte) (string, error) {
+	client := newR2Client()
+	location, err := time.LoadLocation(TIMEZONE)
+	if err != nil {
+		log.Fatalf("Error loading timezone: %v", err)
+		return "", err
+	}
+
+	objectKey := fmt.Sprintf(
+		"%s/firebase-usage-%d.png",
+		R2_BUCKET_DIR,
+		time.Now().In(location).Unix(),
+	)
+
+	_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket:      &R2_BUCKET_NAME,
+		Key:         &objectKey,
+		Body:        bytes.NewReader(image),
+		ContentType: aws.String("image/png"),
+		ACL:         "public-read",
+	})
+	if err != nil {
+		return "", err
+	}
+
+	publicURL := fmt.Sprintf(
+		"%s/%s",
+		R2_BUCKET_PUBLIC_URL,
+		objectKey,
+	)
+
+	return publicURL, nil
+}
+
+func sendMattermostMessage(message string, imageURL string) {
 	payload := map[string]any{
 		"text":     message,
 		"username": SERVICE_NAME,
 		// Use Gopher as a bot icon
 		"icon_url": "https://raw.githubusercontent.com/golang-samples/gopher-vector/refs/heads/master/gopher.svg",
+		"attachments": []map[string]any{
+			{
+				"title":     "Cloudflare R2 bucket hosted chart",
+				"text":      "Pie chart Firebase Realtime DB usage",
+				"color":     "#FF5733",
+				"image_url": imageURL,
+			},
+		},
 	}
 
 	payloadBytes, err := json.Marshal(payload)
