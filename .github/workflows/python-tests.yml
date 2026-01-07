@@ -1,10 +1,20 @@
 name: PNLS-DC Python Tests
 
 on:
-  push:
-    branches: master
   pull_request:
-    branches: master
+    branches: [ master ]
+    paths:
+      - 'aggregator/**/*.py'
+      - 'collector/**/*.py'
+      - 'tests/**/*.py'
+      - 'util/**/*.py'
+  push:
+    branches: [ master ]
+    paths:
+      - 'aggregator/**/*.py'
+      - 'collector/**/*.py'
+      - 'tests/**/*.py'
+      - 'util/**/*.py'
 
 jobs:
   test:

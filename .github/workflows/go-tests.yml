@@ -2,9 +2,17 @@ name: PNLS-DC Go Tests
 
 on:
   push:
-    branches: master
+    branches: [ master ]
+    paths:
+      - 'collector_status_notifier/**/*.go'
+      - 'collector_status_notifier/go.mod'
+      - 'collector_status_notifier/go.sum'
   pull_request:
-    branches: master
+    branches: [ master ]
+    paths:
+      - 'collector_status_notifier/**/*.go'
+      - 'collector_status_notifier/go.mod'
+      - 'collector_status_notifier/go.sum'
 
 jobs:
   test:
@@ -18,11 +26,13 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version: '1.25.5'
+        cache: true
+        cache-dependency-path: collector_status_notifier/go.sum
 
     - name: Install dependencies
       run: |
         cd collector_status_notifier
-        go mod tidy
+        go mod download
 
     - name: Run tests
       run: |
