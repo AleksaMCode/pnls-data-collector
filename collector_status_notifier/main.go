@@ -175,7 +175,7 @@ func validateFirebaseNode(deviceKey, today string) bool {
 func sendMattermostMessage(message string) {
 	payload := map[string]any{
 		"text":     message,
-		"username": "Collector status notifier",
+		"username": SERVICE_NAME,
 		// Use Gopher as a bot icon
 		"icon_url": "https://raw.githubusercontent.com/golang-samples/gopher-vector/refs/heads/master/gopher.svg",
 	}

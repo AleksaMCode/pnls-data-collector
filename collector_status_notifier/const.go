@@ -1,11 +1,12 @@
 package main
 
 const (
+	SERVICE_NAME              = "Collector status notifier"
 	FIREBASE_CREDENTIALS_FILE = "firebase_credentials.json"
 	FIREBASE_BASE_PATH        = "/"
 	TIMESTAMP_FORMAT          = "2006-01-02 15:04:05.999999"
-	// Sleep time between checking devices Firebase status
-	FIREBASE_TIMEOUT = 11
+	// Sleep time (in minutes) between checking devices Firebase status
+	FIREBASE_TIMEOUT = 60
 	LOG_FILE         = "consumer_status_notifier.log"
 	TIMEZONE         = "Europe/Paris"
 )
