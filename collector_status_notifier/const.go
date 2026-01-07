@@ -1,7 +1,6 @@
 package main
 
 const (
-	// Replace with your actual Mattermost webhook URL
 	FIREBASE_CREDENTIALS_FILE = "firebase_credentials.json"
 	FIREBASE_BASE_PATH        = "/"
 	TIMESTAMP_FORMAT          = "2006-01-02 15:04:05.999999"
