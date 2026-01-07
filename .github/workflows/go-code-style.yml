@@ -1,10 +1,14 @@
 name: Go Code Style Check
 
 on:
-  pull_request:
-    branches: [ master ]
   push:
     branches: [ master ]
+    paths:
+      - '**/*.go'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - '**/*.go'
 
 jobs:
   format-check:

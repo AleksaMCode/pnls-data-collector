@@ -2,9 +2,17 @@ name: PNLS-DC Go Tests
 
 on:
   push:
-    branches: master
+    branches: [ master ]
+    paths:
+      - 'collector_status_notifier/**/*.go'
+      - 'collector_status_notifier/go.mod'
+      - 'collector_status_notifier/go.sum'
   pull_request:
-    branches: master
+    branches: [ master ]
+    paths:
+      - 'collector_status_notifier/**/*.go'
+      - 'collector_status_notifier/go.mod'
+      - 'collector_status_notifier/go.sum'
 
 jobs:
   test:
