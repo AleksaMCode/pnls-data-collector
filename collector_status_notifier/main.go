@@ -123,24 +123,24 @@ func validateDeviceData(client *db.Client, ctx context.Context) {
 			continue
 		}
 
-		ref := rootRef.Child(nodeName)
+		// Only fetch the "status" child, not the whole node (see #105)
+		statusRef := rootRef.Child(nodeName).Child("status")
 
 		var deviceData map[string]any
-		if err := ref.Get(ctx, &deviceData); err != nil {
-			log.Printf("Error fetching node %s: %v", nodeName, err)
+		if err := statusRef.Get(ctx, &deviceData); err != nil {
+			log.Printf("Error fetching status for node %s: %v", nodeName, err)
 			continue
 		}
 
 		// Handle the edge case when data is missing.
 		if deviceData == nil {
-			message := fmt.Sprintf("Device `%s` has no data for today (%s)", device, today)
+			message := fmt.Sprintf("Device `%s` has no status for today (%s)", device, today)
 			log.Print(message)
 			sendMattermostMessage(message)
 			continue
 		}
 
-		status, _ := deviceData["status"].(map[string]any)
-		timestamp, _ := status["timestamp"].(string)
+		timestamp, _ := deviceData["timestamp"].(string)
 		timestampTime, _ := time.Parse(TIMESTAMP_FORMAT, timestamp)
 
 		// Check if the timestamp is older than `FIREBASE_TIMEOUT` minutes
