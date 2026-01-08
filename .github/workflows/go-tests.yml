@@ -5,14 +5,12 @@ on:
     branches: [ master ]
     paths:
       - 'collector_status_notifier/**/*.go'
-      - 'collector_status_notifier/go.mod'
-      - 'collector_status_notifier/go.sum'
+      - 'firebase_limit_notifier/**/*.go'
   pull_request:
     branches: [ master ]
     paths:
       - 'collector_status_notifier/**/*.go'
-      - 'collector_status_notifier/go.mod'
-      - 'collector_status_notifier/go.sum'
+      - 'firebase_limit_notifier/**/*.go'
 
 jobs:
   test:
