@@ -17,4 +17,9 @@ const (
 	DEVICE_RPI_3 = "RPI-3"
 )
 
+var (
+	MATTERMOST_WEBHOOK_URL string
+	FIREBASE_DATABASE_URL  string
+)
+
 var Devices = []string{DEVICE_RPI_1, DEVICE_RPI_2, DEVICE_RPI_3}
