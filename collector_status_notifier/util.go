@@ -3,16 +3,23 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"time"
 )
 
-func isWorkingHours() bool {
-	location, err := time.LoadLocation(TIMEZONE)
+func getTimeNow(timezone string) time.Time {
+	location, err := time.LoadLocation(timezone)
 	if err != nil {
 		log.Fatalf("Error loading timezone: %v", err)
+		os.Exit(1)
 	}
-	now := time.Now().In(location)
+
+	return time.Now().In(location)
+}
+
+func isWorkingHours() bool {
+	now := getTimeNow(TIMEZONE)
 	hour := now.Hour()
 	return hour >= 7 && hour < 18
 }
