@@ -45,7 +45,7 @@ func checkUsage(client *db.Client, ctx context.Context) {
 		if err != nil {
 			log.Printf("There was an error uploading the the chart image to R2: %v", err)
 		}
-		log.Printf("Image with a pbulic Cloudflare R2 bucket link was created: %s", publicURL)
+		log.Printf("Image with a public Cloudflare R2 bucket link was created: %s", publicURL)
 	}
 	message := fmt.Sprintf("Current Firebase Realtime DB usage is %.2f MB out of 1 GB (%.2f%%).", usage, getPercentage(usage, FIREBASE_LIMIT_MB))
 	sendMattermostMessage(message, publicURL)
