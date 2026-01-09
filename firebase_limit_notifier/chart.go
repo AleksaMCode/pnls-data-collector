@@ -1,0 +1,40 @@
+package main
+
+import (
+	"log"
+	"os"
+
+	"github.com/go-analyze/charts"
+)
+
+func generatePieChartInMemory(used float64, free float64) ([]byte, error) {
+	values := []float64{used, free}
+	labels := []string{"Used", "Free"}
+
+	p, err := charts.PieRender(values,
+		charts.LegendOptionFunc(charts.LegendOption{
+			SeriesNames: labels,
+		}),
+		charts.TitleOptionFunc(charts.TitleOption{
+			Text: "PNLS-DC\nFirebase Realtime DB Usage",
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := p.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
+}
+
+func saveByteArrayToFile(filename string, pieChart []byte) {
+	err := os.WriteFile(filename, pieChart, 0o644)
+	if err != nil {
+		log.Fatalf("Failed to save pie chart: %v", err)
+	}
+	log.Printf("Pie chart saved to %s", filename)
+}
