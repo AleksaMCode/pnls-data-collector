@@ -10,3 +10,13 @@ const (
 	// Free tier has 1 GB limit on Realtime DB
 	FIREBASE_LIMIT_MB = 1_000
 )
+
+var (
+	MATTERMOST_WEBHOOK_URL string
+	FIREBASE_DATABASE_URL  string
+	R2_ACCESS_KEY          string
+	R2_SECRET_KEY          string
+	R2_BUCKET_NAME         string
+	CLOUDFLARE_ACCOUNT_ID  string
+	R2_BUCKET_PUBLIC_URL   string
+)
