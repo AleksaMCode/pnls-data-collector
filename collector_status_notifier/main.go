@@ -66,7 +66,6 @@ func main() {
 	// Get a reference to the Realtime Database
 	client, err := app.Database(ctx)
 	if err != nil {
-		log.Print(FIREBASE_DATABASE_URL)
 		log.Fatalf("Error getting database client: %v", err)
 	}
 
