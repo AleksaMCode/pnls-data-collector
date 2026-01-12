@@ -13,9 +13,9 @@ def publish_to_channel(data: dict, probe_req_count: int, import_date: date = Non
 
     mattermost_msg = (
         first_line
-        + f"(Captured Probe Requests: **{probe_req_count}**)\n"
-        + f"* Total captured probe requests: {data['total_count']}\n"
-        + f"* Total captured unique MAC addresses: {data['mac_count']}\n"
-        + f"* Total captured unique SSIDs: {data['ssid_count']}\n"
+        + f"(Captured Probe Requests: **{probe_req_count:,}**)\n"
+        + f"* Total captured probe requests: {data['total_count']:,}\n"
+        + f"* Total captured unique MAC addresses: {data['mac_count']:,}\n"
+        + f"* Total captured unique SSIDs: {data['ssid_count']:,}\n"
     )
     send_webhook_message(mattermost_msg)
