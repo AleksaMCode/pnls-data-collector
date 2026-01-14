@@ -15,6 +15,8 @@ import Card from '@mui/material/Card';
 import Avatar from '@mui/material/Avatar';
 import Alert from '@mui/material/Alert';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { IconButton, InputAdornment } from '@mui/material';
 
 // Created using template: https://github.com/mui/material-ui/tree/v7.3.7/docs/data/material/getting-started/templates/sign-in
 
@@ -29,6 +31,10 @@ export default function Login() {
   const [passwordError, setPasswordError] = useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (event) => event.preventDefault();
 
   const validateInputs = () => {
     let isValid = true;
@@ -159,12 +165,27 @@ export default function Login() {
               <TextField
                 error={passwordError}
                 helperText={passwordErrorMessage}
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 required
                 fullWidth
                 value={password}
+                color={passwordError ? 'error' : 'primary'}
                 onChange={(e) => setPassword(e.target.value)}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={handleClickShowPassword}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
             </FormControl>
 
