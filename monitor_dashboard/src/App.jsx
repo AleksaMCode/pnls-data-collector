@@ -4,6 +4,7 @@ import Home from './components/home';
 
 import { useRoutes } from 'react-router-dom';
 import { AuthProvider } from './context/authContext';
+import ProtectedRoute from './components/protectedRoute';
 
 function App() {
   const routesArray = [
@@ -17,7 +18,11 @@ function App() {
     },
     {
       path: '/home',
-      element: <Home />,
+      element: (
+        <ProtectedRoute>
+          <Home />
+        </ProtectedRoute>
+      ),
     },
   ];
   let routesElement = useRoutes(routesArray);
