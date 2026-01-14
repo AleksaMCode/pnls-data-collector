@@ -71,7 +71,7 @@ export default function Login() {
       try {
         await firebaseSignInWithEmailAndPassword(email, password);
       } catch (err) {
-        setErrorMessage(err.message || 'Failed to sign in. Please try again.');
+        setErrorMessage('Failed to sign in. Please try again.');
         setIsSigningIn(false);
       }
     }
