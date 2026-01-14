@@ -1,0 +1,35 @@
+name: Prettier Code Style Check (monitor-dashboard)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/**"
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: monitor_dashboard/package-lock.json
+
+      - name: Install dependencies
+        working-directory: monitor_dashboard
+        run: npm ci
+
+      - name: Run Prettier check
+        working-directory: monitor_dashboard
+        run: |
+          npx prettier --check "**/*.{js,jsx,ts,tsx}"
