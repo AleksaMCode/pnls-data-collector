@@ -2,14 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDrkZiKyIOjJCA5aZSVBJaqtX_LNu7CDNY',
-  authDomain: 'pnl-sniffer.firebaseapp.com',
-  databaseURL:
-    'https://pnl-sniffer-default-rtdb.europe-west1.firebasedatabase.app',
-  projectId: 'pnl-sniffer',
-  storageBucket: 'pnl-sniffer.firebasestorage.app',
-  messagingSenderId: '480790480165',
-  appId: '1:480790480165:web:f8ed113c483903452086cc',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREABSE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREABASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
