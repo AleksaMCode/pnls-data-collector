@@ -5,16 +5,25 @@ import Home from './components/home';
 import { useRoutes } from 'react-router-dom';
 import { AuthProvider } from './context/authContext';
 import ProtectedRoute from './components/protectedRoute';
+import PublicRoute from './components/publicRoute';
 
 function App() {
   const routesArray = [
     {
       path: '*',
-      element: <Login />,
+      element: (
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      ),
     },
     {
       path: '/login',
-      element: <Login />,
+      element: (
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      ),
     },
     {
       path: '/home',
