@@ -11,7 +11,6 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userLoggedIn, setUserLoggedIn] = useState(false);
-  const [isEmailUser, setIsEmailUser] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,13 +21,6 @@ export function AuthProvider({ children }) {
   async function initializeUser(user) {
     if (user) {
       setCurrentUser({ ...user });
-
-      // check if provider is email and password login
-      const isEmail = user.providerData.some(
-        (provider) => provider.providerId === 'password',
-      );
-      setIsEmailUser(isEmail);
-
       setUserLoggedIn(true);
     } else {
       setCurrentUser(null);
@@ -40,7 +32,6 @@ export function AuthProvider({ children }) {
 
   const value = {
     userLoggedIn,
-    isEmailUser,
     currentUser,
     setCurrentUser,
   };
