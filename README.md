@@ -4,5 +4,7 @@
 [![Code style (Python): black](https://img.shields.io/badge/code%20style%20(python)-black-000000.svg)](https://github.com/psf/black)
 [![Go 1.25.5](https://img.shields.io/badge/go-1.25.5-cyan.svg)](https://go.dev/dl/)
 [![Code style (Go): gofumpt](https://img.shields.io/badge/code%20style%20(go)-gofumpt%20-00FFFF.svg)](https://github.com/mvdan/gofumpt)
+[![Node 22.19.0](https://img.shields.io/badge/node-22.19.0-3C873A.svg)](https://nodejs.org/en/blog/release/v22.19.0)
+[![Code style (JS/TS): Prettier](https://img.shields.io/badge/code%20style%20(JS/TS)-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 ![Python tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/python-tests.yml/badge.svg?branch=master)
 ![Go tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/go-tests.yml/badge.svg?branch=master)
