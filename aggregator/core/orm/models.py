@@ -1,8 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
 
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -77,3 +77,16 @@ class LocationMapping(Base):
     location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
 
     location = relationship("Location")
+
+
+class DailyCapturedPerDevice(Base):
+    __tablename__ = "daily_captured_per_device"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires *some* primary key
+    date = Column(Date, primary_key=True)
+    device = Column(String, primary_key=True)
+
+    ssid = Column(Integer, nullable=False)
+    probe_request = Column(Integer, nullable=False)
+    mac = Column(Integer, nullable=False)

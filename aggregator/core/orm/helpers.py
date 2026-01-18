@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import desc, func
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -10,7 +11,14 @@ from util.logger import get_logger
 
 from ...util import util
 from . import _session
-from .models import MAC, SSID, CapturedInfo, ImportsInfo, LocationMapping
+from .models import (
+    MAC,
+    SSID,
+    CapturedInfo,
+    DailyCapturedPerDevice,
+    ImportsInfo,
+    LocationMapping,
+)
 
 logger = get_logger(__name__)
 
@@ -43,6 +51,25 @@ def get_total_captured_ssid_count():
     logger.info("Getting total captured ssid count from the DB.")
     with _session() as db:
         return db.query(func.count(SSID.id)).scalar()
+
+
+def get_all_data_from_daily_captured_stats_per_device() -> list[DailyCapturedPerDevice]:
+    logger.info("Getting all data from daily captured stats per device.")
+    with _session() as db:
+        return db.query(DailyCapturedPerDevice).all()
+
+
+def get_today_data_from_daily_captured_stats_per_device(
+    tz="Europe/Paris",
+) -> list[DailyCapturedPerDevice]:
+    logger.info("Getting all data from daily captured stats per device for today.")
+    today = datetime.now(ZoneInfo(tz)).date()
+    with _session() as db:
+        return (
+            db.query(DailyCapturedPerDevice)
+            .filter(DailyCapturedPerDevice.date == today)
+            .all()
+        )
 
 
 @yaspin(text="Importing data from Firebase to local database...")
