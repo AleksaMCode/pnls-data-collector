@@ -2,21 +2,13 @@ import sys
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-import firebase_admin
-from firebase_admin import credentials
-
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
 from aggregator.mattermost import publish_to_channel
 from util.logger import get_logger
 from util.util import is_after_six
 
 from .firebase import fetch_all_data, fetch_data, publish_stats_data
-from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, TIMEZONE
-
-firebase_admin.initialize_app(
-    credentials.Certificate(FIREBASE_CREDENTIALS),
-    {"databaseURL": FIREBASE_DB_URL},
-)
+from .settings import TIMEZONE
 
 logger = get_logger(__name__)
 
