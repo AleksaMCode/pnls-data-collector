@@ -102,3 +102,25 @@ SELECT DATE(timestamp) AS day, COUNT(*) AS captured_count
 FROM captured_info
 GROUP BY day
 ORDER BY day;
+
+CREATE VIEW daily_captured_per_device AS
+SELECT
+    DATE(c.timestamp) AS date,
+    lm.device AS device,
+    COUNT(DISTINCT s.ssid) AS ssid,
+    COUNT(DISTINCT m.mac) AS mac,
+    -- count ssid or mac (number is the same) = the count is number of probe requests
+	COUNT(s.ssid) AS probe_request
+FROM CAPTURED_INFO c
+JOIN SSID s
+    ON c.ssid = s.id
+JOIN MAC m
+    ON c.mac = m.id
+JOIN LOCATION_MAPPING lm
+    ON c.location = lm.location_id
+GROUP BY
+    DATE(c.timestamp),
+    lm.device
+ORDER BY
+    date,
+    device;
