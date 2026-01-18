@@ -6,7 +6,7 @@ const (
 	FIREBASE_BASE_PATH        = "/"
 	TIMESTAMP_FORMAT          = "2006-01-02 15:04:05.999999"
 	// Sleep time (in minutes) between checking devices Firebase status
-	FIREBASE_TIMEOUT = 60
+	FIREBASE_TIMEOUT = 11
 	LOG_FILE         = "consumer_status_notifier.log"
 	TIMEZONE         = "Europe/Paris"
 )
