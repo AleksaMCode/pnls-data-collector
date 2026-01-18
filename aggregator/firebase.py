@@ -2,21 +2,30 @@ from collections import defaultdict
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-from firebase_admin import db
+import firebase_admin
+from firebase_admin import credentials, db
 from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
 from yaspin import yaspin
 
 from aggregator.core.orm.helpers import (
+    get_today_data_from_daily_captured_stats_per_device,
     get_total_captured_info_count,
     get_total_captured_mac_count,
     get_total_captured_ssid_count,
 )
-from aggregator.core.orm.models import Device
+from aggregator.core.orm.models import DailyCapturedPerDevice, Device
 from util.logger import get_logger
 from util.util import decrypt_data, load_rsa_key_from_file
 
-from .settings import FIREBASE_STATISTICS_NODE, RSA_KEY_PATH, TIMESTAMP_FORMAT, TIMEZONE
+from .settings import (
+    FIREBASE_CREDENTIALS,
+    FIREBASE_DB_URL,
+    FIREBASE_STATISTICS_NODE,
+    RSA_KEY_PATH,
+    TIMESTAMP_FORMAT,
+    TIMEZONE,
+)
 from .util.util import extract_device_name
 
 logger = get_logger(__name__)
@@ -116,6 +125,25 @@ def fetch_data(target_date: date):
     return results
 
 
+@yaspin(text="Publishing daily stats data to Firebase...")
+def publish_daily_stats_data(data: list[DailyCapturedPerDevice]):
+    for capture in tqdm(data, desc="Importing stats capture records", unit="record"):
+        publish_daily_stats_capture_data(capture)
+    logger.info("Finished publishing daily stats data.")
+
+
+def publish_daily_stats_capture_data(capture: DailyCapturedPerDevice):
+    db.reference(
+        f"/{FIREBASE_STATISTICS_NODE}/daily/{capture.date}/{capture.device}"
+    ).update(
+        {
+            "ssid": capture.ssid,
+            "mac": capture.mac,
+            "probe_requests": capture.probe_request,
+        }
+    )
+
+
 @yaspin(text="Publishing stats data to Firebase...")
 def publish_stats_data():
     """
@@ -130,11 +158,15 @@ def publish_stats_data():
         "ssid_count": get_total_captured_ssid_count(),
     }
 
+    daily_stats = get_today_data_from_daily_captured_stats_per_device(TIMEZONE)
+
     try:
         for key, count in stats.items():
             db.reference(f"/{FIREBASE_STATISTICS_NODE}/{key}").update(
                 {"count": count, "timestamp": timestamp}
             )
+        for capture in daily_stats:
+            publish_daily_stats_capture_data(capture)
         logger.info(f"Published stats data to Firebase.")
         return stats
     except Exception as e:
@@ -144,6 +176,13 @@ def publish_stats_data():
 @yaspin("Deleting all data from Firebase...")
 def delete_all():
     ref = db.reference("/")
+    ref.delete()
+    logger.info("Deleted all data from Firebase.")
+
+
+@yaspin("Deleting all stats data from Firebase...")
+def delete_stats():
+    ref = db.reference("/stats")
     ref.delete()
     logger.info("Deleted all data from Firebase.")
 
