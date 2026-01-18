@@ -1,7 +1,7 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import Date, cast, desc, func
+from sqlalchemy import desc, func
 from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
 from yaspin import yaspin
