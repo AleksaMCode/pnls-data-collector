@@ -20,3 +20,11 @@ var (
 	CLOUDFLARE_ACCOUNT_ID  string
 	R2_BUCKET_PUBLIC_URL   string
 )
+
+const (
+	DEVICE_RPI_1 = "RPI-1"
+	DEVICE_RPI_2 = "RPI-2"
+	DEVICE_RPI_3 = "RPI-3"
+)
+
+var Devices = []string{DEVICE_RPI_1, DEVICE_RPI_2, DEVICE_RPI_3}
