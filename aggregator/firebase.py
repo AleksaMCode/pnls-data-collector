@@ -23,6 +23,11 @@ logger = get_logger(__name__)
 
 RSA_KEY = load_rsa_key_from_file(RSA_KEY_PATH)
 
+firebase_admin.initialize_app(
+    credentials.Certificate(FIREBASE_CREDENTIALS),
+    {"databaseURL": FIREBASE_DB_URL},
+)
+
 
 @retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=1, min=30, max=90))
 def fetch_firebase_node(node: str):
