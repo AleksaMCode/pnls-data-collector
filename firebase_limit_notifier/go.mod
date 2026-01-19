@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.0
-	github.com/go-analyze/charts v0.5.21
+	github.com/go-analyze/charts v0.5.23
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.258.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -50,7 +50,7 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.35.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-analyze/bulk v0.1.0 // indirect
+	github.com/go-analyze/bulk v0.1.3 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
