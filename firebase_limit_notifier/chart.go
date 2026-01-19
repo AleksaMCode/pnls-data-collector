@@ -14,9 +14,12 @@ func generatePieChartInMemory(used float64, free float64) ([]byte, error) {
 	p, err := charts.PieRender(values,
 		charts.LegendOptionFunc(charts.LegendOption{
 			SeriesNames: labels,
+			Offset:      charts.OffsetStr{Top: "55"},
 		}),
 		charts.TitleOptionFunc(charts.TitleOption{
-			Text: "PNLS-DC\nFirebase Realtime DB Usage",
+			Text:    "PNLS-DC",
+			Subtext: "Firebase Realtime DB Usage",
+			Offset:  charts.OffsetCenter,
 		}),
 	)
 	if err != nil {
