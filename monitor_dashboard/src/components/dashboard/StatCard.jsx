@@ -11,7 +11,6 @@ import { areaElementClasses } from '@mui/x-charts/LineChart';
 import { useEffect, useState } from 'react';
 import { CircularProgress, Fade } from '@mui/material';
 
-
 /**
  *
  * @param {*} value Current value (e.g., last 30 days)
