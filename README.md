@@ -1,4 +1,5 @@
 # Preferred Network List Sniffer Data Collector - PNLS-DC
+![Monitor Dashboard deploy](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/firebase-hosting-merge.yml/badge.svg?branch=master)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.13.7](https://img.shields.io/badge/python-3.13.7-blue.svg)](https://www.python.org/downloads/release/python-3137/)
 [![Code style (Python): black](https://img.shields.io/badge/code%20style%20(python)-black-000000.svg)](https://github.com/psf/black)
