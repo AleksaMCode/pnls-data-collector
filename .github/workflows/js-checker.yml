@@ -1,0 +1,34 @@
+name: Block console.log()
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/**"
+
+jobs:
+  no-console-log:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fail if console.log() is found
+        working-directory: monitor_dashboard
+        run: |
+          if grep -R "console\.log" \
+            --include="*.js" \
+            --include="*.jsx" \
+            --include="*.ts" \
+            --include="*.tsx" \
+            .; then
+            echo "❌ console.log() found in monitor_dashboard."
+            exit 1
+          else
+            echo "✅ No console.log() found."
+          fi
