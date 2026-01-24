@@ -1,7 +1,6 @@
 # Firebase stuff
 hosting.*.cache
 .firebaserc
-firebase.json
 
 # Logs
 logs
