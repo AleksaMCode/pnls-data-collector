@@ -37,3 +37,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PNLS_WEB }}
           channelId: live
           projectId: pnls-web
+          entryPoint: monitor_dashboard
