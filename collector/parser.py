@@ -47,11 +47,10 @@ def parse_ip_packet(packet):
                 ).strftime(TIMESTAMP_FORMAT)[:-3],
             }
 
+            today = datetime.now().strftime(TIMESTAMP_FORMAT.split(" ")[0])
             # Send to Firebase DB
             try:
-                db.reference(
-                    f"/{FIREBASE_NODE}-{datetime.now().strftime(TIMESTAMP_FORMAT.split(' ')[0])}/data"
-                ).push(data)
+                db.reference(f"/{FIREBASE_NODE}-{today}/data").push(data)
             except Exception as e:
                 logger.error(f"Firebase update failed: {str(e)}")
 
@@ -59,7 +58,7 @@ def parse_ip_packet(packet):
             try:
                 with open(
                     os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)), "data.json"
+                        os.path.dirname(os.path.abspath(__file__)), f"{today}-data.json"
                     ),
                     "a",
                     encoding="utf-8",
