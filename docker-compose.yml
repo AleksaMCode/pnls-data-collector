@@ -1,0 +1,12 @@
+services:
+  monitor_dashboard:
+    build:
+      context: ./monitor_dashboard
+    container_name: monitor_dashboard
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./monitor_dashboard:/app
+      - /app/node_modules
+    env_file:
+      - ./monitor_dashboard/.env
