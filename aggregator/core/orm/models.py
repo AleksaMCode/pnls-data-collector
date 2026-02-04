@@ -1,8 +1,8 @@
 from datetime import date
 from enum import Enum
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import declarative_base, relationship, validates
 
 Base = declarative_base()
 
@@ -27,8 +27,17 @@ class MAC(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     mac = Column(String(17), unique=True, nullable=False)
+    # Universally Administered MAC Address (UAA)
+    # TODO Based on UAA IEEE lookup will be implemented later.
+    uaa = Column(Boolean, nullable=True)
 
     captures = relationship("CapturedInfo", back_populates="mac_ref")
+
+    @validates("mac")
+    def _set_uaa(self, key, value):
+        first_byte = int(value.split(":")[0], 16)
+        self.uaa = (first_byte & 0x02) == 0
+        return value
 
 
 class Location(Base):
