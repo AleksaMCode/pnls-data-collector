@@ -124,3 +124,21 @@ GROUP BY
 ORDER BY
     date,
     device;
+
+-- Add UAA column to MAC table
+-- BOOLEAN defaults to nullable
+ALTER TABLE public.mac
+ADD COLUMN uaa BOOLEAN;
+
+-- Backfill existing rows
+UPDATE mac
+SET uaa = (
+    (('x' || split_part(mac, ':', 1))::bit(8)::int & 2) = 0
+);
+
+-- Create a view for the "real" MAC addresses
+CREATE VIEW public.mac_uaa AS
+SELECT *
+FROM public.mac
+WHERE uaa IS DISTINCT FROM FALSE
+ORDER BY id ASC;
