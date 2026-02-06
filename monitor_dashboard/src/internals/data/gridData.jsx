@@ -59,20 +59,6 @@ function renderStatus(status) {
   return <Chip label={status} color={colors[status]} size="small" />;
 }
 
-function getWorkingStatus() {
-  const now = new Date();
-
-  const hour = Number(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Europe/Paris',
-      hour: '2-digit',
-      hour12: false,
-    }).format(now),
-  );
-
-  return hour >= 7 && hour < 18 ? 'Working' : 'Off';
-}
-
 export function renderAvatar(params) {
   if (params.value == null) {
     return '';
@@ -199,9 +185,8 @@ export const rows = [
   {
     id: 1,
     device: 'RPI-1',
-    // TODO Get status from Firebase
     status: 'Online',
-    capturing: getWorkingStatus(),
+    capturing: 'Working',
     ssidCount: 8345,
     probeRequestCount: 212423,
     macCount: 18.5,
@@ -217,7 +202,7 @@ export const rows = [
     id: 2,
     device: 'RPI-2',
     status: 'Online',
-    capturing: getWorkingStatus(),
+    capturing: 'Working',
     ssidCount: 5653,
     probeRequestCount: 172240,
     macCount: 9.7,
@@ -231,12 +216,12 @@ export const rows = [
     id: 3,
     device: 'RPI-3',
     status: 'Online',
-    capturing: getWorkingStatus(),
+    capturing: 'Working',
     ssidCount: 3455,
     probeRequestCount: 58240,
     macCount: 15.2,
     location: "Stefan's office (31 R-009)",
-    // TODO This needs to be real data from the current month
+    // This is just placeholder data
     trend: [
       166896, 190041, 248686, 226746, 261744, 271890, 332176, 381123, 396435,
       495620, 520278, 460839, 704158, 559134, 681089, 712384, 765381, 771374,

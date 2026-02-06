@@ -6,6 +6,20 @@ import {
 import { useEffect, useState } from 'react';
 import { fetchDeviceOnlineStatus } from '../../firebase/firebase';
 
+function getWorkingStatus(status) {
+  const now = new Date();
+
+  const hour = Number(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/Paris',
+      hour: '2-digit',
+      hour12: false,
+    }).format(now),
+  );
+
+  return status === 'Online' && hour >= 7 && hour < 18 ? 'Working' : 'Off';
+}
+
 export default function CustomizedDataGrid({
   totalsPerDeviceData,
   probeSeries,
@@ -19,11 +33,13 @@ export default function CustomizedDataGrid({
     const rowsMapped = defaultRows.map((row) => {
       const totals = totalsPerDeviceData[row.device];
       const trendSeries = probeSeries[row.device];
+      const status = onlineStatus[row.device] ? 'Online' : 'Offline';
 
       return {
         ...row,
-        // TODO test if status updates
-        status: onlineStatus[row.device] ? 'Online' : 'Offline',
+        status: status,
+
+        capturing: getWorkingStatus(status),
 
         probeRequestCount:
           totals?.probe_requests != null
@@ -42,7 +58,6 @@ export default function CustomizedDataGrid({
             : row.trend,
       };
     });
-
     setRows(rowsMapped);
   }, [totalsPerDeviceData, probeSeries]);
 
