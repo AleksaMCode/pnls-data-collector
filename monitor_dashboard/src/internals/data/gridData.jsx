@@ -59,20 +59,6 @@ function renderStatus(status) {
   return <Chip label={status} color={colors[status]} size="small" />;
 }
 
-function getWorkingStatus() {
-  const now = new Date();
-
-  const hour = Number(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Europe/Paris',
-      hour: '2-digit',
-      hour12: false,
-    }).format(now),
-  );
-
-  return hour >= 7 && hour < 18 ? 'Working' : 'Off';
-}
-
 export function renderAvatar(params) {
   if (params.value == null) {
     return '';
