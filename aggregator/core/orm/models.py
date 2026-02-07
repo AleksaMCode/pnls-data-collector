@@ -22,6 +22,12 @@ class Device(Enum):
     RPI_3 = "RPI-3"
 
 
+class IEEERegistry(Enum):
+    MA_L = "MA-L"
+    MA_M = "MA-M"
+    MA_S = "MA-S"
+
+
 class SSID(Base):
     __tablename__ = "ssid"
 
@@ -124,3 +130,21 @@ class Country(Base):
     region_code = Column(Integer, nullable=True)
     sub_region_code = Column(Integer, nullable=True)
     intermediate_region_code = Column(Integer, nullable=True)
+
+
+class IEEEMacOuiOrg(Base):
+    __tablename__ = "ieee_mac_oui_org"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    address = Column(String, nullable=True)
+    country = Column(Integer, ForeignKey("country.id"), nullable=True)
+
+
+class IEEEMacOui(Base):
+    __tablename__ = "ieee_mac_oui"
+
+    id = Column(Integer, primary_key=True)
+    registry = Column(String, nullable=False)
+    assignment = Column(String, nullable=False)
+    org = Column(Integer, ForeignKey("ieee_mac_oui_org.id"), nullable=False)
