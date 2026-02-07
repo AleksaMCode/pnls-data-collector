@@ -1,7 +1,16 @@
 from datetime import date
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy import (
+    CHAR,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import declarative_base, relationship, validates
 
 Base = declarative_base()
@@ -99,3 +108,19 @@ class DailyCapturedPerDevice(Base):
     ssid = Column(Integer, nullable=False)
     probe_request = Column(Integer, nullable=False)
     mac = Column(Integer, nullable=False)
+
+
+class Country(Base):
+    __tablename__ = "country"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    alpha2 = Column(CHAR(2), unique=True, nullable=False)
+    alpha3 = Column(CHAR(3), unique=True, nullable=False)
+    country_code = Column(CHAR(3), unique=True, nullable=False)
+    region = Column(String, nullable=True)
+    sub_region = Column(String, nullable=True)
+    intermediate_region = Column(String, nullable=True)
+    region_code = Column(Integer, nullable=True)
+    sub_region_code = Column(Integer, nullable=True)
+    intermediate_region_code = Column(Integer, nullable=True)

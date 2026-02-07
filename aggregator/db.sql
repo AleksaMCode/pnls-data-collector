@@ -142,3 +142,19 @@ SELECT *
 FROM public.mac
 WHERE uaa IS DISTINCT FROM FALSE
 ORDER BY id ASC;
+
+-- Add Country table
+
+CREATE TABLE COUNTRY (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    alpha2 CHAR(2) NOT NULL UNIQUE,
+    alpha3 CHAR(3) NOT NULL UNIQUE,
+    country_code CHAR(3) NOT NULL UNIQUE,
+    region TEXT,
+    sub_region TEXT,
+    intermediate_region TEXT,
+    region_code INT,
+    sub_region_code INT,
+    intermediate_region_code INT
+);
