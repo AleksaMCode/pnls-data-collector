@@ -65,7 +65,9 @@ def load_csv(path=CSV_FILE):
                             country_id = extract_country_id(address, country_cache)
 
                         org = IEEEMacOuiOrg(
-                            name=org_name, address=None if not address or address == "" else address, country=country_id
+                            name=org_name,
+                            address=None if not address or address == "" else address,
+                            country=country_id,
                         )
                         db.add(org)
                         db.flush()

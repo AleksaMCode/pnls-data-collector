@@ -4,9 +4,8 @@ import re
 
 from geopy import Nominatim
 
-from util.util import decrypt_data, load_rsa_key_from_file
-
 from aggregator.core.orm.models import Country
+from util.util import decrypt_data, load_rsa_key_from_file
 
 # Fix for pipeline. See #38
 if os.getenv("ENV") != "test":
