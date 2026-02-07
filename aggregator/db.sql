@@ -158,3 +158,46 @@ CREATE TABLE COUNTRY (
     sub_region_code INT,
     intermediate_region_code INT
 );
+
+-- Add IEEE OUI
+CREATE TABLE IEEE_MAC_OUI_ORG (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    address TEXT,
+    country INT REFERENCES COUNTRY(id)
+);
+
+CREATE TABLE IEEE_MAC_OUI (
+    id SERIAL PRIMARY KEY,
+    registry TEXT NOT NULL,
+    assignment TEXT NOT NULL,
+    org INT NOT NULL REFERENCES IEEE_MAC_OUI_ORG(id)
+);
+
+-- Create a materialized view for OUI
+CREATE MATERIALIZED VIEW ieee_mac_oui_with_country AS
+SELECT
+    oui.id,
+    oui.registry,
+    oui.assignment,
+    org.name AS org,
+    c.name AS country
+FROM IEEE_MAC_OUI oui
+JOIN IEEE_MAC_OUI_ORG org
+    ON oui.org = org.id
+LEFT JOIN COUNTRY c
+    ON org.country = c.id;
+
+-- Some extra indexes
+
+CREATE INDEX idx_mac_oui_assignment
+ON IEEE_MAC_OUI (assignment);
+
+CREATE INDEX idx_mac_oui_registry
+ON IEEE_MAC_OUI (registry);
+
+CREATE INDEX idx_country
+ON country (alpha2);
+
+CREATE INDEX idx_ssid_name
+ON SSID (ssid);
