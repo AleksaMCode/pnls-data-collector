@@ -15,6 +15,7 @@ from .models import (
     MAC,
     SSID,
     CapturedInfo,
+    Country,
     DailyCapturedPerDevice,
     ImportsInfo,
     LocationMapping,
@@ -33,6 +34,12 @@ def get_latest_import_date():
             .first()
             .timestamp
         )
+
+
+def get_country_id_with_alpha2(alpha2):
+    # logger.info("Getting country ID from the DB.")
+    with _session() as db:
+        return db.query(Country).filter_by(alpha2=alpha2).one_or_none()
 
 
 def get_total_captured_info_count():

@@ -8,3 +8,4 @@ tenacity
 tqdm
 pymongo
 sentry_sdk
+geopy
