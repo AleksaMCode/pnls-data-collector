@@ -4,6 +4,8 @@ import os
 from aggregator.core.orm.helpers import _session
 from aggregator.core.orm.models import Country
 
+from . import logger
+
 # From https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/blob/master/all/all.csv
 CSV_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "iso-3166-countries.csv"
@@ -43,9 +45,12 @@ def load_csv(path=CSV_FILE):
 
                 db.bulk_save_objects(countries)
                 db.commit()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to load csv - {e}")
             db.rollback()
 
 
 if __name__ == "__main__":
+    logger.info("Starting the importer.")
     load_csv()
+    logger.info("Finished.")
