@@ -2,7 +2,11 @@ import json
 import os
 import re
 
+from geopy import Nominatim
+
 from util.util import decrypt_data, load_rsa_key_from_file
+
+from aggregator.core.orm.models import Country
 
 # Fix for pipeline. See #38
 if os.getenv("ENV") != "test":
@@ -74,3 +78,24 @@ def send_webhook_message(message: str):
         )
     else:
         logger.info("Slack webhook message sent to Mattermost.")
+
+
+def get_country_id(session, address, user_agent="*"):
+    """
+    Use geopy to geocode the address and return country id from the DB.
+    """
+    # Geopy uses `nominatim.openstreetmap.org`; use sleep when calling this function as the API has rate limit.
+    # TODO test this before using!!
+    geolocator = Nominatim(user_agent=user_agent)
+    try:
+        location = geolocator.geocode(address, language="en")
+        if location and location.raw.get("address"):
+            country_name = location.raw["address"].get("country")
+            if country_name:
+                country = (
+                    session.query(Country).filter_by(name=country_name).one_or_none()
+                )
+                return country.id if country else None
+    except Exception as e:
+        logger.error(f"Geocoding error for '{address}': {e}")
+    return None
