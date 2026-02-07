@@ -1,5 +1,6 @@
 # Specific files
 iso-3166-countries.csv
+ieee_oui.csv
 
 # RSA key
 *.pem
