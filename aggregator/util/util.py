@@ -2,14 +2,13 @@ import json
 import os
 import re
 
-from geopy import Nominatim
-
 from aggregator.core.orm.models import Country
 from util.util import decrypt_data, load_rsa_key_from_file
 
 # Fix for pipeline. See #38
 if os.getenv("ENV") != "test":
     from tqdm import tqdm
+    from geopy import Nominatim
     from aggregator.settings import RSA_KEY_PATH, SLACK_WEBHOOK_URL
     import requests
 
