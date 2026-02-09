@@ -201,3 +201,63 @@ ON country (alpha2);
 
 CREATE INDEX idx_ssid_name
 ON SSID (ssid);
+
+CREATE INDEX idx_ieee_mac_oui_registry_assignment
+ON ieee_mac_oui (registry, assignment);
+
+-- Add FK to IEEE OUI
+ALTER TABLE mac
+ADD COLUMN oui INTEGER;
+
+ALTER TABLE mac
+ADD CONSTRAINT fk_mac_oui
+FOREIGN KEY (oui)
+REFERENCES ieee_mac_oui (id);
+
+CREATE INDEX idx_ieee_mac_oui_view_registry_assignment
+ON ieee_mac_oui_with_country (registry, assignment);
+
+CREATE VIEW mac_with_org_resolved AS
+SELECT
+	m.id,
+    m.mac,
+    m.uaa,
+    org.name AS company,
+    c.name AS country,
+    COUNT(ci.id) AS seen_count
+FROM mac m
+LEFT JOIN ieee_mac_oui oui
+    ON m.oui = oui.id
+LEFT JOIN ieee_mac_oui_org org
+    ON oui.org = org.id
+LEFT JOIN country c
+    ON org.country = c.id
+LEFT JOIN captured_info ci
+    ON ci.mac = m.id
+WHERE m.uaa = TRUE
+  AND org.name IS NOT NULL
+GROUP BY m.id, m.mac, m.uaa, org.name, c.name
+ORDER BY seen_count DESC;
+
+CREATE VIEW company_capture_summary AS
+SELECT
+    org.name AS company,
+    c.name AS country,
+    COUNT(ci.id) AS total_occurrences
+FROM mac m
+JOIN captured_info ci
+    ON ci.mac = m.id
+JOIN ieee_mac_oui oui
+    ON m.oui = oui.id
+JOIN ieee_mac_oui_org org
+    ON oui.org = org.id
+LEFT JOIN country c
+    ON org.country = c.id
+WHERE m.uaa = TRUE
+GROUP BY org.name, c.name
+ORDER BY total_occurrences DESC;
+
+-- To get count of total Probe Requests with "real" MAC addresses:
+SELECT SUM(seen_count) AS total_mac_occurrences
+FROM mac_with_org_resolved;
+
