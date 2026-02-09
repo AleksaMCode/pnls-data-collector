@@ -10,13 +10,17 @@ from aggregator import settings, util
 from util.logger import get_logger
 
 from ...util import util
+from ...util.util import mac_to_oui_candidates
 from . import _session
 from .models import (
+    IEEE_PRIORITY,
     MAC,
     SSID,
     CapturedInfo,
     Country,
     DailyCapturedPerDevice,
+    IEEEMacOuiView,
+    IEEERegistry,
     ImportsInfo,
     LocationMapping,
 )
@@ -79,6 +83,37 @@ def get_today_data_from_daily_captured_stats_per_device(
         )
 
 
+def resolve_oui(session, mac: MAC):
+    if mac.oui or not mac.uaa:
+        return
+
+    candidates = mac_to_oui_candidates(mac.mac)
+
+    for registry in IEEE_PRIORITY:
+        assignment = candidates[registry]
+
+        # Build base query using a Materialized View
+        query = session.query(IEEEMacOuiView).filter(
+            IEEEMacOuiView.registry == registry.value,
+            IEEEMacOuiView.assignment == assignment,
+        )
+
+        # CERN MA-L workaround (duplicate assignment issue)
+        if registry == IEEERegistry.MA_L and assignment == "080030":
+            # mac_obj.oui = 37604  # ID for CERN MA-L with 080030
+            query = query.filter(IEEEMacOuiView.org == "CERN")
+
+        # IEEE data can contain duplicates → use first()
+        # See: https://stackoverflow.com/questions/61213303/how-should-i-handle-duplicate-mac-assignment-in-the-ieee-oui-ma-l-data-file
+        oui = query.first()
+
+        if oui:
+            mac.oui = oui.id
+            return
+
+    mac.oui = None
+
+
 @yaspin(text="Importing data from Firebase to local database...")
 def import_data(
     data, firebase_import: bool = True, manual_import_date: date = None
@@ -121,6 +156,9 @@ def import_data(
                 mac_id = mac_map.get(mac_str)
                 if not mac_id:
                     mac_obj = MAC(mac=mac_str)
+                    # Add MAC OUI - explicit call `resolve_oui()`
+                    # (this isn't need if event has been imported in the caller)
+                    resolve_oui(db, mac_obj)
                     db.add(mac_obj)
                     db.flush()
                     mac_map[mac_str] = mac_obj.id
