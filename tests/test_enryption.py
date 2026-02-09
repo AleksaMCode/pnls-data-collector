@@ -38,7 +38,5 @@ class TestRSAEncryption(unittest.TestCase):
         self.assertEqual(decoded_data, byte_data)
 
 
-#
-#
-# if __name__ == "__main__":
-#     unittest.main()
+if __name__ == "__main__":
+    unittest.main()

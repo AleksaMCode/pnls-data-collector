@@ -18,3 +18,7 @@ class TestMACValidator(unittest.TestCase):
             with self.subTest(mac=mac_value):
                 mac = MAC(mac=mac_value)
                 self.assertEqual(mac.uaa, expected)
+
+
+if __name__ == "__main__":
+    unittest.main()
