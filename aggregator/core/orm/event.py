@@ -9,5 +9,5 @@ from aggregator.core.orm.models import MAC
 @event.listens_for(SessionFactory, "before_commit")
 def mac_oui_resolver(session):
     for obj in session.new.union(session.dirty):
-        if isinstance(obj, MAC) and obj.mac:
+        if isinstance(obj, MAC) and obj.mac and not obj.oui:
             resolve_oui(session, obj)
