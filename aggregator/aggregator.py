@@ -2,6 +2,8 @@ import sys
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+# This import is needed in order for listener to work!! - from aggregator.core.orm import event
+from aggregator.core.orm import event
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
 from aggregator.mattermost import publish_to_channel
 from util.logger import get_logger
