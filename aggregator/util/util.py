@@ -2,7 +2,7 @@ import json
 import os
 import re
 
-from aggregator.core.orm.models import Country
+from aggregator.core.orm.models import Country, IEEERegistry
 from util.util import decrypt_data, load_rsa_key_from_file
 
 # Fix for pipeline. See #38
@@ -97,3 +97,17 @@ def get_country_id(session, address, user_agent="*"):
     except Exception as e:
         logger.error(f"Geocoding error for '{address}': {e}")
     return None
+
+
+def mac_normalize(mac: str) -> str:
+    return mac.replace(":", "").upper()
+
+
+def mac_to_oui_candidates(mac: str):
+    mac_normalized = mac_normalize(mac)
+
+    return {
+        IEEERegistry.MA_S: mac_normalized[:9],  # 36 bits
+        IEEERegistry.MA_M: mac_normalized[:7],  # 28 bits
+        IEEERegistry.MA_L: mac_normalized[:6],  # 24 bits
+    }

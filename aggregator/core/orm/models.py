@@ -28,6 +28,13 @@ class IEEERegistry(Enum):
     MA_S = "MA-S"
 
 
+IEEE_PRIORITY = (
+    IEEERegistry.MA_S,
+    IEEERegistry.MA_M,
+    IEEERegistry.MA_L,
+)
+
+
 class SSID(Base):
     __tablename__ = "ssid"
 
@@ -43,8 +50,8 @@ class MAC(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     mac = Column(String(17), unique=True, nullable=False)
     # Universally Administered MAC Address (UAA)
-    # TODO Based on UAA IEEE lookup will be implemented later.
     uaa = Column(Boolean, nullable=True)
+    oui = Column(Integer, ForeignKey("ieee_mac_oui.id"), nullable=True)
 
     captures = relationship("CapturedInfo", back_populates="mac_ref")
 
@@ -148,3 +155,14 @@ class IEEEMacOui(Base):
     registry = Column(String, nullable=False)
     assignment = Column(String, nullable=False)
     org = Column(Integer, ForeignKey("ieee_mac_oui_org.id"), nullable=False)
+
+
+class IEEEMacOuiView(Base):
+    __tablename__ = "ieee_mac_oui_with_country"
+
+    id = Column(Integer, primary_key=True)
+    registry = Column(String)
+    assignment = Column(String)
+    org = Column(String)
+    # country not need for now, can be added later if needed
+    # country = Column(String)

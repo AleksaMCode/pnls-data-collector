@@ -4,8 +4,7 @@ import re
 
 from aggregator.core.orm.helpers import _session, get_country_id_with_alpha2
 from aggregator.core.orm.models import IEEEMacOui, IEEEMacOuiOrg
-
-from . import logger
+from aggregator.tools import logger
 
 # Fix for pipeline.
 if os.getenv("ENV") != "test":

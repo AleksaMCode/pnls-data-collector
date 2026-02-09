@@ -1,6 +1,12 @@
 import unittest
 
-from aggregator.util.util import clean_string, extract_device_name
+from aggregator.core.orm.models import IEEERegistry
+from aggregator.util.util import (
+    clean_string,
+    extract_device_name,
+    mac_normalize,
+    mac_to_oui_candidates,
+)
 
 
 class TestUtils(unittest.TestCase):
@@ -32,6 +38,54 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(clean_string(""), "")
         self.assertNotEqual(clean_string("SSID "), "SSID")
         self.assertEqual(clean_string(" SSID "), " SSID ")
+
+
+class TestMacUtils(unittest.TestCase):
+
+    def test_mac_normalize(self):
+        test_cases = [
+            {"input": "aa:bb:cc:dd:ee:ff", "expected": "AABBCCDDEEFF"},
+            {"input": "AABBCCDDEEFF", "expected": "AABBCCDDEEFF"},
+            {"input": "Aa:Bb:Cc:Dd:Ee:Ff", "expected": "AABBCCDDEEFF"},
+            {"input": "", "expected": ""},
+        ]
+
+        for case in test_cases:
+            with self.subTest(mac=case["input"]):
+                self.assertEqual(mac_normalize(case["input"]), case["expected"])
+
+    def test_mac_to_oui_candidates(self):
+        test_cases = [
+            {
+                "input": "aa:bb:cc:dd:ee:ff",
+                "expected": {
+                    IEEERegistry.MA_L: "AABBCC",
+                    IEEERegistry.MA_M: "AABBCCD",
+                    IEEERegistry.MA_S: "AABBCCDDE",
+                },
+            },
+            {
+                "input": "AABBCCDDEEFF",
+                "expected": {
+                    IEEERegistry.MA_L: "AABBCC",
+                    IEEERegistry.MA_M: "AABBCCD",
+                    IEEERegistry.MA_S: "AABBCCDDE",
+                },
+            },
+            {
+                "input": "aa:bb:cc",
+                "expected": {
+                    IEEERegistry.MA_L: "AABBCC",
+                    IEEERegistry.MA_M: "AABBCC",
+                    IEEERegistry.MA_S: "AABBCC",
+                },
+            },
+        ]
+
+        for case in test_cases:
+            with self.subTest(mac=case["input"]):
+                result = mac_to_oui_candidates(case["input"])
+                self.assertEqual(result, case["expected"])
 
 
 if __name__ == "__main__":
