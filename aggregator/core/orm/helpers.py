@@ -1,14 +1,16 @@
+import logging
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import desc, func
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import after_log, before_log, retry, stop_after_attempt, wait_exponential
 from tqdm import tqdm
 from yaspin import yaspin
 
 from aggregator import settings, util
 from util.logger import get_logger
 
+from ...settings import TIMEZONE
 from ...util import util
 from ...util.util import mac_to_oui_candidates
 from . import _session
@@ -28,7 +30,12 @@ from .models import (
 logger = get_logger(__name__)
 
 
-@retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=1, min=30, max=90))
+@retry(
+    stop=stop_after_attempt(10),
+    wait=wait_exponential(multiplier=1, min=30, max=90),
+    before=before_log(logger, logging.INFO),
+    after=after_log(logger, logging.ERROR),
+)
 def get_latest_import_date():
     logger.info("Getting latest import date from the DB.")
     with _session() as db:
@@ -179,6 +186,15 @@ def import_data(
                         ssid=ssid_id, mac=mac_id, location=location_id, timestamp=ts
                     )
                 )
+
+            # There is still a very small change of a race condition, but this fix is good enough for #198
+            today = datetime.now(ZoneInfo(TIMEZONE)).date()
+            latest_import_date = get_latest_import_date()
+            if latest_import_date == today:
+                logger.info(
+                    f"Skipping import for {today}: import already occurred today."
+                )
+                raise Exception("Import already occurred today.")
         except Exception as e:
             db.rollback()
             logger.error(f"Error occurred during data import - {str(e)}")
