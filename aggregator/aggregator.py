@@ -67,7 +67,7 @@ def transfer_data_all():
 if __name__ == "__main__":
     # Exit if it is still working hours.
     # This was added to fix power outage issue. See #59
-    if not is_after_six(TIMEZONE):
+    if not IMPORT_DATES and not is_after_six(TIMEZONE):
         logger.info("Aggregator can only run after 18:00.")
         sys.exit(0)
     else:
