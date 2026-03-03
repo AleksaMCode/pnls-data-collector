@@ -78,7 +78,12 @@ func validateDeviceData(client *db.Client, ctx context.Context) {
 		// Check if the timestamp is older than `FIREBASE_TIMEOUT` minutes
 		// Devices update status every 10 minutes and we check every 11 minutes so have a buffer of 60 seconds just in case of some delays
 		if time.Since(timestampTime) > FIREBASE_TIMEOUT*time.Minute {
-			message := fmt.Sprintf("Device `%s` hasn't been updated in the last %d minutes! Last update: %s", device, FIREBASE_TIMEOUT, timestamp)
+			message := fmt.Sprintf(
+				"Device `%s` hasn't been updated in the last %d minutes! Last update: %s",
+				device,
+				FIREBASE_TIMEOUT,
+				timestamp,
+			)
 			sendMattermostMsg(message)
 		} else {
 			log.Printf("Device `%s` was recently updated at %s", device, timestamp)

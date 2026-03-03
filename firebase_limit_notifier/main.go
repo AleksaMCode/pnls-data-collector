@@ -85,7 +85,11 @@ func createUsageChart(usage float64) {
 		log.Printf("Image with a public Cloudflare R2 bucket link was created: %s", publicURL)
 	}
 
-	message := fmt.Sprintf("Current Firebase Realtime DB usage is %.2f MB out of 1 GB (%.2f%%).", usage, getPercentage(usage, FIREBASE_LIMIT_MB))
+	message := fmt.Sprintf(
+		"Current Firebase Realtime DB usage is %.2f MB out of 1 GB (%.2f%%).",
+		usage,
+		getPercentage(usage, FIREBASE_LIMIT_MB),
+	)
 	sendMattermostMsg(message, publicURL)
 }
 
