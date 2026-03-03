@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -44,6 +45,17 @@ func restoreR2Env(s r2EnvSnapshot) {
 	R2_ENDPOINT = s.endpoint
 }
 
+func ensureHTTPURL(raw string) string {
+	if raw == "" {
+		return raw
+	}
+	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
+		return raw
+	}
+	// testcontainers MinIO may return host:port; AWS SDK needs a full URI.
+	return "http://" + raw
+}
+
 func TestUploadImageToR2WithMinioTestcontainer(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -80,6 +92,10 @@ func TestUploadImageToR2WithMinioTestcontainer(t *testing.T) {
 	endpoint, err := container.ConnectionString(ctx)
 	if err != nil {
 		t.Fatalf("failed to get MinIO endpoint: %v", err)
+	}
+	endpoint = ensureHTTPURL(endpoint)
+	if _, err := url.ParseRequestURI(endpoint); err != nil {
+		t.Fatalf("invalid MinIO endpoint %q: %v", endpoint, err)
 	}
 
 	snapshot := snapshotR2Env()
