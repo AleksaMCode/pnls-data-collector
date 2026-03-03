@@ -6,11 +6,19 @@ import (
 	"fmt"
 	"log"
 
+	common "github.com/AleksaMCode/pnls-data-collector/util-go/common"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
+
+func getR2Endpoint() string {
+	if R2_ENDPOINT != "" {
+		return R2_ENDPOINT
+	}
+	return fmt.Sprintf("https://%s.r2.cloudflarestorage.com", CLOUDFLARE_ACCOUNT_ID)
+}
 
 func newR2Client() *s3.Client {
 	cfg, err := config.LoadDefaultConfig(
@@ -30,14 +38,18 @@ func newR2Client() *s3.Client {
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", CLOUDFLARE_ACCOUNT_ID))
+		o.BaseEndpoint = aws.String(getR2Endpoint())
+		// MinIO and most local S3-compatible test endpoints require path-style URLs.
+		if R2_ENDPOINT != "" {
+			o.UsePathStyle = true
+		}
 	})
 	return client
 }
 
 func uploadImageToR2(image []byte) (string, error) {
 	client := newR2Client()
-	now := getTimeNow(TIMEZONE)
+	now := common.GetTimeNow(TIMEZONE)
 
 	objectKey := fmt.Sprintf(
 		"%s/firebase-usage-%d.png",

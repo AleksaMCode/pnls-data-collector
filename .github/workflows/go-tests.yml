@@ -2,41 +2,50 @@ name: PNLS-DC Go Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - 'collector_status_notifier/**/*.go'
-      - 'firebase_limit_notifier/**/*.go'
+      - "collector_status_notifier/**/*.go"
+      - "firebase_limit_notifier/**/*.go"
+      - "util-go/**/*.go"
   pull_request:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - 'collector_status_notifier/**/*.go'
-      - 'firebase_limit_notifier/**/*.go'
+      - "collector_status_notifier/**/*.go"
+      - "firebase_limit_notifier/**/*.go"
+      - "util-go/**/*.go"
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.25.5'
-        cache: true
-        cache-dependency-path: |
-         collector_status_notifier/go.sum
-         firebase_limit_notifier/go.sum
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.5"
+          cache: true
+          cache-dependency-path: |
+            collector_status_notifier/go.sum
+            firebase_limit_notifier/go.sum
+            util-go/go.sum
 
-    - name: Run collector_status_notifier tests
-      run: |
-        cd collector_status_notifier
-        go mod download
-        go test -v
+      - name: Run collector_status_notifier tests
+        run: |
+          cd collector_status_notifier
+          go mod download
+          go test -v
 
-    - name: Run firebase_limit_notifier tests
-      run: |
-        cd firebase_limit_notifier
-        go mod download
-        go test -v
+      - name: Run firebase_limit_notifier tests
+        run: |
+          cd firebase_limit_notifier
+          go mod download
+          go test -v -tags=integration
+
+      - name: Run util-go tests
+        run: |
+          cd util-go
+          go mod download
+          go test -v ./...

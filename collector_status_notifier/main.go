@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"firebase.google.com/go/v4/db"
+	firebase "github.com/AleksaMCode/pnls-data-collector/util-go/firebase"
+	mattermost "github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
 )
 
 func main() {
@@ -15,10 +17,12 @@ func main() {
 	initLogging()
 
 	ctx := context.Background()
-	client := getFirebaseClient(ctx)
+	client := firebase.GetFirebaseClient(ctx, FIREBASE_CREDENTIALS_FILE, FIREBASE_DATABASE_URL)
 
 	// Check before sleep
-	checkDevicesStatus(client, ctx)
+	if isWorkingHours() {
+		checkDevicesStatus(client, ctx)
+	}
 
 	// Periodically check the Firebase database every `FIREBASE_TIMEOUT` minutes
 	ticker := time.NewTicker(FIREBASE_TIMEOUT * time.Minute)
@@ -64,8 +68,7 @@ func validateDeviceData(client *db.Client, ctx context.Context) {
 		// Handle the edge case when data is missing.
 		if deviceData == nil {
 			message := fmt.Sprintf("Device `%s` has no status for today (%s)", device, today)
-			log.Print(message)
-			sendMattermostMessage(message)
+			sendMattermostMsg(message)
 			continue
 		}
 
@@ -75,11 +78,20 @@ func validateDeviceData(client *db.Client, ctx context.Context) {
 		// Check if the timestamp is older than `FIREBASE_TIMEOUT` minutes
 		// Devices update status every 10 minutes and we check every 11 minutes so have a buffer of 60 seconds just in case of some delays
 		if time.Since(timestampTime) > FIREBASE_TIMEOUT*time.Minute {
-			message := fmt.Sprintf("Device `%s` hasn't been updated in the last %d minutes! Last update: %s", device, FIREBASE_TIMEOUT, timestamp)
-			log.Print(message)
-			sendMattermostMessage(message)
+			message := fmt.Sprintf(
+				"Device `%s` hasn't been updated in the last %d minutes! Last update: %s",
+				device,
+				FIREBASE_TIMEOUT,
+				timestamp,
+			)
+			sendMattermostMsg(message)
 		} else {
 			log.Printf("Device `%s` was recently updated at %s", device, timestamp)
 		}
 	}
+}
+
+func sendMattermostMsg(message string) {
+	log.Print(message)
+	mattermost.SendMattermostMessage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message)
 }
