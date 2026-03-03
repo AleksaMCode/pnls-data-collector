@@ -2,13 +2,13 @@ name: Go Code Style Check
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - '**/*.go'
+      - "**/*.go"
   pull_request:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - '**/*.go'
+      - "**/*.go"
 
 jobs:
   format-check:
@@ -21,13 +21,18 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25.5'
+          go-version: "1.25.5"
 
-      - name: Install gofumpt
-        run: |
-          go install mvdan.cc/gofumpt@latest
+      - name: Run golangci-lint fmt check (collector_status_notifier)
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: collector_status_notifier
+          args: fmt --check
 
-      - name: Run gofumpt check
-        run: |
-          gofumpt -l -d collector_status_notifier/
-          gofumpt -l -d firebase_limit_notifier/
+      - name: Run golangci-lint fmt check (firebase_limit_notifier)
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: firebase_limit_notifier
+          args: fmt --check
