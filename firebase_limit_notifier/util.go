@@ -2,11 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/joho/godotenv"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -26,6 +23,7 @@ func loadEnvVariables() {
 	R2_BUCKET_NAME = os.Getenv("R2_BUCKET_NAME")
 	CLOUDFLARE_ACCOUNT_ID = os.Getenv("CLOUDFLARE_ACCOUNT_ID")
 	R2_BUCKET_PUBLIC_URL = os.Getenv("R2_BUCKET_PUBLIC_URL")
+	R2_ENDPOINT = os.Getenv("R2_ENDPOINT")
 }
 
 func initLogging() {
@@ -44,24 +42,6 @@ func bytesToMB(bytes int) float64 {
 
 func getPercentage(part float64, whole float64) float64 {
 	return part / whole * 100
-}
-
-func getTimeNow(timezone string) time.Time {
-	location, err := time.LoadLocation(timezone)
-	if err != nil {
-		log.Fatalf("Error loading timezone: %v", err)
-		os.Exit(1)
-	}
-
-	return time.Now().In(location)
-}
-
-func getAbsoluteFirebasePath(credentialsFile string) (string, error) {
-	absPath, err := filepath.Abs(credentialsFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to get current directory: %v", err)
-	}
-	return absPath, nil
 }
 
 func getNodeSize(v any) (float64, error) {

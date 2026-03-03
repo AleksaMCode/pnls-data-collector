@@ -19,6 +19,7 @@ var (
 	R2_BUCKET_NAME         string
 	CLOUDFLARE_ACCOUNT_ID  string
 	R2_BUCKET_PUBLIC_URL   string
+	R2_ENDPOINT            string
 )
 
 const (

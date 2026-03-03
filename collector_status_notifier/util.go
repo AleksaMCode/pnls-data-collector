@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"time"
 
+	common "github.com/AleksaMCode/pnls-data-collector/util-go/common"
 	"github.com/joho/godotenv"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -31,26 +29,9 @@ func initLogging() {
 	})
 }
 
-func getTimeNow(timezone string) time.Time {
-	location, err := time.LoadLocation(timezone)
-	if err != nil {
-		log.Fatalf("Error loading timezone: %v", err)
-		os.Exit(1)
-	}
-
-	return time.Now().In(location)
-}
-
 func isWorkingHours() bool {
-	now := getTimeNow(TIMEZONE)
+	now := common.GetTimeNow(TIMEZONE)
 	hour := now.Hour()
-	return hour >= 7 && hour < 18
-}
-
-func getAbsoluteFirebasePath(credentialsFile string) (string, error) {
-	absPath, err := filepath.Abs(credentialsFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to get current directory: %v", err)
-	}
-	return absPath, nil
+	// Start moved to 6. See #189
+	return hour >= 6 && hour < 18
 }
