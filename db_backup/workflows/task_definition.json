@@ -1,0 +1,99 @@
+[
+  {
+    "name": "pg_dump_task",
+    "description": "Executes pg_dump and stores the SQL dump in temporary workspace.",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 60,
+    "timeoutSeconds": 3600,
+    "responseTimeoutSeconds": 600,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "inputKeys": [],
+    "outputKeys": [
+      "timestamp_unix",
+      "timestamp",
+      "workflow_id",
+      "base_dir",
+      "dump_path",
+      "dump_file_name"
+    ]
+  },
+  {
+    "name": "encryption_task",
+    "description": "Encrypts dump with AES-256-GCM.",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 60,
+    "timeoutSeconds": 3600,
+    "responseTimeoutSeconds": 600,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "inputKeys": [
+      "dump_path",
+      "base_dir",
+      "timestamp",
+      "dump_file_name"
+    ],
+    "outputKeys": [
+      "timestamp",
+      "workflow_id",
+      "base_dir",
+      "encrypted_path",
+      "encrypted_file_name",
+      "dump_file_name"
+    ]
+  },
+  {
+    "name": "compress_task",
+    "description": "Compresses encrypted dump with gzip.",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 60,
+    "timeoutSeconds": 1800,
+    "responseTimeoutSeconds": 600,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "inputKeys": [
+      "encrypted_path",
+      "base_dir",
+      "timestamp",
+      "dump_file_name",
+      "encrypted_file_name"
+    ],
+    "outputKeys": [
+      "timestamp",
+      "workflow_id",
+      "base_dir",
+      "compressed_path",
+      "compressed_file_name",
+      "dump_file_name",
+      "encrypted_file_name"
+    ]
+  },
+  {
+    "name": "upload_to_r2_task",
+    "description": "Uploads gzip artifact to R2 and returns object path.",
+    "retryCount": 3,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 60,
+    "timeoutSeconds": 1800,
+    "responseTimeoutSeconds": 600,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "inputKeys": [
+      "compressed_path",
+      "base_dir",
+      "timestamp",
+      "dump_file_name",
+      "encrypted_file_name",
+      "compressed_file_name"
+    ],
+    "outputKeys": [
+      "object_key",
+      "object_path",
+      "workflow_id",
+      "task_id",
+      "dump_file_name",
+      "encrypted_file_name",
+      "compressed_file_name",
+      "uploaded_at_unix"
+    ]
+  }
+]

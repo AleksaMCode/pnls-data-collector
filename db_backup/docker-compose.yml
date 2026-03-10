@@ -1,0 +1,29 @@
+services:
+  conductor:
+    image: conductoross/conductor-standalone:3.15.0
+    container_name: db_backup_conductor
+    environment:
+      TZ: Europe/Paris
+    ports:
+      - "8080:8080"
+      - "5000:5000"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  db-backup-worker:
+    build:
+      context: .
+    container_name: db_backup_worker
+    depends_on: [conductor]
+    env_file:
+      - .env
+    environment:
+      TZ: Europe/Paris
+      CONDUCTOR_SERVER_URL: http://conductor:8080/api
+    restart: unless-stopped

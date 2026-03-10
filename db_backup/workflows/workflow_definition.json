@@ -1,0 +1,68 @@
+{
+  "name": "db_backup_workflow",
+  "description": "Daily PostgreSQL backup pipeline: dump, encrypt, compress, upload.",
+  "version": 1,
+  "schemaVersion": 2,
+  "restartable": true,
+  "timeoutPolicy": "ALERT_ONLY",
+  "timeoutSeconds": 7200,
+  "tasks": [
+    {
+      "name": "pg_dump_task",
+      "taskReferenceName": "pg_dump_task_ref",
+      "type": "SIMPLE",
+      "startDelay": 0,
+      "optional": false,
+      "inputParameters": {}
+    },
+    {
+      "name": "encryption_task",
+      "taskReferenceName": "encryption_task_ref",
+      "type": "SIMPLE",
+      "startDelay": 0,
+      "optional": false,
+      "inputParameters": {
+        "dump_path": "${pg_dump_task_ref.output.dump_path}",
+        "base_dir": "${pg_dump_task_ref.output.base_dir}",
+        "timestamp": "${pg_dump_task_ref.output.timestamp}",
+        "dump_file_name": "${pg_dump_task_ref.output.dump_file_name}"
+      }
+    },
+    {
+      "name": "compress_task",
+      "taskReferenceName": "compress_task_ref",
+      "type": "SIMPLE",
+      "startDelay": 0,
+      "optional": false,
+      "inputParameters": {
+        "encrypted_path": "${encryption_task_ref.output.encrypted_path}",
+        "base_dir": "${encryption_task_ref.output.base_dir}",
+        "timestamp": "${encryption_task_ref.output.timestamp}",
+        "dump_file_name": "${encryption_task_ref.output.dump_file_name}",
+        "encrypted_file_name": "${encryption_task_ref.output.encrypted_file_name}"
+      }
+    },
+    {
+      "name": "upload_to_r2_task",
+      "taskReferenceName": "upload_to_r2_task_ref",
+      "type": "SIMPLE",
+      "startDelay": 0,
+      "optional": false,
+      "inputParameters": {
+        "compressed_path": "${compress_task_ref.output.compressed_path}",
+        "base_dir": "${compress_task_ref.output.base_dir}",
+        "timestamp": "${compress_task_ref.output.timestamp}",
+        "dump_file_name": "${compress_task_ref.output.dump_file_name}",
+        "encrypted_file_name": "${compress_task_ref.output.encrypted_file_name}",
+        "compressed_file_name": "${compress_task_ref.output.compressed_file_name}"
+      }
+    }
+  ],
+  "outputParameters": {
+    "object_key": "${upload_to_r2_task_ref.output.object_key}",
+    "object_path": "${upload_to_r2_task_ref.output.object_path}",
+    "workflow_id": "${upload_to_r2_task_ref.output.workflow_id}",
+    "task_id": "${upload_to_r2_task_ref.output.task_id}"
+  },
+  "inputParameters": []
+}

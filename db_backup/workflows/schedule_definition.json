@@ -1,0 +1,10 @@
+{
+  "name": "db_backup_daily_2300_paris",
+  "cronExpression": "0 0 23 * * ?",
+  "runCatchupScheduleInstances": false,
+  "startWorkflowRequest": {
+    "name": "db_backup_workflow",
+    "version": 1,
+    "input": {}
+  }
+}
