@@ -38,6 +38,8 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
+const defaultConductorIntegrationImage = "conductoross/conductor-standalone:3.15.0"
+
 func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -70,6 +72,25 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 	dbDSN, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		t.Fatalf("postgres connection string: %v", err)
+	}
+	parsedDSN, err := url.Parse(dbDSN)
+	if err != nil {
+		t.Fatalf("parse postgres dsn: %v", err)
+	}
+	pgUser := ""
+	pgPass := ""
+	if parsedDSN.User != nil {
+		pgUser = parsedDSN.User.Username()
+		pgPass, _ = parsedDSN.User.Password()
+	}
+	pgHost := parsedDSN.Hostname()
+	pgPort := parsedDSN.Port()
+	if pgPort == "" {
+		pgPort = "5432"
+	}
+	pgDBName := strings.TrimPrefix(parsedDSN.Path, "/")
+	if pgDBName == "" {
+		t.Fatalf("postgres dsn missing database name: %q", dbDSN)
 	}
 	pgDumpBin := resolvePgDumpBinaryForTest(t, pgContainer.GetContainerID())
 
@@ -110,7 +131,7 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 
 	conductorCtr, err := tc.Run(
 		ctx,
-		"orkes/conductor-standalone:latest",
+		defaultConductorIntegrationImage,
 		tc.WithExposedPorts("8080/tcp"),
 		tc.WithWaitStrategy(wait.ForHTTP("/health").WithPort("8080/tcp").WithStartupTimeout(2*time.Minute)),
 	)
@@ -137,7 +158,11 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 		PollInterval:        100 * time.Millisecond,
 		PgDumpBin:           pgDumpBin,
 		WorkDir:             filepath.Join(moduleRoot, "tmp", "integration"),
-		DBDSN:               dbDSN,
+		DBHost:              pgHost,
+		DBPort:              pgPort,
+		DBUser:              pgUser,
+		DBPassword:          pgPass,
+		DBName:              pgDBName,
 		R2AccessKey:         "minioadmin",
 		R2SecretKey:         "minioadmin",
 		R2BucketName:        bucketName,
