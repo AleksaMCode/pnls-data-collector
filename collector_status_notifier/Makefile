@@ -1,4 +1,4 @@
-.PHONY: fmt run test test-integration test-coverage test-coverage-view
+.PHONY: fmt run test test-coverage test-coverage-view test-coverage-view-browser
 
 fmt:
 	golangci-lint fmt
@@ -14,3 +14,6 @@ test-coverage:
 
 test-coverage-view:
 	go tool cover -func=coverage
+
+test-coverage-view-browser:
+	go tool cover -html=coverage
