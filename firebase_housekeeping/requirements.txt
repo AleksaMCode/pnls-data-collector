@@ -5,6 +5,5 @@ tenacity
 firebase-admin
 yaspin
 pymongo
-sentry_sdk
 python-dotenv
 SQLAlchemy
