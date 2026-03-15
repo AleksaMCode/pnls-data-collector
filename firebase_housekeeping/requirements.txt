@@ -1,0 +1,9 @@
+fastapi
+psycopg2-binary
+uvicorn
+tenacity
+firebase-admin
+yaspin
+pymongo
+python-dotenv
+SQLAlchemy

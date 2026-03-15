@@ -6,6 +6,5 @@ psycopg2-binary
 yaspin
 tenacity
 tqdm
-pymongo
 sentry_sdk
 geopy

@@ -4,10 +4,10 @@ from datetime import datetime
 
 from yaspin import yaspin
 
-from aggregator.core.orm.models import Device
+from firebase_housekeeping.settings import TIMESTAMP_FORMAT
+from util.core.orm.models import Device
 from util.logger import get_logger
 
-from ...settings import TIMESTAMP_FORMAT
 from . import get_bucket_for_read, get_bucket_for_write, get_collection
 
 logger = get_logger(__name__)

@@ -1,12 +1,8 @@
 import unittest
 
 from aggregator.core.orm.models import IEEERegistry
-from aggregator.util.util import (
-    clean_string,
-    extract_device_name,
-    mac_normalize,
-    mac_to_oui_candidates,
-)
+from aggregator.util.util import clean_string, mac_normalize, mac_to_oui_candidates
+from util.util import extract_device_name
 
 
 class TestUtils(unittest.TestCase):

@@ -2,15 +2,18 @@ import sys
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from aggregator.core.firebase.helpers import (
+    fetch_all_data,
+    fetch_data,
+    publish_stats_data,
+)
+
 # This import is needed in order for listener to work!! - from aggregator.core.orm import event
-from aggregator.core.orm import event
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
 from aggregator.mattermost import publish_to_channel
+from aggregator.settings import TIMEZONE
 from util.logger import get_logger
 from util.util import is_after_six
-
-from .firebase import fetch_all_data, fetch_data, publish_stats_data
-from .settings import TIMEZONE
 
 logger = get_logger(__name__)
 
