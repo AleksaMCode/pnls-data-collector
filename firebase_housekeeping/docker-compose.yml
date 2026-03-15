@@ -1,4 +1,20 @@
 services:
+  firebase_housekeeping:
+    build:
+      context: ..
+      dockerfile: firebase_housekeeping/Dockerfile
+    container_name: firebase_housekeeping
+    networks:
+      - pnls
+    env_file:
+      - ./.env
+    environment:
+      SERVER_URL: 0.0.0.0
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    # depends_on:
+    #   mongodb:
+    #     condition: service_healthy
 
   mongodb:
     image: mongo:latest
@@ -14,6 +30,15 @@ services:
     ports:
       - "${MONGO_PORT}:27017"
     restart: unless-stopped
+#    healthcheck:
+#      test:
+#        [
+#          "CMD-SHELL",
+#          'mongosh --quiet --eval "db.adminCommand(''ping'').ok" || exit 1',
+#        ]
+#      interval: 5s
+#      timeout: 10s
+#      retries: 20
 
 volumes:
   pnls:
@@ -22,3 +47,4 @@ networks:
   pnls:
     name: pnls
     driver: bridge
+    external: true
