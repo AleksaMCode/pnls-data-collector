@@ -4,7 +4,7 @@ from datetime import datetime
 
 from yaspin import yaspin
 
-from aggregator.settings import TIMESTAMP_FORMAT
+from firebase_housekeeping.settings import TIMESTAMP_FORMAT
 from util.core.orm.models import Device
 from util.logger import get_logger
 

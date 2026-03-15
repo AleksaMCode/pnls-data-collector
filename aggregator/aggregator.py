@@ -11,10 +11,9 @@ from aggregator.core.firebase.helpers import (
 # This import is needed in order for listener to work!! - from aggregator.core.orm import event
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
 from aggregator.mattermost import publish_to_channel
+from aggregator.settings import TIMEZONE
 from util.logger import get_logger
 from util.util import is_after_six
-
-from aggregator.settings import TIMEZONE
 
 logger = get_logger(__name__)
 
