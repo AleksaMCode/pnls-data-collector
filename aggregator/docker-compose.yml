@@ -37,21 +37,6 @@ services:
       postgres:
         condition: service_healthy
 
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    networks:
-      - pnls
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DB}
-    volumes:
-      - pnls:/data/mongodata
-    ports:
-      - "${MONGO_PORT}:27017"
-    restart: unless-stopped
-
 volumes:
   pnls:
 

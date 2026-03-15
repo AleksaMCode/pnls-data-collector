@@ -1,7 +1,7 @@
+from aggregator.core.firebase.helpers import publish_daily_stats_data
 from aggregator.core.orm.helpers import (
     get_all_data_from_daily_captured_stats_per_device,
 )
-from aggregator.firebase import publish_daily_stats_data
 
 
 def publish_all_data():
