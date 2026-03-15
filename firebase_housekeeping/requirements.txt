@@ -1,0 +1,10 @@
+fastapi
+psycopg2-binary
+uvicorn
+tenacity
+firebase-admin
+yaspin
+pymongo
+sentry_sdk
+python-dotenv
+SQLAlchemy
