@@ -13,7 +13,7 @@ FIREBASE_CREDENTIALS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 
 FIREBASE_DB_URL = "firebase_db_url"
 
-# Name your RPI NODE in FireBase DB
+# Name your RPI NODE in Firebase DB
 FIREBASE_NODE = "RPI-1"
 
 # Send status update every 10 minutes
