@@ -3,3 +3,5 @@ yaspin
 firebase-admin
 pycryptodome
 sentry_sdk
+dotenv
+tenacity
