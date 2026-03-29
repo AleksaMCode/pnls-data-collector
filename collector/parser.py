@@ -46,8 +46,8 @@ def parse_ip_packet(packet):
                     float(packet.time), tz=ZoneInfo(TIMEZONE)
                 ).strftime(TIMESTAMP_FORMAT)[:-3],
             }
-
             today = datetime.now().strftime(TIMESTAMP_FORMAT.split(" ")[0])
+
             # Send to Firebase DB
             try:
                 db.reference(f"/{FIREBASE_NODE}-{today}/data").push(data)
