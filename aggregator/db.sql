@@ -261,3 +261,53 @@ ORDER BY total_occurrences DESC;
 SELECT SUM(seen_count) AS total_mac_occurrences
 FROM mac_with_org_resolved;
 
+-- GEO mapping changes
+ALTER TABLE SSID
+ADD mapped BOOLEAN DEFAULT FALSE;
+ADD has_geo BOOLEAN DEFAULT FALSE;
+
+CREATE TABLE SSID_GEO (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ssid INTEGER NOT NULL REFERENCES SSID(id) ON DELETE CASCADE,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    country INTEGER REFERENCES COUNTRY(id) ON DELETE SET NULL
+);
+
+CREATE TABLE SSID_GEO_REDUCED (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ssid INTEGER NOT NULL REFERENCES SSID(id) ON DELETE CASCADE,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    country INTEGER REFERENCES COUNTRY(id) ON DELETE SET NULL
+);
+
+-- View for #215 - show wildcard SSIDs
+CREATE OR REPLACE VIEW daily_ssid_counts AS
+WITH wildcard_id AS (
+    SELECT id AS wildcard_ssid_id
+    FROM ssid
+    WHERE ssid = '*'
+    LIMIT 1
+)
+SELECT
+    DATE(c.timestamp) AS day,
+    COUNT(*) AS total_count,
+    COUNT(*) FILTER (WHERE c.ssid = w.wildcard_ssid_id) AS wildcard_ssid,
+    COUNT(*) FILTER (WHERE c.ssid <> w.wildcard_ssid_id) AS real_ssid,
+    CASE
+        WHEN COUNT(*) FILTER (WHERE c.ssid <> w.wildcard_ssid_id) = 0
+        THEN NULL
+        ELSE ROUND(
+            (
+                COUNT(*) FILTER (WHERE c.ssid = w.wildcard_ssid_id)
+                - COUNT(*) FILTER (WHERE c.ssid <> w.wildcard_ssid_id)
+            ) * 100.0
+            / COUNT(*) FILTER (WHERE c.ssid <> w.wildcard_ssid_id), 2
+        )
+    END AS wildcard_vs_real_pct
+FROM captured_info c
+CROSS JOIN wildcard_id w
+WHERE c.timestamp >= '2026-03-26 00:00:00+00'
+GROUP BY DATE(c.timestamp)
+ORDER BY DATE(c.timestamp);
