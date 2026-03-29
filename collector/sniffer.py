@@ -48,27 +48,26 @@ def check_interface_mode():
     """
     global INTERFACE
     for default_interface in INTERFACES:
-        for interface in [f"{default_interface}mon", default_interface]:
-            try:
-                interface_info = subprocess.run(
-                    ["iwconfig", interface], capture_output=True, text=True
-                ).stdout
+        # Changed for #213
+        interface = f"{default_interface}mon"
+        try:
+            interface_info = subprocess.run(
+                ["iwconfig", interface], capture_output=True, text=True
+            ).stdout
 
-                if "Mode:" in interface_info:
-                    # Parse out only the interface mode.
-                    interface_mode = interface_info.split("Mode:", 1)[1].split(" ", 1)[
-                        0
-                    ]
-                    if interface_mode.strip() == "Monitor":
-                        INTERFACE = interface
-                        logger.info(f"Interface `{interface}` is in Monitor mode.")
-                        return True
-                    else:
-                        logger.warning(f"Interface `{interface}` not in Monitor mode.")
-            except Exception as e:
-                logger.error(
-                    f"An Exception occurred during checking interface mode - {str(e)}"
-                )
+            if "Mode:" in interface_info:
+                # Parse out only the interface mode.
+                interface_mode = interface_info.split("Mode:", 1)[1].split(" ", 1)[0]
+                if interface_mode.strip() == "Monitor":
+                    INTERFACE = interface
+                    logger.info(f"Interface `{interface}` is in Monitor mode.")
+                    return True
+                else:
+                    logger.warning(f"Interface `{interface}` not in Monitor mode.")
+        except Exception as e:
+            logger.error(
+                f"An Exception occurred during checking interface mode - {str(e)}"
+            )
 
     return False
 
