@@ -48,10 +48,18 @@ def download_all() -> dict:
         for key in top_level_nodes.keys():
             if key != FIREBASE_STATISTICS_NODE:
                 device = extract_device_name(key)
-                if device in Device.__members__:
+                device_member = next(
+                    (
+                        member
+                        for member in Device.__members__.values()
+                        if member.value == device
+                    ),
+                    None,
+                )
+                if device_member is not None:
                     node_data = ref.child(key).get()
                     # data = node_data.get("data", {})
-                    device_data[device].append(node_data)
+                    device_data[device_member.value].append(node_data)
         logger.info(f"Downloaded all data from Firebase.")
 
     return device_data
