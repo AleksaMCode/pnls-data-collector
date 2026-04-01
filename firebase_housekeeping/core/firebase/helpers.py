@@ -36,6 +36,43 @@ def delete_all_by_nodes():
         logger.info(f"Deleted all data from Firebase.")
 
 
+@yaspin("Deleting Firebase data by smallest nodes...")
+def delete_all_by_smallest_nodes():
+    """
+    Deletes Firebase data leaf-by-leaf (smallest possible nodes) to avoid
+    oversized delete requests on large subtrees.
+    """
+    root_ref = db.reference("/")
+    top_level_nodes = root_ref.get(shallow=True)
+
+    if not top_level_nodes:
+        logger.info(f"No data found in Firebase.")
+        return
+
+    deleted_nodes = 0
+
+    def _delete_leaf_nodes(path: str):
+        nonlocal deleted_nodes
+        current_ref = db.reference(path)
+        children = current_ref.get(shallow=True)
+
+        if isinstance(children, dict) and children:
+            for child_key in children.keys():
+                child_path = f"{path.rstrip('/')}/{child_key}"
+                _delete_leaf_nodes(child_path)
+            return
+
+        current_ref.delete()
+        deleted_nodes += 1
+
+    for key in top_level_nodes.keys():
+        if key == FIREBASE_STATISTICS_NODE:
+            continue
+        _delete_leaf_nodes(f"/{key}")
+
+    logger.info(f"Deleted {deleted_nodes} smallest Firebase nodes.")
+
+
 @yaspin("Downloading all data from Firebase...")
 def download_all() -> dict:
     ref = db.reference("/")
