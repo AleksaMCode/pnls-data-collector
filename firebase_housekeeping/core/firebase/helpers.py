@@ -48,7 +48,7 @@ def download_all() -> dict:
         for key in top_level_nodes.keys():
             if key != FIREBASE_STATISTICS_NODE:
                 device = extract_device_name(key)
-                if Device(device) in Device.__members__.values():
+                if device in Device.__members__:
                     node_data = ref.child(key).get()
                     # data = node_data.get("data", {})
                     device_data[device].append(node_data)
