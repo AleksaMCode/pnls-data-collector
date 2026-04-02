@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from firebase_housekeeping.core.firebase.helpers import (
-    delete_all_by_smallest_nodes,
+    delete_all_by_entry_nodes,
     download_all,
 )
 from firebase_housekeeping.core.mongo.helpers import insert_from_firebase_to_mongo
@@ -47,7 +47,7 @@ async def delete_all():
     logger.info("Delete workflow started.")
     data = download_all()
     insert_from_firebase_to_mongo(data)
-    delete_all_by_smallest_nodes()
+    delete_all_by_entry_nodes()
     logger.info("Delete workflow completed.")
 
 
