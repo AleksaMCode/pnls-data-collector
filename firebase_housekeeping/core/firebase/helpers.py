@@ -1,7 +1,9 @@
+import logging
 from collections import defaultdict
 
 import firebase_admin
 from firebase_admin import credentials, db
+from tenacity import retry, stop_after_attempt, wait_exponential
 from yaspin import yaspin
 
 from firebase_housekeeping.settings import (
@@ -71,6 +73,62 @@ def delete_all_by_smallest_nodes():
         _delete_leaf_nodes(f"/{key}")
 
     logger.info(f"Deleted {deleted_nodes} smallest Firebase nodes.")
+
+
+@yaspin("Deleting Firebase data by entry nodes...")
+@retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=1, min=30, max=90))
+def delete_all_by_entry_nodes():
+    """
+    Deletes data at an intermediate level:
+    - iterate top-level device/date nodes
+    - inspect each direct child (e.g. "data")
+    - delete that child's direct children (entry/random-key nodes)
+    This avoids deleting a huge top-level subtree in one request and also avoids very deep leaf-by-leaf traversal.
+    """
+    root_ref = db.reference("/")
+    top_level_nodes = root_ref.get(shallow=True)
+
+    if not top_level_nodes:
+        logger.info(f"No data found in Firebase.")
+        return
+
+    deleted_nodes = 0
+
+    for top_key in top_level_nodes.keys():
+        if top_key == FIREBASE_STATISTICS_NODE:
+            continue
+
+        top_path = f"/{top_key}"
+        second_level = db.reference(top_path).get(shallow=True)
+
+        if not isinstance(second_level, dict) or not second_level:
+            db.reference(top_path).delete()
+            deleted_nodes += 1
+            continue
+
+        for second_key in second_level.keys():
+            second_path = f"{top_path}/{second_key}"
+            entry_nodes = db.reference(second_path).get(shallow=True)
+
+            try:
+                db.reference(second_path).delete()
+                logging.info(f"Bulk delete successful for '{second_path}")
+                deleted_nodes += 1
+                continue
+            except Exception as exc:
+                logger.warning(
+                    f"Bulk delete failed for '{second_path}'. Falling back to entry-level delete. Error: {exc}"
+                )
+
+            if isinstance(entry_nodes, dict) and entry_nodes:
+                for entry_key in entry_nodes.keys():
+                    db.reference(f"{second_path}/{entry_key}").delete()
+                    deleted_nodes += 1
+            else:
+                db.reference(second_path).delete()
+                deleted_nodes += 1
+
+    logger.info(f"Deleted {deleted_nodes} Firebase entry nodes.")
 
 
 @yaspin("Downloading all data from Firebase...")
