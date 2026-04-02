@@ -28,7 +28,7 @@ import {
 import { FilterAlt, HighlightOff } from '@mui/icons-material';
 import StatCard from './StatCard';
 
-const DEFAULT_FILTERS = ['CERN', 'CERN-Visitors'];
+const DEFAULT_FILTERS = ['CERN', 'CERN-Visitors', '*'];
 const dataTotalTemplate = [
   {
     id: 'probeRequestCount',
