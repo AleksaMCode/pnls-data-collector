@@ -84,7 +84,7 @@ ORDER BY lm.device;
 ALTER TABLE imports_info
 ADD COLUMN captured INTEGER DEFAULT 0;
 
--- This is uber specific view for CERN Computer Sec Team (not needed otherwise).
+-- This is uber specific view for CERN Computer Sec Team (not needed otherwise). #31
 CREATE VIEW public.latest_mac_info_for_cern_like_ssid AS
 WITH RankedEntries AS (
   SELECT *,
@@ -311,3 +311,17 @@ CROSS JOIN wildcard_id w
 WHERE c.timestamp >= '2026-03-26 00:00:00+00'
 GROUP BY DATE(c.timestamp)
 ORDER BY DATE(c.timestamp);
+
+
+-- Update CERN view #227
+CREATE OR REPLACE VIEW public.latest_mac_info_for_cern_like_ssid AS
+WITH RankedEntries AS (
+  SELECT *,
+         ROW_NUMBER() OVER (PARTITION BY ssid, mac, location ORDER BY timestamp DESC) AS rn
+  FROM public.captured_info_resolved
+  WHERE ssid ILIKE '%CERN%'
+    AND ssid NOT IN ('CERN', 'CERN-Visitors', 'CERN-Campus', 'cern', ' CERN-Visitors')
+)
+SELECT ssid, mac, location, timestamp
+FROM RankedEntries
+WHERE rn = 1;
