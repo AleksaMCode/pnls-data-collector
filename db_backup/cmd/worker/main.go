@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"db_backup/internal/backup"
 	"db_backup/internal/conductor"
 	"db_backup/internal/config"
 	"db_backup/internal/storage"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	conductorclient "github.com/conductor-sdk/conductor-go/sdk/client"
 	conductormodel "github.com/conductor-sdk/conductor-go/sdk/model"
@@ -54,21 +53,47 @@ func main() {
 		return pipeline.RunUploadTask(ctx, task)
 	}
 
-	if err := taskRunner.StartWorker(backup.TaskPgDumpName, pgDumpHandler, cfg.WorkerCount, cfg.PollInterval); err != nil {
+	if err := taskRunner.StartWorker(
+		backup.TaskPgDumpName,
+		pgDumpHandler,
+		cfg.WorkerCount,
+		cfg.PollInterval,
+	); err != nil {
 		log.Fatalf("pg_dump worker start error: %v", err)
 	}
-	if err := taskRunner.StartWorker(backup.TaskEncryptName, encryptHandler, cfg.WorkerCount, cfg.PollInterval); err != nil {
+	if err := taskRunner.StartWorker(
+		backup.TaskEncryptName,
+		encryptHandler,
+		cfg.WorkerCount,
+		cfg.PollInterval,
+	); err != nil {
 		log.Fatalf("encryption worker start error: %v", err)
 	}
-	if err := taskRunner.StartWorker(backup.TaskCompressName, compressHandler, cfg.WorkerCount, cfg.PollInterval); err != nil {
+	if err := taskRunner.StartWorker(
+		backup.TaskCompressName,
+		compressHandler,
+		cfg.WorkerCount,
+		cfg.PollInterval,
+	); err != nil {
 		log.Fatalf("compress worker start error: %v", err)
 	}
-	if err := taskRunner.StartWorker(backup.TaskUploadName, uploadHandler, cfg.WorkerCount, cfg.PollInterval); err != nil {
+	if err := taskRunner.StartWorker(
+		backup.TaskUploadName,
+		uploadHandler,
+		cfg.WorkerCount,
+		cfg.PollInterval,
+	); err != nil {
 		log.Fatalf("upload worker start error: %v", err)
 	}
 
-	log.Printf("db_backup worker started. tasks=[%s,%s,%s,%s] conductor=%s",
-		backup.TaskPgDumpName, backup.TaskEncryptName, backup.TaskCompressName, backup.TaskUploadName, cfg.ConductorServerURL)
+	log.Printf(
+		"db_backup worker started. tasks=[%s,%s,%s,%s] conductor=%s",
+		backup.TaskPgDumpName,
+		backup.TaskEncryptName,
+		backup.TaskCompressName,
+		backup.TaskUploadName,
+		cfg.ConductorServerURL,
+	)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)

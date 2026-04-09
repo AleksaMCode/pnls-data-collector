@@ -2,11 +2,10 @@ package storage
 
 import (
 	"context"
+	"db_backup/internal/config"
 	"fmt"
 	"os"
 	"strings"
-
-	"db_backup/internal/config"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"

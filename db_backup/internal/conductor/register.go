@@ -2,12 +2,11 @@ package conductor
 
 import (
 	"context"
+	"db_backup/internal/config"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
-
-	"db_backup/internal/config"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"

@@ -3,13 +3,12 @@ package backup
 import (
 	"bytes"
 	"compress/gzip"
+	"db_backup/internal/config"
 	"encoding/base64"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"db_backup/internal/config"
 )
 
 func TestEncryptAndGzipFile(t *testing.T) {

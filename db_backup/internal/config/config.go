@@ -60,14 +60,16 @@ func Load() (Config, error) {
 	_ = godotenv.Load()
 
 	cfg := Config{
-		ConductorServerURL:  getEnv("CONDUCTOR_SERVER_URL", defaultConductorURL),
-		WorkflowName:        getEnv("DB_BACKUP_WORKFLOW_NAME", defaultWorkflowName),
-		WorkflowVersion:     int32(getEnvInt("DB_BACKUP_WORKFLOW_VERSION", defaultWorkflowVersion)),
-		ScheduleName:        getEnv("DB_BACKUP_SCHEDULE_NAME", defaultScheduleName),
-		ScheduleCron:        getEnv("DB_BACKUP_SCHEDULE_CRON", defaultScheduleCron),
-		Timezone:            getEnv("DB_BACKUP_TIMEZONE", defaultTimezone),
-		WorkerCount:         getEnvInt("DB_BACKUP_WORKER_COUNT", defaultWorkerCount),
-		PollInterval:        time.Duration(getEnvInt("DB_BACKUP_POLL_INTERVAL_MS", defaultPollIntervalMS)) * time.Millisecond,
+		ConductorServerURL: getEnv("CONDUCTOR_SERVER_URL", defaultConductorURL),
+		WorkflowName:       getEnv("DB_BACKUP_WORKFLOW_NAME", defaultWorkflowName),
+		WorkflowVersion:    int32(getEnvInt("DB_BACKUP_WORKFLOW_VERSION", defaultWorkflowVersion)),
+		ScheduleName:       getEnv("DB_BACKUP_SCHEDULE_NAME", defaultScheduleName),
+		ScheduleCron:       getEnv("DB_BACKUP_SCHEDULE_CRON", defaultScheduleCron),
+		Timezone:           getEnv("DB_BACKUP_TIMEZONE", defaultTimezone),
+		WorkerCount:        getEnvInt("DB_BACKUP_WORKER_COUNT", defaultWorkerCount),
+		PollInterval: time.Duration(
+			getEnvInt("DB_BACKUP_POLL_INTERVAL_MS", defaultPollIntervalMS),
+		) * time.Millisecond,
 		PgDumpBin:           getEnv("DB_BACKUP_PG_DUMP_BIN", defaultPgDumpBin),
 		WorkDir:             getEnv("DB_BACKUP_WORK_DIR", defaultWorkDir),
 		DBHost:              os.Getenv("DB_HOST"),
@@ -82,7 +84,9 @@ func Load() (Config, error) {
 		R2Endpoint:          os.Getenv("R2_ENDPOINT"),
 		CloudflareAccountID: os.Getenv("CLOUDFLARE_ACCOUNT_ID"),
 		EncryptionKeyRaw:    os.Getenv("DB_BACKUP_ENCRYPTION_KEY"),
-		UploadTimeout:       time.Duration(getEnvInt("DB_BACKUP_UPLOAD_TIMEOUT_SECONDS", defaultUploadTimeoutSecs)) * time.Second,
+		UploadTimeout: time.Duration(
+			getEnvInt("DB_BACKUP_UPLOAD_TIMEOUT_SECONDS", defaultUploadTimeoutSecs),
+		) * time.Second,
 	}
 
 	if err := cfg.Validate(); err != nil {
