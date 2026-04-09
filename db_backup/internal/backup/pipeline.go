@@ -6,6 +6,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"db_backup/internal/config"
+	"db_backup/internal/storage"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -16,9 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"db_backup/internal/config"
 	localmodel "db_backup/internal/model"
-	"db_backup/internal/storage"
 
 	conductormodel "github.com/conductor-sdk/conductor-go/sdk/model"
 )
@@ -46,12 +46,16 @@ func (p *Pipeline) RunPgDumpTask(ctx context.Context, task *conductormodel.Task)
 	taskID := strings.TrimSpace(task.TaskId)
 	workflowID := strings.TrimSpace(task.WorkflowInstanceId)
 	if taskID == "" || workflowID == "" {
-		return localmodel.PgDumpTaskOutput{}, conductormodel.NewNonRetryableError(errors.New("missing task id or workflow id"))
+		return localmodel.PgDumpTaskOutput{}, conductormodel.NewNonRetryableError(
+			errors.New("missing task id or workflow id"),
+		)
 	}
 
 	loc, err := time.LoadLocation(p.cfg.Timezone)
 	if err != nil {
-		return localmodel.PgDumpTaskOutput{}, conductormodel.NewNonRetryableError(fmt.Errorf("invalid timezone: %w", err))
+		return localmodel.PgDumpTaskOutput{}, conductormodel.NewNonRetryableError(
+			fmt.Errorf("invalid timezone: %w", err),
+		)
 	}
 	now := time.Now().In(loc)
 	timestamp := now.Format("20060102T150405")
@@ -108,7 +112,10 @@ func (p *Pipeline) RunEncryptTask(_ context.Context, task *conductormodel.Task) 
 	}, nil
 }
 
-func (p *Pipeline) RunCompressTask(_ context.Context, task *conductormodel.Task) (localmodel.CompressTaskOutput, error) {
+func (p *Pipeline) RunCompressTask(
+	_ context.Context,
+	task *conductormodel.Task,
+) (localmodel.CompressTaskOutput, error) {
 	encPath, err := requiredInput(task, "encrypted_path")
 	if err != nil {
 		return localmodel.CompressTaskOutput{}, err

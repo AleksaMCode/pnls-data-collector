@@ -1,0 +1,23 @@
+query($accountTag: string!, $datetimeStart: Time!, $datetimeEnd: Time!, $limit: uint64!, $bucketName: string!) {
+  viewer {
+    accounts(filter: {accountTag: $accountTag}) {
+      r2StorageAdaptiveGroups(
+        limit: $limit
+        filter: {
+          datetime_geq: $datetimeStart,
+          datetime_leq: $datetimeEnd,
+          bucketName: $bucketName
+        }
+      ) {
+        dimensions {
+          bucketName
+          datetime
+        }
+        max {
+          payloadSize
+          metadataSize
+        }
+      }
+    }
+  }
+}

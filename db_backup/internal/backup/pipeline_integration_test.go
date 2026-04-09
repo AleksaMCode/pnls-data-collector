@@ -8,6 +8,9 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	"db_backup/internal/conductor"
+	"db_backup/internal/config"
+	"db_backup/internal/storage"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -19,10 +22,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"db_backup/internal/conductor"
-	"db_backup/internal/config"
-	"db_backup/internal/storage"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -241,7 +240,11 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 		t.Fatalf("wait workflow completion: %v", err)
 	}
 	if !finalWf.IsCompleted() {
-		t.Fatalf("workflow did not complete successfully: status=%s reason=%s", finalWf.Status, finalWf.ReasonForIncompletion)
+		t.Fatalf(
+			"workflow did not complete successfully: status=%s reason=%s",
+			finalWf.Status,
+			finalWf.ReasonForIncompletion,
+		)
 	}
 
 	objectKey, ok := finalWf.Output["object_key"].(string)

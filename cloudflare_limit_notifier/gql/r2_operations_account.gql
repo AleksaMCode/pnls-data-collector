@@ -1,0 +1,20 @@
+query($accountTag: string!, $datetimeStart: Time!, $datetimeEnd: Time!, $limit: uint64!) {
+  viewer {
+    accounts(filter: {accountTag: $accountTag}) {
+      r2OperationsAdaptiveGroups(
+        limit: $limit
+        filter: {
+          datetime_geq: $datetimeStart,
+          datetime_leq: $datetimeEnd
+        }
+      ) {
+        dimensions {
+          actionType
+        }
+        sum {
+          requests
+        }
+      }
+    }
+  }
+}
