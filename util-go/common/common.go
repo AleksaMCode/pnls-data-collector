@@ -23,3 +23,10 @@ func GetTimeNow(timezone string) time.Time {
 // 	}
 // 	return absPath, nil
 // }
+
+func GetPercentage(part float64, whole float64) float64 {
+	if whole == 0 {
+		return 0
+	}
+	return part / whole * 100
+}
