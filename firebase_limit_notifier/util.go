@@ -37,11 +37,7 @@ func initLogging() {
 }
 
 func bytesToMB(bytes int) float64 {
-	return float64(bytes) / (1024 * 1024)
-}
-
-func getPercentage(part float64, whole float64) float64 {
-	return part / whole * 100
+	return float64(bytes) / BYTES_IN_MB
 }
 
 func getNodeSize(v any) (float64, error) {

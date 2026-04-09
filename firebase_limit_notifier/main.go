@@ -88,7 +88,7 @@ func createUsageChart(usage float64) {
 	message := fmt.Sprintf(
 		"Current Firebase Realtime DB usage is %.2f MB out of 1 GB (%.2f%%).",
 		usage,
-		getPercentage(usage, FIREBASE_LIMIT_MB),
+		common.GetPercentage(usage, FIREBASE_LIMIT_MB),
 	)
 	sendMattermostMsg(message, publicURL)
 }

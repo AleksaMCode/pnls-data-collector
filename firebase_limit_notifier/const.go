@@ -9,6 +9,8 @@ const (
 	TIMEZONE                  = "Europe/Paris"
 	// Free tier has 1 GB limit on Realtime DB
 	FIREBASE_LIMIT_MB = 1_000
+
+	BYTES_IN_MB = 1024 * 1024
 )
 
 var (
