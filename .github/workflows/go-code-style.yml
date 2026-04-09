@@ -45,3 +45,15 @@ jobs:
           cd util-go
           golangci-lint fmt
           git diff --exit-code
+
+      - name: Run golangci-lint fmt check (db_backup)
+        run: |
+          cd db_backup
+          golangci-lint fmt
+          git diff --exit-code
+
+      - name: Run golangci-lint fmt check (cloudflare_limit_notifier)
+        run: |
+          cd cloudflare_limit_notifier
+          golangci-lint fmt
+          git diff --exit-code
