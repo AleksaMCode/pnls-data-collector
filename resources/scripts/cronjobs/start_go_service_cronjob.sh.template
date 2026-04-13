@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eu
+
+# Use this to run any Go service in this project.
+
+# Abs path to project dir
+PROJECT_DIR="go_service_abs_path"
+
+cd "$PROJECT_DIR" || exit 1
+
+. "${PROJECT_DIR}/common.sh"
+wait_for_network "cern.ch" 5
+
+go run .
