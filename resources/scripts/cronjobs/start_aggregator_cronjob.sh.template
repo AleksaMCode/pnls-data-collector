@@ -1,0 +1,16 @@
+#!/bin/bash
+set -eu
+
+# Directory where this script file lives (not the current working directory)
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# Source helper next to this script
+. "${SCRIPT_DIR}/common.sh"
+
+# Abs path to project dir
+PROJECT_DIR="PROJECT_DIR"
+cd "$PROJECT_DIR" || exit 1
+
+wait_for_network "cern.ch" 5
+
+source aggregator/.venv/bin/activate
+python3 -m aggregator.aggregator
