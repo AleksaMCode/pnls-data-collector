@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import firebase_admin
 from firebase_admin import credentials, db
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import before_sleep_log, retry, stop_after_attempt, wait_exponential
 from yaspin import yaspin
 
 from firebase_housekeeping.settings import (
@@ -76,7 +76,11 @@ def delete_all_by_smallest_nodes():
 
 
 @yaspin("Deleting Firebase data by entry nodes...")
-@retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=1, min=30, max=90))
+@retry(
+    stop=stop_after_attempt(10),
+    wait=wait_exponential(multiplier=1, min=30, max=90),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+)
 def delete_all_by_entry_nodes():
     """
     Deletes data at an intermediate level:
@@ -115,18 +119,23 @@ def delete_all_by_entry_nodes():
                 logging.info(f"Bulk delete successful for '{second_path}")
                 deleted_nodes += 1
                 continue
-            except Exception as exc:
+            except Exception as e:
                 logger.warning(
-                    f"Bulk delete failed for '{second_path}'. Falling back to entry-level delete. Error: {exc}"
+                    f"Bulk delete failed for '{second_path}'. Falling back to entry-level delete. Error: {e}"
                 )
-
-            if isinstance(entry_nodes, dict) and entry_nodes:
-                for entry_key in entry_nodes.keys():
-                    db.reference(f"{second_path}/{entry_key}").delete()
+            try:
+                if isinstance(entry_nodes, dict) and entry_nodes:
+                    for entry_key in entry_nodes.keys():
+                        db.reference(f"{second_path}/{entry_key}").delete()
+                        deleted_nodes += 1
+                else:
+                    db.reference(second_path).delete()
                     deleted_nodes += 1
-            else:
-                db.reference(second_path).delete()
-                deleted_nodes += 1
+            except Exception as e:
+                logger.warning(
+                    f"Fallback for entry-level delete failed for '{second_path}'. Error: {e}"
+                )
+                raise
 
     logger.info(f"Deleted {deleted_nodes} Firebase entry nodes.")
 
