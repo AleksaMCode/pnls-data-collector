@@ -1,4 +1,5 @@
 import logging
+import os
 from collections import defaultdict
 
 import firebase_admin
@@ -14,6 +15,10 @@ from firebase_housekeeping.settings import (
 from util.core.orm.models import Device
 from util.logger import get_logger
 from util.util import extract_device_name
+
+# Fix for pipeline.
+if os.getenv("ENV") != "test":
+    from tqdm import tqdm
 
 logger = get_logger(__name__)
 
@@ -125,9 +130,13 @@ def delete_all_by_entry_nodes():
                 )
             try:
                 if isinstance(entry_nodes, dict) and entry_nodes:
-                    for entry_key in entry_nodes.keys():
+                    for entry_key in tqdm(
+                        entry_nodes.keys(), desc="Deleting records", unit="record"
+                    ):
                         db.reference(f"{second_path}/{entry_key}").delete()
                         deleted_nodes += 1
+
+                    logging.info(f"Entry-level delete successful for '{entry_nodes}")
                 else:
                     db.reference(second_path).delete()
                     deleted_nodes += 1
