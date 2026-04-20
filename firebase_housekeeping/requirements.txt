@@ -7,3 +7,4 @@ yaspin
 pymongo
 python-dotenv
 SQLAlchemy
+tqdm
