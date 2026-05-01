@@ -514,6 +514,37 @@ export async function fetchManufacturersData() {
   }
 }
 
+export async function fetchSankeyData() {
+  const db = getFirebaseDb();
+
+  try {
+    const snapshot = await get(ref(db, 'stats/sankey'));
+
+    if (!snapshot.exists()) {
+      return {};
+    }
+
+    const sankeyData = {};
+
+    snapshot.forEach((deviceSnap) => {
+      const deviceKey = deviceSnap.key ?? '';
+      sankeyData[deviceKey] = {};
+
+      deviceSnap.forEach((manufacturerSnap) => {
+        const manufacturerData = manufacturerSnap.val() || {};
+        sankeyData[deviceKey][manufacturerSnap.key ?? ''] = {
+          country: manufacturerData.country ?? null,
+        };
+      });
+    });
+
+    return sankeyData;
+  } catch (error) {
+    console.error('Failed to fetch sankey data:', error);
+    throw error;
+  }
+}
+
 export async function subscribeToLiveProbeRequestCount(devices, callback) {
   const db = getFirebaseDb();
 
