@@ -1,3 +1,11 @@
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   columns as defaultColumns,
@@ -5,6 +13,7 @@ import {
 } from '../../internals/data/gridData';
 import { useEffect, useState } from 'react';
 import { fetchDeviceOnlineStatus } from '../../firebase/firebase';
+import CustomSankeyDiagram from './CustomSankeyDiagram';
 
 function getWorkingStatus(status) {
   const now = new Date();
@@ -23,9 +32,12 @@ function getWorkingStatus(status) {
 export default function CustomizedDataGrid({
   totalsPerDeviceData,
   probeSeries,
+  sankeyData,
 }) {
   const [rows, setRows] = useState(defaultRows);
   const [onlineStatus, setOnlineStatus] = useState({});
+  const [isSankeyExpanded, setIsSankeyExpanded] = useState(false);
+  const [showExpandTooltip, setShowExpandTooltip] = useState(false);
 
   useEffect(() => {
     if (!totalsPerDeviceData || !probeSeries) return;
@@ -82,45 +94,83 @@ export default function CustomizedDataGrid({
   }, []);
 
   return (
-    <DataGrid
-      checkboxSelection={false}
-      rows={rows}
-      columns={defaultColumns}
-      getRowClassName={(params) =>
-        params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-      }
-      initialState={{
-        pagination: { paginationModel: { pageSize: 20 } },
-      }}
-      pageSizeOptions={[10, 20, 50]}
-      disableColumnResize
-      density="compact"
-      slotProps={{
-        filterPanel: {
-          filterFormProps: {
-            logicOperatorInputProps: {
-              variant: 'outlined',
-              size: 'small',
-            },
-            columnInputProps: {
-              variant: 'outlined',
-              size: 'small',
-              sx: { mt: 'auto' },
-            },
-            operatorInputProps: {
-              variant: 'outlined',
-              size: 'small',
-              sx: { mt: 'auto' },
-            },
-            valueInputProps: {
-              InputComponentProps: {
+    <Box>
+      <DataGrid
+        checkboxSelection={false}
+        rows={rows}
+        columns={defaultColumns}
+        getRowClassName={(params) =>
+          params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+        }
+        initialState={{
+          pagination: { paginationModel: { pageSize: 20 } },
+        }}
+        pageSizeOptions={[10, 20, 50]}
+        disableColumnResize
+        density="compact"
+        slotProps={{
+          filterPanel: {
+            filterFormProps: {
+              logicOperatorInputProps: {
                 variant: 'outlined',
                 size: 'small',
               },
+              columnInputProps: {
+                variant: 'outlined',
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              operatorInputProps: {
+                variant: 'outlined',
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              valueInputProps: {
+                InputComponentProps: {
+                  variant: 'outlined',
+                  size: 'small',
+                },
+              },
             },
           },
-        },
-      }}
-    />
+        }}
+      />
+
+      <Accordion
+        sx={{ mt: 2 }}
+        expanded={isSankeyExpanded}
+        onChange={(_, expanded) => {
+          setIsSankeyExpanded(expanded);
+          setShowExpandTooltip(false);
+        }}
+      >
+        <Tooltip
+          title="Click to expand and see the Sankey diagram"
+          arrow
+          open={!isSankeyExpanded && showExpandTooltip}
+          onOpen={() => setShowExpandTooltip(true)}
+          onClose={() => setShowExpandTooltip(false)}
+          disableHoverListener={isSankeyExpanded}
+          disableFocusListener
+          disableTouchListener
+          disableInteractive
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle2">
+              Device to Manufacturer to Country (Sankey)
+            </Typography>
+          </AccordionSummary>
+        </Tooltip>
+        <AccordionDetails>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            This Sankey view shows only the top 20 manufacturers from each
+            device.
+          </Typography>
+          <Paper sx={{ p: 2 }}>
+            <CustomSankeyDiagram sankeyData={sankeyData} />
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
+    </Box>
   );
 }

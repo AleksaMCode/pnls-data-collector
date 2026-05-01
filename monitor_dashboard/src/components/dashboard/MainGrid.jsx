@@ -13,6 +13,7 @@ import {
   fetchManufacturersData,
   fetchLast30DaysTotalsWithSeries,
   fetchPrevious30DaysTotals,
+  fetchSankeyData,
   fetchTotalPerDeviceStats,
   fetchTotalStats,
   fetchProbeRequestsPerDeviceLastNDays,
@@ -100,6 +101,7 @@ export default function MainGrid() {
   const [totalDataSeriesDates, setTotalDataSeriesDates] = useState(null);
   const [perDeviceTotalData, setPerDeviceTotalData] = useState(null);
   const [probeSeriesPerDevice, setProbeSeriesPerDevice] = useState(null);
+  const [sankeyData, setSankeyData] = useState({});
   const [isLoadingTotalStats, setIsLoadingTotalStats] = useState(true);
   const [manufacturers, setManufacturers] = useState([]);
 
@@ -222,6 +224,19 @@ export default function MainGrid() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const data = await fetchSankeyData();
+        setSankeyData(data);
+      } catch (err) {
+        console.error('Failed to fetch sankey data:', err);
+      }
+    }
+
+    fetchData();
+  }, []);
+
   return (
     <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
       {/* cards */}
@@ -295,11 +310,13 @@ export default function MainGrid() {
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Devices
       </Typography>
+
       <Grid container spacing={2} columns={3}>
         <Grid size={{ xs: 12, lg: 3 }}>
           <CustomizedDataGrid
             totalsPerDeviceData={perDeviceTotalData}
             probeSeries={probeSeriesPerDevice}
+            sankeyData={sankeyData}
           />
         </Grid>
       </Grid>

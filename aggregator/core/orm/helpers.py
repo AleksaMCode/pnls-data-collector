@@ -8,6 +8,7 @@ from tqdm import tqdm
 from yaspin import yaspin
 
 from aggregator import settings, util
+from util.core.orm.models import Device
 from util.logger import get_logger
 
 from ...settings import TIMEZONE
@@ -20,6 +21,7 @@ from .models import (
     SSID,
     CapturedInfo,
     CompanyCaptureSummary,
+    CompanyCaptureSummaryByDevice,
     DailyCapturedPerDevice,
     IEEEMacOuiView,
     IEEERegistry,
@@ -103,6 +105,24 @@ def get_all_data_from_company_capture_summary(
             db.query(CompanyCaptureSummary)
             .filter(CompanyCaptureSummary.percentage >= min_percentage)
             .filter(CompanyCaptureSummary.company != "Private")
+            .all()
+        )
+
+
+def get_all_data_from_company_capture_summary_by_device(
+    device: Device, min_percentage: float = 0.001, limit: int = 20
+) -> list[CompanyCaptureSummaryByDevice]:
+    logger.info(
+        f"Getting top 20 company capture summary data for {device.value} with {min_percentage}% minimum percentage filter."
+    )
+    with _session() as db:
+        return (
+            db.query(CompanyCaptureSummaryByDevice)
+            .filter(CompanyCaptureSummaryByDevice.device == device.value)
+            .filter(CompanyCaptureSummaryByDevice.percentage >= min_percentage)
+            .filter(CompanyCaptureSummaryByDevice.company != "Private")
+            .order_by(desc(CompanyCaptureSummaryByDevice.total_occurrences))
+            .limit(limit)
             .all()
         )
 

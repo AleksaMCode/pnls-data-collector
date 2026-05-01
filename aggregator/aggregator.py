@@ -6,6 +6,7 @@ from aggregator.core.firebase.helpers import (
     fetch_all_data,
     fetch_data,
     publish_manufacturers_data,
+    publish_sankey_data,
     publish_stats_data,
 )
 
@@ -49,6 +50,7 @@ def transfer_data(import_date: date, manual_import=False):
     )
     stats = publish_stats_data()
     publish_manufacturers_data()
+    publish_sankey_data()
     # Publish message to Mattermost.
     try:
         publish_to_channel(stats, count, import_date if manual_import else None)
