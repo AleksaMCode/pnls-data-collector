@@ -7,6 +7,7 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -160,3 +161,15 @@ class IEEEMacOuiView(Base):
     org = Column(String)
     # country not need for now, can be added later if needed
     # country = Column(String)
+
+
+class CompanyCaptureSummary(Base):
+    __tablename__ = "company_capture_summary"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    company = Column(String, primary_key=True)
+    country = Column(String, primary_key=True, nullable=True)
+    country_alpha3 = Column(String(3), primary_key=True, nullable=True)
+    total_occurrences = Column(Integer, nullable=False)
+    percentage = Column(Float, nullable=False)
