@@ -9,6 +9,7 @@ from tqdm import tqdm
 from yaspin import yaspin
 
 from aggregator.core.orm.helpers import (
+    get_all_data_from_company_capture_summary,
     get_today_data_from_daily_captured_stats_per_device,
     get_total_captured_info_count,
     get_total_captured_mac_count,
@@ -172,6 +173,34 @@ def publish_stats_data():
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
 
 
+@yaspin(text="Publishing manufacturers data to Firebase...")
+def publish_manufacturers_data():
+    manufacturer_data = get_all_data_from_company_capture_summary()
+
+    try:
+        for manufacturer in manufacturer_data:
+            key = manufacturer.company
+            # Skip devices marked with Private company for MAC E4F14C. This isn't a real company.
+            # TODO: Maybe exclude this from the final results as it affects the total percentage (although not significantly).
+            if key == "Private":
+                continue
+            # From docs: https://firebase.google.com/docs/database/admin/structure-data#how_data_is_structured_its_a_json_tree
+            for invalid_char in [".", "$", "#", "[", "]", "/"]:
+                key = key.replace(invalid_char, " ")
+
+            db.reference(f"/{FIREBASE_STATISTICS_NODE}/manufacturers/{key}").update(
+                {
+                    "country": manufacturer.country_alpha3,
+                    "count": manufacturer.total_occurrences,
+                    "percentage": manufacturer.percentage,
+                }
+            )
+        logger.info("Published manufacturers data to Firebase.")
+        return manufacturer_data
+    except Exception as e:
+        logger.error(f"Publishing manufacturers data to Firebase failed: {str(e)}")
+
+
 @yaspin("Deleting all data from Firebase...")
 def delete_all():
     ref = db.reference("/")
@@ -184,6 +213,13 @@ def delete_stats():
     ref = db.reference("/stats")
     ref.delete()
     logger.info("Deleted all data from Firebase.")
+
+
+@yaspin("Deleting manufacturers data from Firebase...")
+def delete_manufacturers():
+    ref = db.reference(f"/{FIREBASE_STATISTICS_NODE}/manufacturers")
+    ref.delete()
+    logger.info("Deleted manufacturers data from Firebase.")
 
 
 def download_today() -> dict:
