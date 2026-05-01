@@ -261,7 +261,7 @@ ORDER BY total_occurrences DESC;
 SELECT SUM(seen_count) AS total_mac_occurrences
 FROM mac_with_org_resolved;
 
--- GEO mapping changes
+-- GEO mapping changes (#208)
 ALTER TABLE SSID
 ADD mapped BOOLEAN DEFAULT FALSE;
 ADD has_geo BOOLEAN DEFAULT FALSE;
@@ -325,3 +325,28 @@ WITH RankedEntries AS (
 SELECT ssid, mac, location, timestamp
 FROM RankedEntries
 WHERE rn = 1;
+
+-- Update the view of device's manufacturer
+DROP VIEW company_capture_summary;
+CREATE VIEW company_capture_summary AS
+SELECT
+    org.name AS company,
+    c.name AS country,
+    c.alpha3 AS country_alpha3,
+    COUNT(ci.id) AS total_occurrences,
+    ROUND(
+        100.0 * COUNT(ci.id) / SUM(COUNT(ci.id)) OVER (),
+        4
+    ) AS percentage
+FROM mac m
+JOIN captured_info ci
+    ON ci.mac = m.id
+JOIN ieee_mac_oui oui
+    ON m.oui = oui.id
+JOIN ieee_mac_oui_org org
+    ON oui.org = org.id
+LEFT JOIN country c
+    ON org.country = c.id
+WHERE m.uaa = TRUE
+GROUP BY org.name, c.name, c.alpha3
+ORDER BY total_occurrences DESC;
