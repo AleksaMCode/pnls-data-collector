@@ -350,3 +350,30 @@ LEFT JOIN country c
 WHERE m.uaa = TRUE
 GROUP BY org.name, c.name, c.alpha3
 ORDER BY total_occurrences DESC;
+
+CREATE OR REPLACE VIEW company_capture_summary_by_device AS
+SELECT
+    lm.device AS device,
+    org.name AS company,
+    c.name AS country,
+    c.alpha3 AS country_alpha3,
+    COUNT(ci.id) AS total_occurrences,
+    ROUND(
+        100.0 * COUNT(ci.id) / SUM(COUNT(ci.id)) OVER (PARTITION BY lm.device),
+        4
+    ) AS percentage
+FROM mac m
+JOIN captured_info ci
+    ON ci.mac = m.id
+JOIN location_mapping lm
+    ON ci.location = lm.location_id
+JOIN ieee_mac_oui oui
+    ON m.oui = oui.id
+JOIN ieee_mac_oui_org org
+    ON oui.org = org.id
+LEFT JOIN country c
+    ON org.country = c.id
+WHERE
+    m.uaa = TRUE
+GROUP BY lm.device, org.name, c.name, c.alpha3
+ORDER BY lm.device, total_occurrences DESC;
