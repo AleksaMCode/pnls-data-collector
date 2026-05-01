@@ -146,9 +146,11 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
                     .trim();
                   const count = countryCounts[normalizedAlpha3] ?? 0;
                   const hasData = count > 0;
+                      const geographyKey =
+                        `${geo.rsmKey ?? 'rsm'}-${geo.id ?? 'noid'}-${normalizedAlpha3 || 'geo'}-${index}`;
                   return (
                     <Geography
-                      key={geo.rsmKey}
+                          key={geographyKey}
                       geography={geo}
                       fill={hasData ? '#0b57adff' : '#F5F5F5'}
                       stroke="#90CAF9"
