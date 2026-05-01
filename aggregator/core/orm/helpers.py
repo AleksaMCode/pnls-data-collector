@@ -19,7 +19,7 @@ from .models import (
     MAC,
     SSID,
     CapturedInfo,
-    Country,
+    CompanyCaptureSummary,
     DailyCapturedPerDevice,
     IEEEMacOuiView,
     IEEERegistry,
@@ -86,6 +86,20 @@ def get_today_data_from_daily_captured_stats_per_device(
         return (
             db.query(DailyCapturedPerDevice)
             .filter(DailyCapturedPerDevice.date == today)
+            .all()
+        )
+
+
+def get_all_data_from_company_capture_summary(
+    min_percentage: float = 0.0010,
+) -> list[CompanyCaptureSummary]:
+    logger.info(
+        "Getting all data from company capture summary with minimum percentage filter."
+    )
+    with _session() as db:
+        return (
+            db.query(CompanyCaptureSummary)
+            .filter(CompanyCaptureSummary.percentage >= min_percentage)
             .all()
         )
 
