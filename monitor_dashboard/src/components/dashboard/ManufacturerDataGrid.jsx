@@ -1,4 +1,12 @@
 import { DataGrid } from '@mui/x-data-grid';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { useMemo } from 'react';
+
+const WORLD_TOPOLOGY_URL =
+  'https://raw.githubusercontent.com/subyfly/topojson/refs/heads/master/world-countries.json';
 
 const columns = [
   {
@@ -45,26 +53,86 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
     percentage: Number(manufacturer.percentage ?? 0),
   }));
 
+  const countryCounts = useMemo(() => {
+    const acc = {};
+
+    for (const row of rows) {
+      const code = row.country?.toUpperCase().trim();
+      if (!code) continue;
+
+      acc[code] = (acc[code] ?? 0) + Number(row.count ?? 0);
+    }
+
+    return acc;
+  }, [rows]);
+
   return (
-    <DataGrid
-      rows={rows}
-      columns={columns}
-      disableRowSelectionOnClick
-      initialState={{
-        pagination: { paginationModel: { pageSize: 5 } },
-      }}
-      pageSizeOptions={[5, 10, 20]}
-      getRowClassName={(params) =>
-        params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-      }
-      sx={{
-        '& .MuiDataGrid-row': {
-          backgroundColor: 'common.white',
-        },
-        '& .MuiDataGrid-row:hover': {
-          backgroundColor: 'primary.50',
-        },
-      }}
-    />
+    <Box>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        disableRowSelectionOnClick
+        initialState={{
+          pagination: { paginationModel: { pageSize: 5 } },
+        }}
+        pageSizeOptions={[5, 10, 20]}
+        getRowClassName={(params) =>
+          params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+        }
+        sx={{
+          '& .MuiDataGrid-row': {
+            backgroundColor: 'common.white',
+          },
+          '& .MuiDataGrid-row:hover': {
+            backgroundColor: 'primary.50',
+          },
+        }}
+      />
+
+      <Paper sx={{ mt: 2, p: 2 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          Manufacturer data by country (world map)
+        </Typography>
+        <ComposableMap
+          projection="geoMercator"
+          projectionConfig={{
+            scale: 130,
+            center: [0, 20],
+          }}
+          style={{ width: '100%', height: 'auto' }}
+        >
+          <Geographies geography={WORLD_TOPOLOGY_URL}>
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const alpha3 = geo.properties.ISO_A3 ?? geo.id;
+                const count = countryCounts[alpha3] ?? 0;
+                const hasData = count > 0;
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill={hasData ? '#0b57adff' : '#F5F5F5'}
+                    stroke="#90CAF9"
+                    strokeWidth={0.4}
+                    style={{
+                      default: { outline: 'none' },
+                      hover: {
+                        fill: '#1E88E5',
+                        outline: 'none',
+                        cursor: 'pointer',
+                      },
+                    }}
+                  >
+                    <title>
+                      {`${geo.properties.name ?? geo.properties.NAME ?? geo.properties.ADMIN ?? 'Unknown'}: ${count.toLocaleString()}`}
+                    </title>
+                  </Geography>
+                );
+              })
+            }
+          </Geographies>
+        </ComposableMap>
+      </Paper>
+    </Box>
   );
 }
