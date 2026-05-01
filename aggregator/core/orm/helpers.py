@@ -91,15 +91,18 @@ def get_today_data_from_daily_captured_stats_per_device(
 
 
 def get_all_data_from_company_capture_summary(
-    min_percentage: float = 0.0010,
+    min_percentage: float = 0.001,
 ) -> list[CompanyCaptureSummary]:
     logger.info(
         f"Getting all data from company capture summary with {min_percentage}% minimum percentage filter."
     )
+    # Skip devices marked with Private company for MAC E4F14C. This isn't a real company.
+    # TODO: Maybe exclude this from the final results as it affects the total percentage (although not significantly).
     with _session() as db:
         return (
             db.query(CompanyCaptureSummary)
             .filter(CompanyCaptureSummary.percentage >= min_percentage)
+            .filter(CompanyCaptureSummary.company != "Private")
             .all()
         )
 
