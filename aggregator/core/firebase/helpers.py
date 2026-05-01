@@ -215,6 +215,13 @@ def delete_stats():
     logger.info("Deleted all data from Firebase.")
 
 
+@yaspin("Deleting manufacturers data from Firebase...")
+def delete_manufacturers():
+    ref = db.reference(f"/{FIREBASE_STATISTICS_NODE}/manufacturers")
+    ref.delete()
+    logger.info("Deleted manufacturers data from Firebase.")
+
+
 def download_today() -> dict:
     """
     Downloads data from Firebase that was stored today.
