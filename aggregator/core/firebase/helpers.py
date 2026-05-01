@@ -180,6 +180,10 @@ def publish_manufacturers_data():
     try:
         for manufacturer in manufacturer_data:
             key = manufacturer.company
+            # Skip devices marked with Private company for MAC E4F14C. This isn't a real company.
+            # TODO: Maybe exclude this from the final results as it affects the total percentage (although not significantly).
+            if key == "Private":
+                continue
             # From docs: https://firebase.google.com/docs/database/admin/structure-data#how_data_is_structured_its_a_json_tree
             for invalid_char in [".", "$", "#", "[", "]", "/"]:
                 key = key.replace(invalid_char, " ")
