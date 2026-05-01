@@ -94,7 +94,7 @@ def get_all_data_from_company_capture_summary(
     min_percentage: float = 0.0010,
 ) -> list[CompanyCaptureSummary]:
     logger.info(
-        "Getting all data from company capture summary with minimum percentage filter."
+        f"Getting all data from company capture summary with {min_percentage}% minimum percentage filter."
     )
     with _session() as db:
         return (
