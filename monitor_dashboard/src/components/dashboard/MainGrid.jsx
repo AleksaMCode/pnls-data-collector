@@ -2,6 +2,7 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CustomizedDataGrid from './CustomizedDataGrid';
+import ManufacturerDataGrid from './ManufacturerDataGrid';
 import HighlightedCard from './HighlightedCard';
 import CapturedDataBarChart from './CapturedDataBarChart';
 import SessionsChart from './SessionsChart';
@@ -9,6 +10,7 @@ import StatCard from './StatCard';
 import { useEffect, useState } from 'react';
 import {
   fetchAllDataSeries,
+  fetchManufacturersData,
   fetchLast30DaysTotalsWithSeries,
   fetchPrevious30DaysTotals,
   fetchTotalPerDeviceStats,
@@ -99,6 +101,7 @@ export default function MainGrid() {
   const [perDeviceTotalData, setPerDeviceTotalData] = useState(null);
   const [probeSeriesPerDevice, setProbeSeriesPerDevice] = useState(null);
   const [isLoadingTotalStats, setIsLoadingTotalStats] = useState(true);
+  const [manufacturers, setManufacturers] = useState([]);
 
   useEffect(() => {
     fetchProbeRequestsPerDeviceLastNDays(30)
@@ -203,6 +206,22 @@ export default function MainGrid() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const manufacturersData = await fetchManufacturersData();
+        const sortedData = [...manufacturersData].sort(
+          (a, b) => Number(b.count ?? 0) - Number(a.count ?? 0),
+        );
+        setManufacturers(sortedData);
+      } catch (err) {
+        console.error('Failed to fetch manufacturers data:', err);
+      }
+    }
+
+    fetchData();
+  }, []);
+
   return (
     <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
       {/* cards */}
@@ -253,6 +272,24 @@ export default function MainGrid() {
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <MultiSeriesRadarChart totalsPerDeviceData={perDeviceTotalData} />
+        </Grid>
+      </Grid>
+      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
+        Manufacturer data
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Based on the MAC addresses of devices captured at CERN, the following
+        represents the manufacturers most frequently observed among the recorded
+        devices.
+      </Typography>
+      <Grid
+        container
+        spacing={2}
+        columns={12}
+        sx={{ mb: (theme) => theme.spacing(2) }}
+      >
+        <Grid size={{ xs: 12 }}>
+          <ManufacturerDataGrid manufacturers={manufacturers} />
         </Grid>
       </Grid>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>

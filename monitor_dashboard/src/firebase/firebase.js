@@ -483,6 +483,37 @@ export async function fetchTotalStats() {
   }
 }
 
+export async function fetchManufacturersData() {
+  const db = getFirebaseDb();
+
+  try {
+    const snapshot = await get(ref(db, 'stats/manufacturers'));
+
+    if (!snapshot.exists()) {
+      return [];
+    }
+
+    const manufacturers = [];
+    snapshot.forEach((companySnap) => {
+      const companyData = companySnap.val() || {};
+      manufacturers.push({
+        company: companySnap.key ?? '',
+        country: companyData.country ?? null,
+        count: Number(companyData.count ?? 0),
+        // Backward-compatible with older typo key.
+        percentage: Number(
+          companyData.percentage ?? companyData.percetage ?? 0,
+        ),
+      });
+    });
+
+    return manufacturers;
+  } catch (error) {
+    console.error('Failed to fetch manufacturers data:', error);
+    throw error;
+  }
+}
+
 export async function subscribeToLiveProbeRequestCount(devices, callback) {
   const db = getFirebaseDb();
 
