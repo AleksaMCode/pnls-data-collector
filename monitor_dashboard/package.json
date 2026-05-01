@@ -19,6 +19,7 @@
     "@mui/x-date-pickers": "^8.24.0",
     "@mui/x-tree-view": "^8.24.0",
     "@react-spring/web": "^10.0.3",
+    "@vnedyalk0v/react19-simple-maps": "^2.0.7",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.19",
     "firebase": "^12.7.0",
