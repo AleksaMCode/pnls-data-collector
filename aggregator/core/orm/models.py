@@ -63,6 +63,8 @@ class Location(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     location = Column(String(50), unique=True, nullable=False)
     description = Column(String(255), nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     captures = relationship("CapturedInfo", back_populates="location_ref")
 
@@ -103,6 +105,16 @@ class LocationMapping(Base):
     location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
 
     location = relationship("Location")
+
+
+class LocationMappingResolved(Base):
+    __tablename__ = "location_mapping_resolved"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    device = Column(String, primary_key=True)
+    location = Column(String, nullable=False)
+    coordinates = Column(String, nullable=True)
 
 
 class DailyCapturedPerDevice(Base):

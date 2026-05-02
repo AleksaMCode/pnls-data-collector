@@ -27,6 +27,7 @@ from .models import (
     IEEERegistry,
     ImportsInfo,
     LocationMapping,
+    LocationMappingResolved,
 )
 
 logger = get_logger(__name__)
@@ -125,6 +126,12 @@ def get_all_data_from_company_capture_summary_by_device(
             .limit(limit)
             .all()
         )
+
+
+def get_all_data_from_location_mapping_resolved() -> list[LocationMappingResolved]:
+    logger.info("Getting all data from location mapping resolved.")
+    with _session() as db:
+        return db.query(LocationMappingResolved).all()
 
 
 def resolve_oui(session, mac: MAC):
