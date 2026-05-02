@@ -411,3 +411,30 @@ SELECT
 FROM location_mapping lm
 JOIN location l ON lm.location_id = l.id
 ORDER BY lm.device;
+
+-- Performance boost to daily_captured_per_device #246
+-- Original time was about 40 seconds, after optimization it was about 19 seconds
+-- Add a generated column for the date
+ALTER TABLE captured_info
+ADD COLUMN capture_date DATE GENERATED ALWAYS AS (DATE(timestamp)) STORED;
+
+-- Index it
+CREATE INDEX idx_captured_info_capture_date ON captured_info(capture_date);
+
+DROP VIEW daily_captured_per_device;
+CREATE VIEW daily_captured_per_device AS
+SELECT
+    c.capture_date AS date,
+    lm.device AS device,
+    COUNT(DISTINCT c.ssid) AS ssid,
+    COUNT(DISTINCT c.mac) AS mac,
+    COUNT(c.ssid) AS probe_request
+FROM captured_info c
+JOIN location_mapping lm
+    ON c.location = lm.location_id
+GROUP BY
+    c.capture_date,
+    lm.device
+ORDER BY
+    date,
+    device;
