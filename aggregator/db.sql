@@ -377,3 +377,37 @@ WHERE
     m.uaa = TRUE
 GROUP BY lm.device, org.name, c.name, c.alpha3
 ORDER BY lm.device, total_occurrences DESC;
+
+ALTER TABLE location
+ADD COLUMN latitude DOUBLE PRECISION,
+ADD COLUMN longitude DOUBLE PRECISION;
+
+UPDATE location
+SET
+    latitude = 46.23257940351152,
+    longitude = 6.045154364603783
+WHERE location = '31/R-009';
+
+UPDATE location
+SET
+    latitude = 46.231364501742455,
+    longitude = 6.054017985878448
+WHERE location = '62/R-001';
+
+UPDATE location
+SET
+    latitude = 46.231551592583266,
+    longitude = 6.054826626521773
+WHERE location = '61/R-202';
+
+CREATE OR REPLACE VIEW location_mapping_resolved AS
+SELECT
+    lm.device AS device,
+    CONCAT(l.description, ' (', l.location, ')') AS location,
+    CASE
+        WHEN l.latitude IS NULL OR l.longitude IS NULL THEN NULL
+        ELSE CONCAT(l.latitude, ',', l.longitude)
+    END AS coordinates
+FROM location_mapping lm
+JOIN location l ON lm.location_id = l.id
+ORDER BY lm.device;
