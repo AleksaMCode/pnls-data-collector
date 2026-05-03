@@ -35,6 +35,8 @@ def capture_traffic(status_thread: threading.Thread):
         iface=f"{INTERFACE}",
         prn=parse_ip_packet,
         store=False,
+        filter="type mgt subtype probe-req",
+        lfilter=lambda p: p.haslayer(Dot11ProbeReq),
     )
     sniffer.start()
     sniffer.join()
