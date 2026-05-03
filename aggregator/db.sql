@@ -438,3 +438,13 @@ GROUP BY
 ORDER BY
     date,
     device;
+
+CREATE OR REPLACE VIEW total_captured_per_device AS
+SELECT
+  device,
+  SUM(ssid)::BIGINT AS ssid,
+  SUM(mac)::BIGINT AS mac,
+  SUM(probe_request)::BIGINT AS probe_request
+FROM daily_captured_per_device
+GROUP BY device
+ORDER BY device;
