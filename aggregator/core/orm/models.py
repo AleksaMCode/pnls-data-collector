@@ -130,6 +130,17 @@ class DailyCapturedPerDevice(Base):
     mac = Column(Integer, nullable=False)
 
 
+class TotalCapturedPerDevice(Base):
+    __tablename__ = "total_captured_per_device"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    device = Column(String, primary_key=True)
+    ssid = Column(Integer, nullable=False)
+    probe_request = Column(Integer, nullable=False)
+    mac = Column(Integer, nullable=False)
+
+
 class Country(Base):
     __tablename__ = "country"
 

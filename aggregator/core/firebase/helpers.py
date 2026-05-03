@@ -12,6 +12,7 @@ from aggregator.core.orm.helpers import (
     get_all_data_from_company_capture_summary,
     get_all_data_from_company_capture_summary_by_device,
     get_all_data_from_location_mapping_resolved,
+    get_device_total_captured_data,
     get_today_data_from_daily_captured_stats_per_device,
     get_total_captured_info_count,
     get_total_captured_mac_count,
@@ -204,14 +205,16 @@ def publish_devices_data():
 
     try:
         for device_info in device_data:
-            key = device_info.device
-            for invalid_char in [".", "$", "#", "[", "]", "/"]:
-                key = key.replace(invalid_char, " ")
+            device = device_info.device
+            totals = get_device_total_captured_data(Device(device))
 
-            db.reference(f"/{FIREBASE_STATISTICS_NODE}/devices/{key}").update(
+            db.reference(f"/{FIREBASE_STATISTICS_NODE}/devices/{device}").update(
                 {
                     "location": device_info.location,
                     "coordinates": device_info.coordinates,
+                    "ssid": totals.ssid,
+                    "probes": totals.probe_request,
+                    "mac": totals.mac,
                 }
             )
         logger.info("Published devices data to Firebase.")
