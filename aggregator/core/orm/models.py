@@ -84,6 +84,9 @@ class CapturedInfo(Base):
     ssid = Column(Integer, ForeignKey("ssid.id"), nullable=False)
     mac = Column(Integer, ForeignKey("mac.id"), nullable=False)
     location = Column(Integer, ForeignKey("location.id"), nullable=False)
+    channel = Column(
+        Integer, ForeignKey("channels_2_4_wifi.id"), nullable=False, default=10
+    )
     timestamp = Column(DateTime, nullable=False)
 
     # __table_args__ = (
@@ -95,6 +98,16 @@ class CapturedInfo(Base):
     ssid_ref = relationship("SSID", back_populates="captures")
     mac_ref = relationship("MAC", back_populates="captures")
     location_ref = relationship("Location", back_populates="captures")
+
+
+class Channels24Wifi(Base):
+    __tablename__ = "channels_2_4_wifi"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    channel_number = Column(Integer, nullable=False)
+    lower_frequency = Column(Integer, nullable=False)
+    center_frequency = Column(Integer, nullable=False)
+    upper_frequency = Column(Integer, nullable=False)
 
 
 class LocationMapping(Base):
