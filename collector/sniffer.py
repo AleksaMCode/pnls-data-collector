@@ -1,38 +1,31 @@
 import subprocess
 import sys
 import threading
+import time
 from http.client import HTTPException
 from urllib.error import HTTPError
 
-import firebase_admin
-from firebase_admin import credentials
+from scapy.layers.dot11 import Dot11ProbeReq
 from scapy.sendrecv import AsyncSniffer
 from yaspin import yaspin
 
+import collector.wlan.helpers as wifi_helpers
+from collector.core.firebase.helpers import update_device_status
+from collector.settings import CHANNEL_HOP_INTERVAL, CHANNELS, FIREBASE_TIMEOUT_STATUS
+from collector.wlan.helpers import channel_hopper, check_interface_mode
+from collector.wlan.parser import parse_ip_packet
 from util.logger import get_logger
-
-from .parser import parse_ip_packet
-from .settings import FIREBASE_CREDENTIALS, FIREBASE_DB_URL, INTERFACES
-from .sniffer_status import send_status
 
 logger = get_logger(__name__)
 
-INTERFACE = ""
-
-# Init Firebase DB
-firebase_admin.initialize_app(
-    credentials.Certificate(FIREBASE_CREDENTIALS),
-    {"databaseURL": FIREBASE_DB_URL},
-)
-
 
 @yaspin(text="Capturing Probe Requests...")
-def capture_traffic(status_thread: threading.Thread):
+def capture_traffic():
     """
-    Captures Wi-Fi traffic and publish SSIDs and other information.
+    Captures Wi-Fi traffic and publishes SSIDs and other information.
     """
     sniffer = AsyncSniffer(
-        iface=f"{INTERFACE}",
+        iface=f"{wifi_helpers.INTERFACE}",
         prn=parse_ip_packet,
         store=False,
         filter="type mgt subtype probe-req",
@@ -40,38 +33,18 @@ def capture_traffic(status_thread: threading.Thread):
     )
     sniffer.start()
     sniffer.join()
-    status_thread.join()
 
 
-@yaspin(text="Checking interface mode...")
-def check_interface_mode():
+def send_status():
     """
-    Checks if the wireless interface has been set to the Monitor mode.
+    Updates device status by adding a new timestamp to Firebase Realtime DB.
     """
-    global INTERFACE
-    for default_interface in INTERFACES:
-        # Changed for #213
-        interface = f"{default_interface}mon"
+    while True:
         try:
-            interface_info = subprocess.run(
-                ["iwconfig", interface], capture_output=True, text=True
-            ).stdout
-
-            if "Mode:" in interface_info:
-                # Parse out only the interface mode.
-                interface_mode = interface_info.split("Mode:", 1)[1].split(" ", 1)[0]
-                if interface_mode.strip() == "Monitor":
-                    INTERFACE = interface
-                    logger.info(f"Interface `{interface}` is in Monitor mode.")
-                    return True
-                else:
-                    logger.warning(f"Interface `{interface}` not in Monitor mode.")
+            update_device_status()
+            time.sleep(FIREBASE_TIMEOUT_STATUS)
         except Exception as e:
-            logger.error(
-                f"An Exception occurred during checking interface mode - {str(e)}"
-            )
-
-    return False
+            logger.error(f"Firebase device status update failed: {str(e)}")
 
 
 def start():
