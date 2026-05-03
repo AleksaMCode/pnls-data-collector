@@ -82,11 +82,21 @@ def start():
     status_thread = threading.Thread(target=send_status, daemon=False)
     status_thread.start()
 
+    channel_hopper_thread = threading.Thread(
+        target=channel_hopper,
+        args=(wifi_helpers.INTERFACE, CHANNEL_HOP_INTERVAL, CHANNELS),
+        daemon=True,
+    )
+    channel_hopper_thread.start()
+    logger.info(
+        f"Started channel hopper thread for `{wifi_helpers.INTERFACE}` with {CHANNEL_HOP_INTERVAL * 1000} ms interval.",
+    )
+
     while True:
         try:
             logger.info("Start capturing packets from Wi-Fi traffic.")
             # Capture the Wi-Fi packets.
-            capture_traffic(status_thread)
+            capture_traffic()
         except (HTTPException, HTTPError) as e:
             logger.error(f"HTTP Exception: {str(e)}")
         except KeyboardInterrupt as e:
