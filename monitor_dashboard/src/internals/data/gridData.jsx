@@ -190,7 +190,7 @@ export const rows = [
     ssidCount: 8345,
     probeRequestCount: 212423,
     macCount: 18.5,
-    location: "Users Office's waiting room  (61/R-202)",
+    location: 'location-1',
     trend: [
       469172, 488506, 592287, 617401, 640374, 632751, 668638, 807246, 749198,
       944863, 911787, 844815, 992022, 1143838, 1446926, 1267886, 1362511,
@@ -206,7 +206,7 @@ export const rows = [
     ssidCount: 5653,
     probeRequestCount: 172240,
     macCount: 9.7,
-    location: 'CERN Community Support Centres',
+    location: 'location-2',
     trend: [
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 557488, 1341471, 2044561, 2206438,
@@ -220,7 +220,7 @@ export const rows = [
     ssidCount: 3455,
     probeRequestCount: 58240,
     macCount: 15.2,
-    location: "Stefan's office (31 R-009)",
+    location: 'location-3',
     // This is just placeholder data
     trend: [
       166896, 190041, 248686, 226746, 261744, 271890, 332176, 381123, 396435,

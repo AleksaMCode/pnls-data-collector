@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from 'react';
 import { fetchDeviceOnlineStatus } from '../../firebase/firebase';
 import CustomSankeyDiagram from './CustomSankeyDiagram';
+import DeviceHeatMap from './DeviceHeatMap';
 
 function getWorkingStatus(status) {
   const now = new Date();
@@ -37,6 +38,7 @@ export default function CustomizedDataGrid({
   const [rows, setRows] = useState(defaultRows);
   const [onlineStatus, setOnlineStatus] = useState({});
   const [isSankeyExpanded, setIsSankeyExpanded] = useState(false);
+  const [isHeatMapExpanded, setIsHeatMapExpanded] = useState(true);
   const [showExpandTooltip, setShowExpandTooltip] = useState(false);
 
   useEffect(() => {
@@ -63,6 +65,8 @@ export default function CustomizedDataGrid({
 
         macCount:
           totals?.mac != null ? totals.mac.toLocaleString() : row.macCount,
+
+        location: totals?.location ?? row.location,
 
         trend:
           Array.isArray(trendSeries) && trendSeries.length > 0
@@ -168,6 +172,29 @@ export default function CustomizedDataGrid({
           </Typography>
           <Paper sx={{ p: 2 }}>
             <CustomSankeyDiagram sankeyData={sankeyData} />
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion
+        sx={{ mt: 2 }}
+        expanded={isHeatMapExpanded}
+        onChange={(_, expanded) => {
+          setIsHeatMapExpanded(expanded);
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="subtitle2">
+            Device Heatmap (CERN Meyrin)
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Heat intensity reflects the total captured probe requests per
+            device.
+          </Typography>
+          <Paper sx={{ p: 2 }}>
+            <DeviceHeatMap totalsPerDeviceData={totalsPerDeviceData} />
           </Paper>
         </AccordionDetails>
       </Accordion>
