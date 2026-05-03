@@ -27,8 +27,8 @@ jobs:
             --include="*.ts" \
             --include="*.tsx" \
             .; then
-            echo "❌ console.log() found in monitor_dashboard."
+            echo "console.log() found in monitor_dashboard."
             exit 1
           else
-            echo "✅ No console.log() found."
+            echo "No console.log() found."
           fi

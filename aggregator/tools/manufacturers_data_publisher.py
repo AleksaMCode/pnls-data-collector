@@ -6,5 +6,4 @@ def publish_all_data():
 
 
 if __name__ == "__main__":
-    # To be used for bulk import
     publish_all_data()

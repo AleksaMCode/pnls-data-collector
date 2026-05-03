@@ -376,31 +376,26 @@ export async function fetchDeviceDataSeries(deviceName) {
 
 export async function fetchTotalPerDeviceStats() {
   const db = getFirebaseDb();
-  const dailyRef = ref(db, 'stats/daily'); // all dates
+  const devicesRef = ref(db, 'stats/devices');
 
-  const snapshot = await get(dailyRef);
-  if (!snapshot.exists()) return {};
+  const devicesSnapshot = await get(devicesRef);
 
   const totalsPerDevice = {};
 
-  snapshot.forEach((dateSnap) => {
-    dateSnap.forEach((deviceSnap) => {
-      const deviceName = deviceSnap.key; // e.g., "RPI-1"
+  if (devicesSnapshot.exists()) {
+    devicesSnapshot.forEach((deviceSnap) => {
+      const deviceName = deviceSnap.key;
       const data = deviceSnap.val() || {};
-
-      if (!totalsPerDevice[deviceName]) {
-        totalsPerDevice[deviceName] = {
-          mac: 0,
-          probe_requests: 0,
-          ssid: 0,
-        };
-      }
-
-      totalsPerDevice[deviceName].mac += data.mac ?? 0;
-      totalsPerDevice[deviceName].probe_requests += data.probe_requests ?? 0;
-      totalsPerDevice[deviceName].ssid += data.ssid ?? 0;
+      totalsPerDevice[deviceName] = {
+        mac: data.mac ?? 0,
+        // Backend publishes "probes" for stats/devices; keep UI key normalized.
+        probe_requests: data.probes ?? data.probe_requests ?? 0,
+        ssid: data.ssid ?? 0,
+        location: data.location ?? null,
+        coordinates: data.coordinates ?? null,
+      };
     });
-  });
+  }
 
   return totalsPerDevice;
 }

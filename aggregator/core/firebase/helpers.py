@@ -11,6 +11,8 @@ from yaspin import yaspin
 from aggregator.core.orm.helpers import (
     get_all_data_from_company_capture_summary,
     get_all_data_from_company_capture_summary_by_device,
+    get_all_data_from_location_mapping_resolved,
+    get_device_total_captured_data,
     get_today_data_from_daily_captured_stats_per_device,
     get_total_captured_info_count,
     get_total_captured_mac_count,
@@ -195,6 +197,29 @@ def publish_manufacturers_data():
         logger.info("Published manufacturers data to Firebase.")
     except Exception as e:
         logger.error(f"Publishing manufacturers data to Firebase failed: {str(e)}")
+
+
+@yaspin(text="Publishing device location data to Firebase...")
+def publish_devices_data():
+    device_data = get_all_data_from_location_mapping_resolved()
+
+    try:
+        for device_info in device_data:
+            device = device_info.device
+            totals = get_device_total_captured_data(Device(device))
+
+            db.reference(f"/{FIREBASE_STATISTICS_NODE}/devices/{device}").update(
+                {
+                    "location": device_info.location,
+                    "coordinates": device_info.coordinates,
+                    "ssid": totals.ssid,
+                    "probes": totals.probe_request,
+                    "mac": totals.mac,
+                }
+            )
+        logger.info("Published devices data to Firebase.")
+    except Exception as e:
+        logger.error(f"Publishing devices data to Firebase failed: {str(e)}")
 
 
 @yaspin(text="Publishing sankey data to Firebase...")

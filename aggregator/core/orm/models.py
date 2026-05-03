@@ -63,6 +63,8 @@ class Location(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     location = Column(String(50), unique=True, nullable=False)
     description = Column(String(255), nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     captures = relationship("CapturedInfo", back_populates="location_ref")
 
@@ -105,6 +107,16 @@ class LocationMapping(Base):
     location = relationship("Location")
 
 
+class LocationMappingResolved(Base):
+    __tablename__ = "location_mapping_resolved"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    device = Column(String, primary_key=True)
+    location = Column(String, nullable=False)
+    coordinates = Column(String, nullable=True)
+
+
 class DailyCapturedPerDevice(Base):
     __tablename__ = "daily_captured_per_device"
     __table_args__ = {"info": {"is_view": True}}
@@ -113,6 +125,17 @@ class DailyCapturedPerDevice(Base):
     date = Column(Date, primary_key=True)
     device = Column(String, primary_key=True)
 
+    ssid = Column(Integer, nullable=False)
+    probe_request = Column(Integer, nullable=False)
+    mac = Column(Integer, nullable=False)
+
+
+class TotalCapturedPerDevice(Base):
+    __tablename__ = "total_captured_per_device"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    device = Column(String, primary_key=True)
     ssid = Column(Integer, nullable=False)
     probe_request = Column(Integer, nullable=False)
     mac = Column(Integer, nullable=False)

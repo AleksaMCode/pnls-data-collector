@@ -22,11 +22,14 @@ from .models import (
     CapturedInfo,
     CompanyCaptureSummary,
     CompanyCaptureSummaryByDevice,
+    Country,
     DailyCapturedPerDevice,
     IEEEMacOuiView,
     IEEERegistry,
     ImportsInfo,
     LocationMapping,
+    LocationMappingResolved,
+    TotalCapturedPerDevice,
 )
 
 logger = get_logger(__name__)
@@ -124,6 +127,22 @@ def get_all_data_from_company_capture_summary_by_device(
             .order_by(desc(CompanyCaptureSummaryByDevice.total_occurrences))
             .limit(limit)
             .all()
+        )
+
+
+def get_all_data_from_location_mapping_resolved() -> list[LocationMappingResolved]:
+    logger.info("Getting all data from location mapping resolved.")
+    with _session() as db:
+        return db.query(LocationMappingResolved).all()
+
+
+def get_device_total_captured_data(device: Device) -> TotalCapturedPerDevice:
+    logger.info(f"Getting total captured data for device {device.value}.")
+    with _session() as db:
+        return (
+            db.query(TotalCapturedPerDevice)
+            .filter(TotalCapturedPerDevice.device == device.value)
+            .one_or_none()
         )
 
 
