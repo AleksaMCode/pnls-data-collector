@@ -40,7 +40,7 @@ def send_webhook_message(
     """
     data = {
         "text": message,
-        "username": bot_name,
+        "username": bot_name.value,
         "icon_url": BOT_ICON_URL_MAP.get(bot_name, DEFAULT_ICON_URL),
     }
 
