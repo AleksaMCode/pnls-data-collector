@@ -1,8 +1,10 @@
 import json
 import os
 import re
+from datetime import date
 
 from aggregator.core.orm.models import Country, IEEERegistry
+from util.mattermost.helpers import send_webhook_message
 from util.util import decrypt_data, load_rsa_key_from_file
 
 # Fix for pipeline. See #38
@@ -10,7 +12,6 @@ if os.getenv("ENV") != "test":
     from tqdm import tqdm
     from geopy import Nominatim
     from aggregator.settings import RSA_KEY_PATH, SLACK_WEBHOOK_URL
-    import requests
 
 from . import logger
 
@@ -46,27 +47,6 @@ def parse_data_local(file_name):
         )
 
 
-def send_webhook_message(message: str):
-    """
-    Sends a message to a Slack like app (Mattermost) via webhook.
-    """
-    data = {"text": message, "username": "Aggregator"}
-
-    response = requests.post(
-        SLACK_WEBHOOK_URL,
-        data=json.dumps(data),
-        headers={"Content-Type": "application/json"},
-        timeout=10,
-    )
-
-    if response.status_code != 200:
-        raise ValueError(
-            f"Request to Mattermost returned an error {response.status_code}, the response is:\n{response.text}"
-        )
-    else:
-        logger.info("Slack webhook message sent to Mattermost.")
-
-
 def get_country_id(session, address, user_agent="*"):
     """
     Use geopy to geocode the address and return country id from the DB.
@@ -100,3 +80,21 @@ def mac_to_oui_candidates(mac: str):
         IEEERegistry.MA_M: mac_normalized[:7],  # 28 bits
         IEEERegistry.MA_L: mac_normalized[:6],  # 24 bits
     }
+
+
+def publish_to_channel(data: dict, probe_req_count: int, import_date: date = None):
+    # This is tightly coupled with stats data from firebase#publish_stats_data.
+    first_line = (
+        "**Today's data has been aggregated.**\n"
+        if not import_date
+        else f"**Data imported for date '{import_date}'.**\n"
+    )
+
+    mattermost_msg = (
+        first_line
+        + f"(Captured Probe Requests: **{probe_req_count:,}**)\n"
+        + f"* Total captured probe requests: {data['total_count']:,}\n"
+        + f"* Total captured unique MAC addresses: {data['mac_count']:,}\n"
+        + f"* Total captured unique SSIDs: {data['ssid_count']:,}\n"
+    )
+    send_webhook_message(mattermost_msg, webhook=SLACK_WEBHOOK_URL)
