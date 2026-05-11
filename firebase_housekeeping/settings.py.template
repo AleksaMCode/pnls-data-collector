@@ -15,3 +15,6 @@ FIREBASE_CREDENTIALS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 FIREBASE_DB_URL = "firebase_db_url"
 
 FIREBASE_STATISTICS_NODE = "stats"
+
+# Project uses CERN's Mattermost
+SLACK_WEBHOOK_URL = "mattermost_webhook_url"

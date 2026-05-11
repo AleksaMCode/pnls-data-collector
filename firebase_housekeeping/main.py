@@ -13,8 +13,10 @@ from firebase_housekeeping.settings import (
     SERVICE_DESCRIPTION,
     SERVICE_NAME,
     SERVICE_VERSION,
+    SLACK_WEBHOOK_URL,
 )
 from util.logger import get_logger
+from util.mattermost.helpers import MattermostBot, send_webhook_message
 
 logger = get_logger(__name__)
 
@@ -45,9 +47,21 @@ app.add_middleware(
 @app.delete("/delete")
 async def delete_all():
     logger.info("Delete workflow started.")
+    send_webhook_message(
+        "Firebase delete workflow started.",
+        webhook=SLACK_WEBHOOK_URL,
+        bot_name=MattermostBot.HOUSEKEEPING,
+    )
+
     data = download_all()
     insert_from_firebase_to_mongo(data)
     delete_all_by_entry_nodes()
+
+    send_webhook_message(
+        "Firebase delete workflow completed.",
+        webhook=SLACK_WEBHOOK_URL,
+        bot_name=MattermostBot.HOUSEKEEPING,
+    )
     logger.info("Delete workflow completed.")
 
 
