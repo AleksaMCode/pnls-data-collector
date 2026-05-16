@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 import { useMemo } from 'react';
 
 function buildSankeyGraph(data) {
@@ -161,6 +162,10 @@ function layoutSankey(graph) {
 }
 
 export default function CustomSankeyDiagram({ sankeyData }) {
+  const theme = useTheme();
+  const labelColor = theme.vars
+    ? theme.vars.palette.text.primary
+    : theme.palette.text.primary;
   const sankeyGraph = useMemo(() => {
     if (!sankeyData || Object.keys(sankeyData).length === 0) {
       return { nodes: [], links: [] };
@@ -228,7 +233,7 @@ export default function CustomSankeyDiagram({ sankeyData }) {
               dominantBaseline="middle"
               textAnchor={node.layer === 2 ? 'end' : 'start'}
               fontSize="11"
-              fill="#424242"
+              fill={labelColor}
             >
               {node.label}
             </text>
