@@ -7,6 +7,7 @@ import Paper from '@mui/material/Paper';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { alpha, useTheme } from '@mui/material/styles';
 import {
   ComposableMap,
   Geographies,
@@ -59,6 +60,7 @@ const columns = [
 ];
 
 export default function ManufacturerDataGrid({ manufacturers = [] }) {
+  const theme = useTheme();
   const [worldGeography, setWorldGeography] = useState(null);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showExpandTooltip, setShowExpandTooltip] = useState(false);
@@ -83,6 +85,25 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
 
     return acc;
   }, [rows]);
+
+  const mapColors = {
+    withData:
+      theme.palette.mode === 'dark'
+        ? theme.palette.primary.light
+        : theme.palette.primary.main,
+    withoutData:
+      theme.palette.mode === 'dark'
+        ? alpha(theme.palette.common.white, 0.12)
+        : theme.palette.grey[100],
+    stroke:
+      theme.palette.mode === 'dark'
+        ? alpha(theme.palette.common.white, 0.28)
+        : theme.palette.divider,
+    hover:
+      theme.palette.mode === 'dark'
+        ? theme.palette.primary.main
+        : theme.palette.primary.dark,
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -112,9 +133,12 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
   return (
     <Box>
       <DataGrid
+        checkboxSelection={false}
         rows={rows}
         columns={columns}
         disableRowSelectionOnClick
+        disableColumnResize
+        // density="compact"
         initialState={{
           pagination: { paginationModel: { pageSize: 5 } },
         }}
@@ -122,12 +146,30 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
         getRowClassName={(params) =>
           params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
         }
-        sx={{
-          '& .MuiDataGrid-row': {
-            backgroundColor: 'common.white',
-          },
-          '& .MuiDataGrid-row:hover': {
-            backgroundColor: 'primary.50',
+        slotProps={{
+          filterPanel: {
+            filterFormProps: {
+              logicOperatorInputProps: {
+                variant: 'outlined',
+                size: 'small',
+              },
+              columnInputProps: {
+                variant: 'outlined',
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              operatorInputProps: {
+                variant: 'outlined',
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              valueInputProps: {
+                InputComponentProps: {
+                  variant: 'outlined',
+                  size: 'small',
+                },
+              },
+            },
           },
         }}
       />
@@ -185,13 +227,15 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
                         <Geography
                           key={`${geo.rsmKey ?? 'rsm'}-${geo.id ?? 'noid'}-${normalizedAlpha3 || 'geo'}-${index}`}
                           geography={geo}
-                          fill={hasData ? '#0b57adff' : '#F5F5F5'}
-                          stroke="#90CAF9"
+                          fill={
+                            hasData ? mapColors.withData : mapColors.withoutData
+                          }
+                          stroke={mapColors.stroke}
                           strokeWidth={0.4}
                           style={{
                             default: { outline: 'none' },
                             hover: {
-                              fill: '#1E88E5',
+                              fill: mapColors.hover,
                               outline: 'none',
                               cursor: 'pointer',
                             },
