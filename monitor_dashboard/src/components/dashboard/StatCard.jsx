@@ -33,8 +33,15 @@ function calculateTrend(value, prevValue, tolerance = 0.1) {
     percentChange * 100
   ).toFixed(1)}%`;
 
-  // Within tolerance → neutral
-  if (Math.abs(percentChange) < tolerance) {
+  if (percentChange > 0) {
+    return {
+      trend: 'up',
+      deltaPercent,
+    };
+  }
+
+  // Keep tolerance only for negative values.
+  if (percentChange < 0 && Math.abs(percentChange) < tolerance) {
     return {
       trend: 'neutral',
       deltaPercent,
@@ -42,7 +49,7 @@ function calculateTrend(value, prevValue, tolerance = 0.1) {
   }
 
   return {
-    trend: diff < 0 ? 'down' : 'up',
+    trend: percentChange < 0 ? 'down' : 'neutral',
     deltaPercent,
   };
 }
