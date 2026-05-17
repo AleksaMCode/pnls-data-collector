@@ -1,6 +1,7 @@
 import subprocess
 import time
 
+from scapy.layers.dot11 import Dot11Elt, RadioTap
 from yaspin import yaspin
 
 from collector.settings import INTERFACES
@@ -10,6 +11,22 @@ INTERFACE = ""
 logger = get_logger(__name__)
 # Current WLAN Channel for 2.4 GHz range.
 WLAN_CHANNEL = 1
+FREQ_TO_CHANNEL_24GHZ = {
+    2412: 1,
+    2417: 2,
+    2422: 3,
+    2427: 4,
+    2432: 5,
+    2437: 6,
+    2442: 7,
+    2447: 8,
+    2452: 9,
+    2457: 10,
+    2462: 11,
+    2467: 12,
+    2472: 13,
+    2484: 14,
+}
 
 
 @yaspin(text="Checking interface mode...")
@@ -45,7 +62,6 @@ def check_interface_mode():
 
 def _set_channel(interface: str, channel: int):
     global WLAN_CHANNEL
-    WLAN_CHANNEL = channel
     try:
         result = subprocess.run(
             ["iw", "dev", interface, "set", "channel", str(channel)],
@@ -54,8 +70,36 @@ def _set_channel(interface: str, channel: int):
         )
         if result.returncode != 0:
             logger.error(f"Failed to set channel {channel}: {result.stderr}")
+        else:
+            WLAN_CHANNEL = channel
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to set channel {channel} on {interface}: {e.stderr}")
+
+
+def extract_channel_from_packet(packet):
+    """
+    Extracts the 2.4 GHz WLAN channel directly from packet metadata.
+    """
+    # Radiotap is a metadata header the capture interface/driver adds to each sniffed 802.11 frame in monitor mode.
+    # It’s not Wi-Fi payload from the client; it’s capture metadata like RSSI, rate, flags, and often channel frequency.
+    if packet.haslayer(RadioTap):
+        radiotap = packet[RadioTap]
+        frequency = getattr(radiotap, "ChannelFrequency", None)
+        if isinstance(frequency, int):
+            channel = FREQ_TO_CHANNEL_24GHZ.get(frequency)
+            if channel:
+                return channel
+
+    # Dot11Elt are 802.11 information elements inside management frames.
+    # One of those elements is DS Parameter Set with ID = 3.
+    # DS Parameter Set carries the AP/client channel as a single byte (for 2.4GHz usage).
+    element = packet.getlayer(Dot11Elt)
+    while element is not None:
+        if getattr(element, "ID", None) == 3 and element.info:
+            return int(element.info[0])
+        element = element.payload.getlayer(Dot11Elt)
+
+    return None
 
 
 def channel_hopper(interface: str, interval: float, channels=range(1, 14)):

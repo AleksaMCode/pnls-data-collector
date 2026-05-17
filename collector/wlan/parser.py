@@ -41,7 +41,8 @@ def parse_ip_packet(packet):
             data = {
                 "mac": encrypt_data(RSA_KEY, packet.addr2),
                 "ssid": "*" if not ssid else ssid,
-                "channel": wifi_helpers.WLAN_CHANNEL,
+                "channel": wifi_helpers.extract_channel_from_packet(packet)
+                or wifi_helpers.WLAN_CHANNEL,
                 "timestamp": datetime.fromtimestamp(
                     float(packet.time), tz=ZoneInfo(TIMEZONE)
                 ).strftime(TIMESTAMP_FORMAT)[:-3],
