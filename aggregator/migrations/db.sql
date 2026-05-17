@@ -478,7 +478,7 @@ INSERT INTO channels_2_4_wifi (
 (13, 2461, 2472, 2483),
 (14, 2473, 2484, 2495);
 
--- Using default value10 for channels as all of the RPI devices capture on that channel.
+-- Using default value 10 for channels as all of the RPI devices capture on that channel.
 -- Default data is done for the old data, the new data will have its channel set.
 ALTER TABLE captured_info
 ADD COLUMN channel INTEGER NOT NULL DEFAULT 10 REFERENCES channels_2_4_wifi(id);

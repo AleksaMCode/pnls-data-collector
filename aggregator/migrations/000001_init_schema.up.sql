@@ -2,6 +2,7 @@
 -- Name: captured_info; Type: TABLE; Schema: public; Owner: -
 --
 
+-- Using default value 10 for channels as all of the RPI devices capture on that channel by default.
 CREATE TABLE public.captured_info (
     id integer NOT NULL,
     ssid integer NOT NULL,
