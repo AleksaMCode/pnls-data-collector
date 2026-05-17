@@ -102,6 +102,40 @@ def extract_channel_from_packet(packet):
     return None
 
 
+def extract_rssi_dbm_from_packet(packet):
+    if not packet.haslayer(RadioTap):
+        return None
+    rt = packet[RadioTap]
+    # Try common Radiotap RSSI attribute names
+    raw = (
+        getattr(rt, "dBm_AntSignal", None)
+        if getattr(rt, "dBm_AntSignal", None) is not None
+        else getattr(rt, "dBm_antsignal", None)
+    )
+    if raw is None:
+        return None
+
+    # Some drivers/scapy combos may expose unsigned byte (0..255).
+    # Convert to signed dBm if needed.
+    normalized = raw
+    if isinstance(normalized, int) and normalized > 127:
+        normalized -= 256
+
+    try:
+        rssi_dbm = int(normalized)
+    except (TypeError, ValueError):
+        logger.info(f"Discarded non-numeric RSSI value: raw={raw!r}")
+        return None
+
+    if -127 <= rssi_dbm <= 0:
+        return rssi_dbm
+
+    logger.debug(
+        f"Discarded out-of-range RSSI value: raw={raw!r}, normalized={rssi_dbm!r}"
+    )
+    return None
+
+
 def channel_hopper(interface: str, interval: float, channels=range(1, 14)):
     # FIXME: Consider only using, CHANNELS_24GHZ = [1, 6, 11], as they are non-overlapping channels and other will be included there.
     # This should allow for faster hopping on non-overlapping channels in monitor mode meaning more probe requests captured,
