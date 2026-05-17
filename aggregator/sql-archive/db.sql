@@ -1,3 +1,5 @@
+-- Legacy pre-migrate schema script; not used by migrate.
+
 CREATE DATABASE PNLS;
 
 -- Connect to PNLS
