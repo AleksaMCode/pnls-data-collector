@@ -3,12 +3,12 @@ import subprocess
 import time
 
 from scapy.layers.dot11 import Dot11Elt, RadioTap
+from yaspin import yaspin
 
 from util.logger import get_logger
 
 # Fix for pipeline. See #10
 if os.getenv("ENV") != "test":
-    from yaspin import yaspin
 
     from collector.settings import INTERFACES
 
