@@ -1,7 +1,7 @@
-import unittest
 import logging
 import sys
 import types
+import unittest
 
 from scapy.layers.dot11 import Dot11Elt, RadioTap
 
@@ -79,7 +79,9 @@ class TestExtractChannelFromPacket(unittest.TestCase):
         self.assertEqual(extract_channel_from_packet(packet), 6)
 
     def test_falls_back_to_ds_parameter_set(self):
-        packet = FakePacket(first_element=FakeDot11Element(element_id=3, info=bytes([11])))
+        packet = FakePacket(
+            first_element=FakeDot11Element(element_id=3, info=bytes([11]))
+        )
 
         self.assertEqual(extract_channel_from_packet(packet), 11)
 
