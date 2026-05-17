@@ -197,6 +197,7 @@ def import_data(
                 device_name = record.get("device")
                 ssid_str = util.clean_string(record.get("ssid"))
                 mac_str = record.get("mac")
+                channel = int(record.get("channel")) or 10
 
                 if mac_str in settings.MAC_FILTER:
                     continue
@@ -239,7 +240,11 @@ def import_data(
                 location_id = mapping.location_id
                 captured_records.append(
                     CapturedInfo(
-                        ssid=ssid_id, mac=mac_id, location=location_id, timestamp=ts
+                        ssid=ssid_id,
+                        mac=mac_id,
+                        location=location_id,
+                        channel=channel,
+                        timestamp=ts,
                     )
                 )
 

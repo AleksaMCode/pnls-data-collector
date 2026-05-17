@@ -3,6 +3,13 @@ import os
 # Test if WLAN1 is available first, only use WLAN0 as backup (only true for RPi devices)
 INTERFACES = ["wlan1", "wlan0"]
 
+# Channel hopping interval in seconds (100 ms)
+CHANNEL_HOP_INTERVAL = 0.1
+
+# 2.4 GHz Wi-Fi channel that are to be used in channel hopping.
+# FIXME: Channels 12 and 13 exist in some countries, but are rarely used in practice. Consider removing them.
+CHANNELS = range(1, 14)
+
 TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 TIMEZONE = "Europe/Paris"

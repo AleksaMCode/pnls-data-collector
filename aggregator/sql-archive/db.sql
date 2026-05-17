@@ -1,3 +1,5 @@
+-- Legacy pre-migrate schema script; not used by migrate.
+
 CREATE DATABASE PNLS;
 
 -- Connect to PNLS
@@ -448,3 +450,37 @@ SELECT
 FROM daily_captured_per_device
 GROUP BY device
 ORDER BY device;
+
+CREATE TABLE channels_2_4_wifi (
+    id SERIAL PRIMARY KEY,
+    channel_number INT NOT NULL,
+    lower_frequency INT NOT NULL,
+    center_frequency INT NOT NULL,
+    upper_frequency INT NOT NULL
+);
+
+INSERT INTO channels_2_4_wifi (
+    channel_number,
+    lower_frequency,
+    center_frequency,
+    upper_frequency
+) VALUES
+(1, 2401, 2412, 2423),
+(2, 2406, 2417, 2428),
+(3, 2411, 2422, 2433),
+(4, 2416, 2427, 2438),
+(5, 2421, 2432, 2443),
+(6, 2426, 2437, 2448),
+(7, 2431, 2442, 2453),
+(8, 2436, 2447, 2458),
+(9, 2441, 2452, 2463),
+(10, 2446, 2457, 2468),
+(11, 2451, 2462, 2473),
+(12, 2456, 2467, 2478),
+(13, 2461, 2472, 2483),
+(14, 2473, 2484, 2495);
+
+-- Using default value 10 for channels as all of the RPI devices capture on that channel.
+-- Default data is done for the old data, the new data will have its channel set.
+ALTER TABLE captured_info
+ADD COLUMN channel INTEGER NOT NULL DEFAULT 10 REFERENCES channels_2_4_wifi(id);

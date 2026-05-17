@@ -12,7 +12,7 @@ ieee_oui.csv
 *.rdb
 
 # Local copy of capured data
-data.json
+*-data.json
 
 # Log files
 *.log
