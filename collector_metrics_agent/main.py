@@ -54,11 +54,7 @@ def start():
             writes_per_sec=writes_per_sec,
             uptime=uptime,
         )
-        ok = send_metrics(metrics)
-        if ok:
-            logger.info(f"Sent {len(metrics)} metrics from {DEVICE_NAME}.")
-        else:
-            logger.info(f"Failed to send {len(metrics)} metrics from {DEVICE_NAME}.")
+        _ = send_metrics(metrics)
         time.sleep(DATADOG_TIMEOUT)
 
 
