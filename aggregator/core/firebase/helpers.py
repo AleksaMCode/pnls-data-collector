@@ -120,6 +120,7 @@ def fetch_data(target_date: date):
                     "device": device.value,
                     "mac": decrypt_data(RSA_KEY, entry_value.get("mac")),
                     "ssid": entry_value.get("ssid"),
+                    "channel": entry_value.get("channel"),
                     "timestamp": entry_value.get("timestamp"),
                 }
             )
