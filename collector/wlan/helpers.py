@@ -42,7 +42,9 @@ def check_interface_mode(interface_cli: str = None):
     global INTERFACE
 
     if interface_cli:
-        logger.info(f"Interface mode is set to {interface_cli}. Running in a multi-sensor mode.")
+        logger.info(
+            f"Interface mode is set to {interface_cli}. Running in a multi-sensor mode."
+        )
     else:
         # If no argument is used for interface, it will be set to None, meaning RPi device is using only one antenna.
         logger.info("Interface mode is not set. Running in a single sensor mode.")

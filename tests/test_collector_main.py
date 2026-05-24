@@ -26,5 +26,6 @@ class TestCollectorMainArgParse(unittest.TestCase):
 
         self.assertTrue(args.channel_hopping)
 
+
 if __name__ == "__main__":
     unittest.main()
