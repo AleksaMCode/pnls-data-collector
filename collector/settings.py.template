@@ -4,8 +4,8 @@ import os
 # WLAN2 is used when RPi device has multiple antennas.
 INTERFACES = ["wlan1", "wlan2", "wlan0"]
 
-# Channel hopping interval in seconds (100 ms)
-CHANNEL_HOP_INTERVAL = 0.1
+# Channel hopping interval in seconds (350 ms)
+CHANNEL_HOP_INTERVAL = 0.35
 
 # 2.4 GHz Wi-Fi channel that are to be used in channel hopping.
 # FIXME: Channels 12 and 13 exist in some countries, but are rarely used in practice. Consider removing them.
