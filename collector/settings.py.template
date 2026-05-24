@@ -1,7 +1,8 @@
 import os
 
-# Test if WLAN1 is available first, only use WLAN0 as backup (only true for RPi devices)
-INTERFACES = ["wlan1", "wlan0"]
+# Check if WLAN1 is available first, only use WLAN0 as backup (only true for RPi devices).
+# WLAN2 is used when RPi device has multiple antennas.
+INTERFACES = ["wlan1", "wlan2", "wlan0"]
 
 # Channel hopping interval in seconds (100 ms)
 CHANNEL_HOP_INTERVAL = 0.1
