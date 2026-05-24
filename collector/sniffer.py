@@ -47,8 +47,8 @@ def send_status():
             logger.error(f"Firebase device status update failed: {str(e)}")
 
 
-def start():
-    if not check_interface_mode():
+def start(interface: str = None, channel_hopping: bool = False):
+    if not check_interface_mode(interface):
         logger.warning("Failed to start the sniffer due to missing monitor interface.")
         # Force reboot if there is no monitor mode (see #1 for more info)
         logger.info("Force reboot of the RPi device.")
