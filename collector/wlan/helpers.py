@@ -35,12 +35,24 @@ FREQ_TO_CHANNEL_24GHZ = {
 
 
 @yaspin(text="Checking interface mode...")
-def check_interface_mode():
+def check_interface_mode(interface_cli: str = None):
     """
     Checks if the wireless interface has been set to the Monitor mode.
     """
     global INTERFACE
+
+    if interface_cli:
+        logger.info(f"Interface mode is set to {interface_cli}. Running in a multi-sensor mode.")
+    else:
+        # If no argument is used for interface, it will be set to None, meaning RPi device is using only one antenna.
+        logger.info("Interface mode is not set. Running in a single sensor mode.")
+
     for default_interface in INTERFACES:
+        # If specific interface is used then use that interface instead of setting's defaults. Change for #278
+        if interface_cli and default_interface != interface_cli:
+            continue
+        else:
+            logger.info(f"Interface mode is set to {default_interface}.")
         # Changed for #213
         interface = f"{default_interface}mon"
         try:
