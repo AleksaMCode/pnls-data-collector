@@ -57,15 +57,20 @@ def start(interface: str = None, channel_hopping: bool = False):
     status_thread = threading.Thread(target=send_status, daemon=False)
     status_thread.start()
 
-    channel_hopper_thread = threading.Thread(
-        target=channel_hopper,
-        args=(wifi_helpers.INTERFACE, CHANNEL_HOP_INTERVAL, CHANNELS),
-        daemon=True,
-    )
-    channel_hopper_thread.start()
-    logger.info(
-        f"Started channel hopper thread for `{wifi_helpers.INTERFACE}` with {CHANNEL_HOP_INTERVAL * 1000} ms interval.",
-    )
+    if channel_hopping:
+        channel_hopper_thread = threading.Thread(
+            target=channel_hopper,
+            args=(wifi_helpers.INTERFACE, CHANNEL_HOP_INTERVAL, CHANNELS),
+            daemon=True,
+        )
+        channel_hopper_thread.start()
+
+        logger.info("Channel hopping enabled via CLI flag.")
+        logger.info(
+            f"Started channel hopper thread for `{wifi_helpers.INTERFACE}` with {CHANNEL_HOP_INTERVAL * 1000} ms interval.",
+        )
+    else:
+        logger.info("Channel hopping disabled via CLI flag.")
 
     while True:
         try:
@@ -74,7 +79,7 @@ def start(interface: str = None, channel_hopping: bool = False):
             capture_traffic()
         except (HTTPException, HTTPError) as e:
             logger.error(f"HTTP Exception: {str(e)}")
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             logger.warning("Sniffer stopped forcefully.")
             # 130 - Script terminated by Control-C
             sys.exit(130)
