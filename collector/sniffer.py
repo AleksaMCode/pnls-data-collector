@@ -48,7 +48,7 @@ def send_status():
 
 
 def start(interface: str = None, channel_hopping: bool = False):
-    if not check_interface_mode(interface):
+    if not check_interface_mode(interface) and not channel_hopping:
         logger.warning("Failed to start the sniffer due to missing monitor interface.")
         # Force reboot if there is no monitor mode (see #1 for more info)
         logger.info("Force reboot of the RPi device.")
