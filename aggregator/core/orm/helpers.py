@@ -1,5 +1,7 @@
 import logging
 from datetime import date, datetime
+from typing import Any
+from warnings import deprecated
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import desc, func
@@ -20,8 +22,6 @@ from .models import (
     MAC,
     SSID,
     CapturedInfo,
-    CompanyCaptureSummary,
-    CompanyCaptureSummaryByDevice,
     Country,
     DailyCapturedPerDevice,
     IEEEMacOuiView,
@@ -95,45 +95,23 @@ def get_today_data_from_daily_captured_stats_per_device(
         )
 
 
+@deprecated("This is no longer used as this data is published to Superbase.")
 def get_all_data_from_company_capture_summary(
     min_percentage: float = 0.001,
-) -> list[CompanyCaptureSummary]:
-    logger.info(
-        f"Getting all data from company capture summary with {min_percentage}% minimum percentage filter."
-    )
-    # Skip devices marked with Private company for MAC E4F14C. This isn't a real company.
-    # TODO: Maybe exclude this from the final results as it affects the total percentage (although not significantly).
-    with _session() as db:
-        return (
-            db.query(CompanyCaptureSummary)
-            .filter(CompanyCaptureSummary.percentage >= min_percentage)
-            .filter(CompanyCaptureSummary.company != "Private")
-            .all()
-        )
+) -> list[Any]:
+    return []
 
 
+@deprecated("This is no longer used as this data is published to Superbase.")
 def get_all_data_from_company_capture_summary_by_device(
     device: Device, min_percentage: float = 0.001, limit: int = 20
-) -> list[CompanyCaptureSummaryByDevice]:
-    logger.info(
-        f"Getting top 20 company capture summary data for {device.value} with {min_percentage}% minimum percentage filter."
-    )
-    with _session() as db:
-        return (
-            db.query(CompanyCaptureSummaryByDevice)
-            .filter(CompanyCaptureSummaryByDevice.device == device.value)
-            .filter(CompanyCaptureSummaryByDevice.percentage >= min_percentage)
-            .filter(CompanyCaptureSummaryByDevice.company != "Private")
-            .order_by(desc(CompanyCaptureSummaryByDevice.total_occurrences))
-            .limit(limit)
-            .all()
-        )
+) -> list[Any]:
+    return []
 
 
-def get_all_data_from_location_mapping_resolved() -> list[LocationMappingResolved]:
-    logger.info("Getting all data from location mapping resolved.")
-    with _session() as db:
-        return db.query(LocationMappingResolved).all()
+@deprecated("This is no longer used as this data is published to Superbase.")
+def get_all_data_from_location_mapping_resolved() -> list[Any]:
+    return []
 
 
 def get_device_total_captured_data(device: Device) -> TotalCapturedPerDevice:

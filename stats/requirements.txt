@@ -1,0 +1,7 @@
+SQLAlchemy
+python-dotenv
+psycopg2-binary
+yaspin
+tenacity
+tqdm
+sentry_sdk

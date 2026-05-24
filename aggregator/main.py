@@ -49,8 +49,6 @@ def transfer_data(import_date: date, manual_import=False):
         manual_import_date=import_date if manual_import else None,
     )
     stats = publish_stats_data()
-    publish_manufacturers_data()
-    publish_sankey_data()
     # Publish message to Mattermost.
     try:
         publish_to_channel(stats, count, import_date if manual_import else None)
