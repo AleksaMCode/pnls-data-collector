@@ -42,10 +42,10 @@ class="center"
    - Captures Wi-Fi probe requests.
    - Preprocesses and [RSA-encrypts](https://en.wikipedia.org/wiki/RSA_cryptosystem) data.
    - Pushes data to [Firebase Realtime Database](https://firebase.google.com/docs/database).
-     - It does also keep a local copy of the data.
+     - It also keeps a local copy of the data.
 
    - > [!NOTE] 
-     > This actully started as a seperate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer), which was used as a starting point when writing code for `collector`.
+     > This actually started as a separate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer), which was used as a starting point when writing code for `collector`.
 
 2. **Firebase Realtime Database**
    - Event-driven ingestion from edge devices.
@@ -54,7 +54,7 @@ class="center"
 
 3. **Scheduled/continuous microservices**
    - Daily batch ETL to PostgreSQL.
-     - `aggregator` runs every day just after $6$ PM starts process of extraction from Fireabase, decrypts, transforms, and finally loads data to PostgreSQL. It also writes daily statistics to Firebase and sends out a [Mattermost](https://github.com/mattermost/mattermost) summary.
+     - `aggregator` runs every day just after $6$ PM, starting the process of extracting data from Firebase, decrypting, transforming, and finally loading it into PostgreSQL. It also writes daily statistics to Firebase and sends a [Mattermost](https://github.com/mattermost/mattermost) summary.
 
 <p align="center">
 <img
@@ -69,10 +69,10 @@ class="center"
 </p>
 
    - Firebase cleanup every $5$ days (`firebase_housekeeping`).
-     - Starting at midnight, it migrates data to MongoDB as backup, and deletes old Firebase nodes in order to stay within the [free $1$ GB limit](https://firebase.google.com/pricing).
+     - Starting at midnight, it migrates data to MongoDB as backup, and deletes old Firebase nodes in order to stay within the [free 1 GB limit](https://firebase.google.com/pricing).
    - Device online status monitoring.
-     - `collector_status_notifier` checks device status every $11$ minutes during the capture window[^1] and sends Mattermost alerts if a device if offline.
-   - Continues edge device monitoring
+     - `collector_status_notifier` checks device status every $11$ minutes during the capture window[^1] and sends Mattermost alerts if a device is offline.
+   - Continuous edge device monitoring.
      - `collector_metrics_agent` collects and sends edge device metrics data to the [Datadog](https://en.wikipedia.org/wiki/Datadog) storage where it is displayed in a monitoring dashboard.
    - Weekly Firebase usage reporting (`firebase_limit_notifier`).
      - Computes Firebase usage, generates a pie chart (uploaded to [Cloudflare R2](https://www.cloudflare.com/products/r2/)), and sends a Mattermost report.
@@ -90,7 +90,7 @@ class="center"
 </p>
 
    - Weekly Cloudflare usage reporting (`cloudflare_limit_notifier`).
-     - It computer current R2 usage (storage usage and class A and B operations) in order to stay withing the [free limits](https://developers.cloudflare.com/r2/pricing/#free-tier).
+     - It computes the current R2 usage (storage usage and class A and B operations) in order to stay within the [free limits](https://developers.cloudflare.com/r2/pricing/#free-tier).
 
 <p align="center">
 <img
@@ -104,14 +104,14 @@ class="center"
     </p>
 </p>
 
-1. **Warehousing and analytics**
+4. **Warehousing and analytics**
    - PostgreSQL for structured analytics data.
      - Stores structured, queryable data (SSIDs, MACs, locations, timestamps, etc.)
      - Source for analytics and historical reporting.
      - Schema definition (`aggregator/migrations`) and migration done using [migrate](https://github.com/golang-migrate/migrate).
    - MongoDB used by archive flow.
 
-2. **Database Backup Service (`db_backup`)**
+5. **Database Backup Service (`db_backup`)**
    - Provides a PostgreSQL backup workflow orchestrated by [Netflix Conductor](https://en.wikipedia.org/wiki/Conductor_(software)).
    - This workflow is triggered every day just after $11$ PM.
    - Pipeline tasks:
@@ -120,13 +120,13 @@ class="center"
      3. `compress_task` - gzip to `backup.sql.enc.gz`
      4. `upload_to_r2_task` - upload artifact to Cloudflare R2/S3-compatible storage
 
-3. **Frontend (`monitor_dashboard`)**
+6. **Frontend (`monitor_dashboard`)**
    - React UI with [Firebase Authentication](https://firebase.google.com/docs/auth).
    - Reads daily statistics written by ETL for the analytics dashboard.
    - Real-time and daily aggregated analytics views.
    - Deployed to [Firebase Hosting](https://firebase.google.com/docs/hosting).
 
-4. **Observability**
+7. **Observability**
    - [Sentry](https://docs.sentry.io/product/explore/logs/) for centralized error tracking.
      - Using both Mattermost notifications (compatible with Slack-style webhooks from Sentry) and email notifications.
    - Datadog for edge devices (`collector`) metrics dashboard tracking.
