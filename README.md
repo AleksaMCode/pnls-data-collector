@@ -13,7 +13,7 @@
 ![](https://img.shields.io/github/v/release/AleksaMCode/pnls-data-collector)
 
 
-A distributed, microservice system for capturing Wi‑Fi [probe requests](https://en.wikipedia.org/wiki/IEEE_802.11#Management_frames) (SSIDs, MACs, ...), with hybrid [event-driven](https://en.wikipedia.org/wiki/Event-driven_architecture) ingestion, batch [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load), real-time analytics, and centralized observability. Built for ongoing research into privacy protection in Wi-Fi networks. as part of collaboration with the Computer Security Team at CERN.
+A distributed, microservice system for capturing Wi‑Fi [probe requests](https://en.wikipedia.org/wiki/IEEE_802.11#Management_frames) (SSIDs, MACs, ...), with hybrid [event-driven](https://en.wikipedia.org/wiki/Event-driven_architecture) ingestion, batch [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load), real-time analytics, and centralized observability. Built for ongoing research into privacy protection in Wi-Fi networks.
 
 <p align="center">
 <img
@@ -23,7 +23,7 @@ width="100%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 1</b>: PNLS-DC system overview</label>
+    <label><b>Fig. 1</b>: PNLS-DC <code>1.0.0</code> system overview</label>
     </p>
 </p>
 
@@ -150,4 +150,4 @@ class="center"
 - `db_backup/docker-compose.yml` runs Conductor + backup worker stack.
 
 
-[^1]: Current capture window is between $7$ AM and $6$ PM.
+[^1]: Current capture window is between 7 AM and 6 PM.
