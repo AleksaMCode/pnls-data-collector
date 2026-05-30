@@ -4,17 +4,19 @@ authors:
   - given-names: Aleksa
     family-names: Majkić
     email: aleksamcode@gmail.com
-title: "Preferred Network List Data Collector"
-version: 0.0.0
+title: "Preferred Network List Sniffer Data Collector"
+version: 1.0.0
 type: software
-date-released: 2026-00-00
+date-released: 2026-05-30
 url: "https://github.com/AleksaMCode/pnls-data-collector"
 keywords:
   - rpi
-  - pln
   - pnls
   - 802.11
   - ssid
   - microservices
   - event-driven architecture
-license: MIT
+  - wifi-probe-requests
+  - privacy-research
+  - network-security
+license: GPL-2.0
