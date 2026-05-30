@@ -1,6 +1,8 @@
 import logging
 import os
 from collections import defaultdict
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -8,9 +10,12 @@ from tenacity import before_sleep_log, retry, stop_after_attempt, wait_exponenti
 from yaspin import yaspin
 
 from firebase_housekeeping.settings import (
+    BULK_DELETE_SIZE,
     FIREBASE_CREDENTIALS,
     FIREBASE_DB_URL,
     FIREBASE_STATISTICS_NODE,
+    TIMESTAMP_FORMAT,
+    TIMEZONE,
 )
 from util.core.orm.models import Device
 from util.logger import get_logger
@@ -102,9 +107,14 @@ def delete_all_by_entry_nodes():
         return
 
     deleted_nodes = 0
+    today = datetime.now(ZoneInfo(TIMEZONE)).strftime(TIMESTAMP_FORMAT.split(" ")[0])
 
     for top_key in top_level_nodes.keys():
         if top_key == FIREBASE_STATISTICS_NODE:
+            continue
+        # Skip any top-level node that contains today's date (#281)
+        if today in top_key:
+            logger.info(f"Skipping today's node: {top_key}")
             continue
 
         top_path = f"/{top_key}"
@@ -117,7 +127,6 @@ def delete_all_by_entry_nodes():
 
         for second_key in second_level.keys():
             second_path = f"{top_path}/{second_key}"
-            entry_nodes = db.reference(second_path).get(shallow=True)
 
             try:
                 db.reference(second_path).delete()
@@ -129,12 +138,21 @@ def delete_all_by_entry_nodes():
                     f"Bulk delete failed for '{second_path}'. Falling back to entry-level delete. Error: {e}"
                 )
             try:
+                entry_nodes = db.reference(second_path).get(shallow=True)
                 if isinstance(entry_nodes, dict) and entry_nodes:
-                    for entry_key in tqdm(
-                        entry_nodes.keys(), desc="Deleting records", unit="record"
+                    entry_keys = list(entry_nodes.keys())
+                    for start_idx in tqdm(
+                        range(0, len(entry_keys), BULK_DELETE_SIZE),
+                        desc="Deleting records",
+                        unit="batch",
                     ):
-                        db.reference(f"{second_path}/{entry_key}").delete()
-                        deleted_nodes += 1
+                        chunk_keys = entry_keys[
+                            start_idx : start_idx + BULK_DELETE_SIZE
+                        ]
+                        delete_payload = {entry_key: None for entry_key in chunk_keys}
+                        db.reference(second_path).update(delete_payload)
+                        deleted_nodes += len(chunk_keys)
+                        logger.info(f"Deleted {len(chunk_keys)} nodes.")
 
                     logging.info(f"Entry-level delete successful for '{entry_nodes}")
                 else:
