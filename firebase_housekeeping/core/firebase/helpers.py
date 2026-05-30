@@ -1,6 +1,8 @@
 import logging
 import os
 from collections import defaultdict
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -12,6 +14,8 @@ from firebase_housekeeping.settings import (
     FIREBASE_CREDENTIALS,
     FIREBASE_DB_URL,
     FIREBASE_STATISTICS_NODE,
+    TIMESTAMP_FORMAT,
+    TIMEZONE,
 )
 from util.core.orm.models import Device
 from util.logger import get_logger
@@ -103,9 +107,14 @@ def delete_all_by_entry_nodes():
         return
 
     deleted_nodes = 0
+    today = datetime.now(ZoneInfo(TIMEZONE)).strftime(TIMESTAMP_FORMAT.split(" ")[0])
 
     for top_key in top_level_nodes.keys():
         if top_key == FIREBASE_STATISTICS_NODE:
+            continue
+        # Skip any top-level node that contains today's date (#281)
+        if today in top_key:
+            logger.info(f"Skipping today's node: {top_key}")
             continue
 
         top_path = f"/{top_key}"
