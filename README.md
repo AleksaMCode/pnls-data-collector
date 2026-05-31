@@ -44,8 +44,8 @@ class="center"
    - Pushes data to [Firebase Realtime Database](https://firebase.google.com/docs/database).
      - It also keeps a local copy of the data.
 
-   - > [!NOTE] 
-     > This actually started as a separate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer), which was used as a starting point when writing code for `collector`.
+> [!NOTE] 
+> The `collector` service started as a separate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer); it was used as a starting point when writing this service.
 
 2. **Firebase Realtime Database**
    - Event-driven ingestion from edge devices.
@@ -125,6 +125,18 @@ class="center"
    - Reads daily statistics written by ETL for the analytics dashboard.
    - Real-time and daily aggregated analytics views.
    - Deployed to [Firebase Hosting](https://firebase.google.com/docs/hosting).
+
+<p align="center">
+<img
+src="./resources/pnls-dc-ui.png?raw=true"
+alt="Part of the monitoring dashboard"
+width="90%"
+class="center"
+/>
+<p align="center">
+    <label><b>Fig. 5</b>: Part of the monitoring dashboard <code>1.0.0</code></label>
+    </p>
+</p>
 
 7. **Observability**
    - [Sentry](https://docs.sentry.io/product/explore/logs/) for centralized error tracking.
