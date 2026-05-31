@@ -1,11 +1,14 @@
 from sqlalchemy import desc
 
-from stats.core.orm.models import CompanyCaptureSummary, CompanyCaptureSummaryByDevice, LocationMappingResolved
+from stats.core.orm.models import (
+    CompanyCaptureSummary,
+    CompanyCaptureSummaryByDevice,
+    LocationMappingResolved,
+)
 from util.core.orm.models import Device
 from util.logger import get_logger
 
 from . import _session
-
 
 logger = get_logger(__name__)
 
@@ -25,6 +28,7 @@ def get_all_data_from_company_capture_summary(
             .filter(CompanyCaptureSummary.company != "Private")
             .all()
         )
+
 
 def get_all_data_from_company_capture_summary_by_device(
     device: Device, min_percentage: float = 0.001, limit: int = 20

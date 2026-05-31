@@ -1,12 +1,8 @@
-from sqlalchemy import (
-    Column,
-    Float,
-    Integer,
-    String,
-)
+from sqlalchemy import Column, Float, Integer, String
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+
 
 class CompanyCaptureSummary(Base):
     __tablename__ = "company_capture_summary"
@@ -31,6 +27,7 @@ class CompanyCaptureSummaryByDevice(Base):
     country_alpha3 = Column(String(3), primary_key=True, nullable=True)
     total_occurrences = Column(Integer, nullable=False)
     percentage = Column(Float, nullable=False)
+
 
 class LocationMappingResolved(Base):
     __tablename__ = "location_mapping_resolved"

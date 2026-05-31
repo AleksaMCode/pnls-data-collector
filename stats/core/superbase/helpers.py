@@ -1,8 +1,9 @@
 from yaspin import yaspin
+
+from stats.core.orm.helpers import get_all_data_from_location_mapping_resolved
 from util.logger import get_logger
 
 from . import _session
-from stats.core.orm.helpers import get_all_data_from_location_mapping_resolved
 
 logger = get_logger(__name__)
 
