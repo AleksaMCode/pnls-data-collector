@@ -17,7 +17,7 @@ A distributed, microservice system for capturing Wi‑Fi [probe requests](https:
 
 <p align="center">
 <img
-src="./resources/pnls-dc-architecture.png?raw=true"
+src="./resources/pnls-dc-architecture.svg?raw=true"
 alt="PNLS-DC system overview"
 width="100%"
 class="center"
