@@ -47,6 +47,18 @@ class="center"
 > [!NOTE] 
 > The `collector` service started as a separate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer); it was used as a starting point when writing this service.
 
+<p align="center">
+<img
+src="./resources/collector-devices.jpg?raw=true"
+alt="PNLS-DC system overview"
+width="90%"
+class="center"
+/>
+<p align="center">
+    <label><b>Fig. 2</b>: <code>collector</code> devices (RPi 4 with a colling case) with an <a href="https://alfa-network.eu/awus036acs">AWUS036ACS</a> antenas</label>
+    </p>
+</p>
+
 2. **Firebase Realtime Database**
    - Event-driven ingestion from edge devices.
    - Temporary storage and staging for batch ETL.
@@ -64,7 +76,7 @@ width="50%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 2</b>: Example <code>aggregator</code> Mattermost message</label>
+    <label><b>Fig. 3</b>: Example <code>aggregator</code> Mattermost message</label>
     </p>
 </p>
 
@@ -85,7 +97,7 @@ width="50%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 3</b>: Example <code>firebase_limit_notifier</code> Mattermost message</label>
+    <label><b>Fig. 4</b>: Example <code>firebase_limit_notifier</code> Mattermost message</label>
     </p>
 </p>
 
@@ -100,7 +112,7 @@ width="40%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 4</b>: Example <code>cloudflare_limit_notifier</code> Mattermost message</label>
+    <label><b>Fig. 5</b>: Example <code>cloudflare_limit_notifier</code> Mattermost message</label>
     </p>
 </p>
 
@@ -134,7 +146,7 @@ width="90%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 5</b>: Part of the monitoring dashboard <code>1.0.0</code></label>
+    <label><b>Fig. 6</b>: Part of the monitoring dashboard <code>1.0.0</code></label>
     </p>
 </p>
 
