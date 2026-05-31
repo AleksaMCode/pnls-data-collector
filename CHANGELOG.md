@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Changed Firebase cleanup to use batch-delete workflow. #267
+- Firebase cleanup batch-delete flow now skips nodes for the current day to avoid removing fresh data. #267
+- Go formatter automation updated to include a previously missing service target. #284
+- README documentation updated and refined across multiple passes (wording, spelling, and clarity improvements).
+
 ## [1.0.0] - 2026-05-30
 
 ### Added
