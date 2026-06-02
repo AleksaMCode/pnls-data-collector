@@ -6,10 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- Sentry fatal-error logging integrated into the Go notifier services: `cloudflare_limit_notifier`, `collector_status_notifier`, and `firebase_limit_notifier`. PR #296
+- Mattermost bot icon support added for Go services through service-name-based icon mapping, with custom bot icon assets under `resources/bot_icons/`. PR #296
+
 ### Changed
-- Changed Firebase cleanup to use batch-delete workflow. #267
-- Firebase cleanup batch-delete flow now skips nodes for the current day to avoid removing fresh data. #267
-- Go formatter automation updated to include a previously missing service target. #284
+- Changed Firebase cleanup to use batch-delete workflow. PR #267
+- Firebase cleanup batch-delete flow now skips nodes for the current day to avoid removing fresh data. PR #267
+- Go formatter automation updated to include a previously missing service target. PR #284
 - README documentation updated and refined across multiple passes (wording, spelling, and clarity improvements).
 
 ## [1.0.0] - 2026-05-30
