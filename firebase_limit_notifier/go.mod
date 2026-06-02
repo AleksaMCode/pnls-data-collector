@@ -11,7 +11,7 @@ require (
 	github.com/go-analyze/charts v0.5.23
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.264.0 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
 require (
