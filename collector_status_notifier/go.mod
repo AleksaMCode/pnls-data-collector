@@ -6,7 +6,6 @@ require (
 	firebase.google.com/go/v4 v4.19.0
 	github.com/AleksaMCode/pnls-data-collector/util-go v0.0.0-00010101000000-000000000000
 	github.com/joho/godotenv v1.5.1
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (
@@ -29,6 +28,7 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.36.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/getsentry/sentry-go v0.46.2 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -63,6 +63,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
 	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
 replace github.com/AleksaMCode/pnls-data-collector/util-go => ../util-go

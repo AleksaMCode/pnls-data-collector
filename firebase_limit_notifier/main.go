@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"firebase.google.com/go/v4/db"
-	common "github.com/AleksaMCode/pnls-data-collector/util-go/common"
-	firebase "github.com/AleksaMCode/pnls-data-collector/util-go/firebase"
-	mattermost "github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/common"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/firebase"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
 )
 
 func main() {
 	loadEnvVariables()
-	initLogging()
+	logging.InitObservability(LOG_FILE, SENTRY_DSN, SERVICE_NAME)
 
 	ctx := context.Background()
 	client := firebase.GetFirebaseClient(ctx, FIREBASE_CREDENTIALS_FILE, FIREBASE_DATABASE_URL)

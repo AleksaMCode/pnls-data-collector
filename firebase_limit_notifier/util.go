@@ -5,18 +5,19 @@ import (
 	"log"
 	"os"
 
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/joho/godotenv"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func loadEnvVariables() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-		os.Exit(1)
+		logging.Fatal("Error loading .env file")
 	}
 
 	MATTERMOST_WEBHOOK_URL = os.Getenv("MATTERMOST_WEBHOOK_URL")
 	FIREBASE_DATABASE_URL = os.Getenv("FIREBASE_DATABASE_URL")
+	SENTRY_DSN = os.Getenv("SENTRY_DSN")
 
 	R2_ACCESS_KEY = os.Getenv("R2_ACCESS_KEY")
 	R2_SECRET_KEY = os.Getenv("R2_SECRET_KEY")

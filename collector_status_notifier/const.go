@@ -1,14 +1,16 @@
 package main
 
+import "time"
+
 const (
 	SERVICE_NAME              = "Collector status notifier"
 	FIREBASE_CREDENTIALS_FILE = "firebase_credentials.json"
 	FIREBASE_BASE_PATH        = "/"
 	TIMESTAMP_FORMAT          = "2006-01-02 15:04:05.999999"
 	// Sleep time (in minutes) between checking devices Firebase status
-	FIREBASE_TIMEOUT = 11
-	LOG_FILE         = "consumer_status_notifier.log"
-	TIMEZONE         = "Europe/Paris"
+	COLLECTOR_TIMEOUT = 11 * time.Minute
+	LOG_FILE          = "consumer_status_notifier.log"
+	TIMEZONE          = "Europe/Paris"
 )
 
 const (
@@ -20,6 +22,7 @@ const (
 var (
 	MATTERMOST_WEBHOOK_URL string
 	FIREBASE_DATABASE_URL  string
+	SENTRY_DSN             string
 )
 
 var Devices = []string{DEVICE_RPI_1, DEVICE_RPI_2, DEVICE_RPI_3}

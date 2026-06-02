@@ -1,19 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
-	common "github.com/AleksaMCode/pnls-data-collector/util-go/common"
-	mattermost "github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/common"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
 
 func main() {
 	loadEnvVariables()
-	initLogging()
+	logging.InitObservability(LOG_FILE, SENTRY_DSN, SERVICE_NAME)
+
 	if err := validateRequiredEnv(); err != nil {
-		log.Fatalf("Invalid configuration: %v", err)
+		logging.Fatal(fmt.Sprintf("Invalid configuration: %v", err))
 		return
 	}
 
@@ -22,7 +25,7 @@ func main() {
 
 	usage, err := client.getCurrentMonthUsage(now)
 	if err != nil {
-		log.Fatalf("Failed to fetch Cloudflare R2 metrics: %v", err)
+		logging.Fatal(fmt.Sprintf("Failed to fetch Cloudflare R2 metrics: %v", err))
 		return
 	}
 

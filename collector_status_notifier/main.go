@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"firebase.google.com/go/v4/db"
-	firebase "github.com/AleksaMCode/pnls-data-collector/util-go/firebase"
-	logging "github.com/AleksaMCode/pnls-data-collector/util-go/logging"
-	mattermost "github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/firebase"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
 )
 
 func main() {

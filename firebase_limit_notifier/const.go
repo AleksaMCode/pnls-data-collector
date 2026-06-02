@@ -16,6 +16,7 @@ const (
 var (
 	MATTERMOST_WEBHOOK_URL string
 	FIREBASE_DATABASE_URL  string
+	SENTRY_DSN             string
 	R2_ACCESS_KEY          string
 	R2_SECRET_KEY          string
 	R2_BUCKET_NAME         string

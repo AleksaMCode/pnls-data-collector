@@ -5,17 +5,18 @@ import (
 	"log"
 	"os"
 
+	logging "github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/joho/godotenv"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func loadEnvVariables() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-		os.Exit(1)
+		logging.Fatal("Error loading .env file")
 	}
 
 	MATTERMOST_WEBHOOK_URL = os.Getenv("MATTERMOST_WEBHOOK_URL")
+	SENTRY_DSN = os.Getenv("SENTRY_DSN")
 	CLOUDFLARE_API_TOKEN = os.Getenv("CLOUDFLARE_API_TOKEN")
 	CLOUDFLARE_ACCOUNT_ID = os.Getenv("CLOUDFLARE_ACCOUNT_ID")
 	CLOUDFLARE_GRAPHQL_ENDPOINT = os.Getenv("CLOUDFLARE_GRAPHQL_ENDPOINT")
