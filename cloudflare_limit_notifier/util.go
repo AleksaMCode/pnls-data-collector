@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	logging "github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/joho/godotenv"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func loadEnvVariables() {
@@ -25,16 +23,6 @@ func loadEnvVariables() {
 	if CLOUDFLARE_GRAPHQL_ENDPOINT == "" {
 		CLOUDFLARE_GRAPHQL_ENDPOINT = DEFAULT_GRAPHQL_ENDPOINT
 	}
-}
-
-func initLogging() {
-	log.SetOutput(&lumberjack.Logger{
-		Filename:   LOG_FILE,
-		MaxSize:    1_000,
-		MaxBackups: 3,
-		MaxAge:     28,
-		Compress:   true,
-	})
 }
 
 func validateRequiredEnv() error {
