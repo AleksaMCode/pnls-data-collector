@@ -9,29 +9,26 @@ import (
 
 	"firebase.google.com/go/v4/db"
 	firebase "github.com/AleksaMCode/pnls-data-collector/util-go/firebase"
+	logging "github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	mattermost "github.com/AleksaMCode/pnls-data-collector/util-go/mattermost"
 )
 
 func main() {
 	loadEnvVariables()
-	initLogging()
+	logging.InitObservability(LOG_FILE, SENTRY_DSN, SERVICE_NAME)
 
 	ctx := context.Background()
 	client := firebase.GetFirebaseClient(ctx, FIREBASE_CREDENTIALS_FILE, FIREBASE_DATABASE_URL)
 
 	// Check before sleep
-	if isWorkingHours() {
-		checkDevicesStatus(client, ctx)
-	}
+	checkDevicesStatus(client, ctx)
 
-	// Periodically check the Firebase database every `FIREBASE_TIMEOUT` minutes
-	ticker := time.NewTicker(FIREBASE_TIMEOUT * time.Minute)
+	// Periodically check the Firebase database every `COLLECTOR_TIMEOUT` minutes
+	ticker := time.NewTicker(COLLECTOR_TIMEOUT)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if isWorkingHours() {
-			checkDevicesStatus(client, ctx)
-		}
+		checkDevicesStatus(client, ctx)
 	}
 }
 
@@ -75,13 +72,13 @@ func validateDeviceData(client *db.Client, ctx context.Context) {
 		timestamp, _ := deviceData["timestamp"].(string)
 		timestampTime, _ := time.Parse(TIMESTAMP_FORMAT, timestamp)
 
-		// Check if the timestamp is older than `FIREBASE_TIMEOUT` minutes
+		// Check if the timestamp is older than `COLLECTOR_TIMEOUT` minutes
 		// Devices update status every 10 minutes and we check every 11 minutes so have a buffer of 60 seconds just in case of some delays
-		if time.Since(timestampTime) > FIREBASE_TIMEOUT*time.Minute {
+		if time.Since(timestampTime) > COLLECTOR_TIMEOUT {
 			message := fmt.Sprintf(
 				"Device `%s` hasn't been updated in the last %d minutes! Last update: %s",
 				device,
-				FIREBASE_TIMEOUT,
+				COLLECTOR_TIMEOUT,
 				timestamp,
 			)
 			sendMattermostMsg(message)
