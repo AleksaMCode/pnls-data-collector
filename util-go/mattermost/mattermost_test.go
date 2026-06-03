@@ -45,7 +45,7 @@ func TestSendMattermostMessagePostsExpectedPayload(t *testing.T) {
 	if received["username"] != "collector-status" {
 		t.Fatalf("unexpected username field: %v", received["username"])
 	}
-	if received["icon_url"] != botIconURL {
+	if received["icon_url"] != iconURLForService("collector-status") {
 		t.Fatalf("unexpected icon_url field: %v", received["icon_url"])
 	}
 	if _, ok := received["attachments"]; ok {

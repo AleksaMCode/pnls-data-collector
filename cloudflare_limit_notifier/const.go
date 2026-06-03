@@ -18,6 +18,7 @@ const (
 
 var (
 	MATTERMOST_WEBHOOK_URL      string
+	SENTRY_DSN                  string
 	CLOUDFLARE_API_TOKEN        string
 	CLOUDFLARE_ACCOUNT_ID       string
 	CLOUDFLARE_GRAPHQL_ENDPOINT string

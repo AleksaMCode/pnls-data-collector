@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/go-analyze/charts"
 )
 
@@ -37,7 +39,7 @@ func generatePieChartInMemory(used float64, free float64) ([]byte, error) {
 func saveByteArrayToFile(filename string, pieChart []byte) {
 	err := os.WriteFile(filename, pieChart, 0o644)
 	if err != nil {
-		log.Fatalf("Failed to save pie chart: %v", err)
+		logging.Fatal(fmt.Sprintf("Failed to save pie chart: %v", err))
 	}
 	log.Printf("Pie chart saved to %s", filename)
 }

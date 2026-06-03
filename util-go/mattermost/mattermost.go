@@ -7,7 +7,26 @@ import (
 	"net/http"
 )
 
-const botIconURL = "https://raw.githubusercontent.com/golang-samples/gopher-vector/refs/heads/master/gopher.svg"
+const (
+	botIconBaseURL      = "https://raw.githubusercontent.com/AleksaMCode/pnls-data-collector/master/resources/bot_icons/"
+	defaultIconFilename = "status_notifier.png"
+)
+
+var botIconFilenameByService = map[string]string{
+	// https://www.flaticon.com/free-icon/limitation_12642584
+	"Cloudflare limit notifier": "limit_notifier.png",
+	"Firebase limit notifier":   "limit_notifier.png",
+	// https://www.flaticon.com/free-icon/login-warning_18841837
+	"Collector status notifier": "status_notifier.png",
+}
+
+func iconURLForService(serviceName string) string {
+	filename, ok := botIconFilenameByService[serviceName]
+	if !ok {
+		filename = defaultIconFilename
+	}
+	return botIconBaseURL + filename
+}
 
 func SendMattermostMessage(webhookURL string, serviceName string, message string) {
 	sendMattermostMessage(webhookURL, serviceName, message, "")
@@ -21,7 +40,7 @@ func sendMattermostMessage(webhookURL string, serviceName string, message string
 	payload := map[string]any{
 		"text":     message,
 		"username": serviceName,
-		"icon_url": botIconURL,
+		"icon_url": iconURLForService(serviceName),
 	}
 
 	// Only add attachment if imageURL is provided

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 
 	common "github.com/AleksaMCode/pnls-data-collector/util-go/common"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -33,7 +33,7 @@ func newR2Client() *s3.Client {
 		config.WithRegion("auto"), // Required by SDK but not used by R2
 	)
 	if err != nil {
-		log.Fatal(err)
+		logging.Fatal(err.Error())
 		return nil
 	}
 
