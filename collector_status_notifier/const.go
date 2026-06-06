@@ -8,7 +8,7 @@ const (
 	FIREBASE_BASE_PATH        = "/"
 	TIMESTAMP_FORMAT          = "2006-01-02 15:04:05.999999"
 	// COLLECTOR_TIMEOUT is an idle time (in minutes) between checking devices status
-	COLLECTOR_TIMEOUT = 11 * time.Minute
+	COLLECTOR_TIMEOUT = 5 * time.Minute
 	// FIREABASE_TIMEOUT is time in seconds between checking device's Firebase heartbeat
 	FIREABASE_TIMEOUT = 11 * time.Minute
 	// DATADOG_TIMEOUT is time in seconds between checking device's Datadog heartbeat
