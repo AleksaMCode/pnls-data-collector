@@ -9,12 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 - Sentry fatal-error logging integrated into the Go notifier services: `cloudflare_limit_notifier`, `collector_status_notifier`, and `firebase_limit_notifier`. PR #296
 - Mattermost bot icon support added for Go services through service-name-based icon mapping, with custom bot icon assets under `resources/bot_icons/`. PR #296
+- Datadog heartbeat status validation added to `collector_status_notifier` as the primary device-health source, with periodic checks and Datadog API integration for configured devices. PR #302
+- New `FIREBASE_MONGO_BACKUP_ENABLED` usage flag added to `firebase_housekeeping` to control MongoDB backup behavior during cleanup workflows. PR #301
 
 ### Changed
 - Changed Firebase cleanup to use batch-delete workflow. PR #267
 - Firebase cleanup batch-delete flow now skips nodes for the current day to avoid removing fresh data. PR #267
 - Go formatter automation updated to include a previously missing service target. PR #284
 - README documentation updated and refined across multiple passes (wording, spelling, and clarity improvements).
+- `collector_status_notifier` now performs device status checks every 5 minutes via Datadog and falls back to Firebase status checks when Datadog is unavailable. PR #302
 
 ## [1.0.0] - 2026-05-30
 
