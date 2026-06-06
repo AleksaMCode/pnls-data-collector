@@ -7,10 +7,14 @@ const (
 	FIREBASE_CREDENTIALS_FILE = "firebase_credentials.json"
 	FIREBASE_BASE_PATH        = "/"
 	TIMESTAMP_FORMAT          = "2006-01-02 15:04:05.999999"
-	// Sleep time (in minutes) between checking devices Firebase status
+	// COLLECTOR_TIMEOUT is an idle time (in minutes) between checking devices status
 	COLLECTOR_TIMEOUT = 11 * time.Minute
-	LOG_FILE          = "consumer_status_notifier.log"
-	TIMEZONE          = "Europe/Paris"
+	// FIREABASE_TIMEOUT is time in seconds between checking device's Firebase heartbeat
+	FIREABASE_TIMEOUT = 11 * time.Minute
+	// DATADOG_TIMEOUT is time in seconds between checking device's Datadog heartbeat
+	DATADOG_TIMEOUT = 30 * time.Second
+	LOG_FILE        = "consumer_status_notifier.log"
+	TIMEZONE        = "Europe/Paris"
 )
 
 const (
@@ -20,9 +24,13 @@ const (
 )
 
 var (
-	MATTERMOST_WEBHOOK_URL string
-	FIREBASE_DATABASE_URL  string
-	SENTRY_DSN             string
+	MATTERMOST_WEBHOOK_URL   string
+	FIREBASE_DATABASE_URL    string
+	SENTRY_DSN               string
+	DATADOG_API_KEY          string
+	DATADOG_APP_KEY          string
+	DATADOG_HEARTBEAT_METRIC string
+	DATADOG_HOST             string
 )
 
 var Devices = []string{DEVICE_RPI_1, DEVICE_RPI_2, DEVICE_RPI_3}
