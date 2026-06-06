@@ -20,3 +20,6 @@ BULK_DELETE_SIZE = 10_000
 
 # Project uses CERN's Mattermost
 SLACK_WEBHOOK_URL = "mattermost_webhook_url"
+
+# Use this flag to turn off MongoDB backups
+MONGO_BACKUP = True

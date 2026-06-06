@@ -10,6 +10,7 @@ from firebase_housekeeping.core.firebase.helpers import (
 )
 from firebase_housekeeping.core.mongo.helpers import insert_from_firebase_to_mongo
 from firebase_housekeeping.settings import (
+    MONGO_BACKUP,
     SERVICE_DESCRIPTION,
     SERVICE_NAME,
     SERVICE_VERSION,
@@ -53,8 +54,10 @@ async def delete_all():
         bot_name=MattermostBot.HOUSEKEEPING,
     )
 
-    data = download_all()
-    insert_from_firebase_to_mongo(data)
+    if MONGO_BACKUP:
+        data = download_all()
+        insert_from_firebase_to_mongo(data)
+
     delete_all_by_entry_nodes()
 
     send_webhook_message(
