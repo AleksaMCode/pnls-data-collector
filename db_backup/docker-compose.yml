@@ -8,8 +8,7 @@ services:
       - "8080:8080"
       - "5000:5000"
     healthcheck:
-      test:
-        ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 20

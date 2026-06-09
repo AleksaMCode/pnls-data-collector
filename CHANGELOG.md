@@ -23,6 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `collector_status_notifier` now performs device status checks every 5 minutes via Datadog and falls back to Firebase status checks when Datadog is unavailable. PR #302
 - `firebase_housekeeping` logging was expanded with additional runtime messages for better operational visibility.
 
+### Fixed
+- `db_backup` Conductor Docker healthcheck endpoint was corrected from `/api/health` to `/health`, resolving false `unhealthy` container status after worker runs.
+
 ## [1.0.0] - 2026-05-30
 
 ### Added
