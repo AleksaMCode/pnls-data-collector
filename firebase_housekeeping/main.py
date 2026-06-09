@@ -55,9 +55,11 @@ async def delete_all():
     )
 
     if MONGO_BACKUP:
+        logger.info("Adding Firebase data to MongoDB backup.")
         data = download_all()
         insert_from_firebase_to_mongo(data)
 
+    logger.info("Starting Firebase node deletion.")
     delete_all_by_entry_nodes()
 
     send_webhook_message(
