@@ -5,6 +5,7 @@ import (
 	"db_backup/internal/backup"
 	"db_backup/internal/conductor"
 	"db_backup/internal/config"
+	applog "db_backup/internal/logging"
 	"db_backup/internal/storage"
 	"log"
 	"os"
@@ -17,9 +18,11 @@ import (
 )
 
 func main() {
+	applog.InitSentry(os.Getenv("SENTRY_DSN"), os.Getenv("SERVICE_NAME"))
+
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("configuration error: %v", err)
+		applog.Fatalf("configuration error: %v", err)
 	}
 
 	// Keep SDK config in sync with local config values.
@@ -30,12 +33,12 @@ func main() {
 	apiClient := conductorclient.NewAPIClientFromEnv()
 
 	if err := conductor.RegisterAll(ctx, cfg, apiClient); err != nil {
-		log.Fatalf("registration error: %v", err)
+		applog.Fatalf("registration error: %v", err)
 	}
 
 	uploader, err := storage.NewR2Uploader(cfg)
 	if err != nil {
-		log.Fatalf("r2 client init error: %v", err)
+		applog.Fatalf("r2 client init error: %v", err)
 	}
 	pipeline := backup.NewPipeline(cfg, uploader)
 
@@ -62,7 +65,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		log.Fatalf("pg_dump worker start error: %v", err)
+		applog.Fatalf("pg_dump worker start error: %v", err)
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskEncryptName,
@@ -70,7 +73,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		log.Fatalf("encryption worker start error: %v", err)
+		applog.Fatalf("encryption worker start error: %v", err)
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskCompressName,
@@ -78,7 +81,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		log.Fatalf("compress worker start error: %v", err)
+		applog.Fatalf("compress worker start error: %v", err)
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskUploadName,
@@ -86,7 +89,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		log.Fatalf("upload worker start error: %v", err)
+		applog.Fatalf("upload worker start error: %v", err)
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskCleanupName,
@@ -94,7 +97,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		log.Fatalf("cleanup worker start error: %v", err)
+		applog.Fatalf("cleanup worker start error: %v", err)
 	}
 
 	log.Printf(
