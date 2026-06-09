@@ -54,6 +54,8 @@ type Config struct {
 
 	EncryptionKeyRaw string
 	UploadTimeout    time.Duration
+	SentryDSN        string
+	ServiceName      string
 }
 
 func Load() (Config, error) {
@@ -87,6 +89,8 @@ func Load() (Config, error) {
 		UploadTimeout: time.Duration(
 			getEnvInt("DB_BACKUP_UPLOAD_TIMEOUT_SECONDS", defaultUploadTimeoutSecs),
 		) * time.Second,
+		SentryDSN:   os.Getenv("SENTRY_DSN"),
+		ServiceName: getEnv("SERVICE_NAME", "db_backup_worker"),
 	}
 
 	if err := cfg.Validate(); err != nil {

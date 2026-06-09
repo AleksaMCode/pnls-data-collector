@@ -212,11 +212,17 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 	}, cfg.WorkerCount, cfg.PollInterval); err != nil {
 		t.Fatalf("start upload worker: %v", err)
 	}
+	if err := taskRunner.StartWorker(TaskCleanupName, func(tk *_jsii.Task) (interface{}, error) {
+		return pipeline.RunCleanupTask(ctx, tk)
+	}, cfg.WorkerCount, cfg.PollInterval); err != nil {
+		t.Fatalf("start cleanup worker: %v", err)
+	}
 	defer func() {
 		taskRunner.Shutdown(TaskPgDumpName)
 		taskRunner.Shutdown(TaskEncryptName)
 		taskRunner.Shutdown(TaskCompressName)
 		taskRunner.Shutdown(TaskUploadName)
+		taskRunner.Shutdown(TaskCleanupName)
 		taskRunner.WaitWorkers()
 	}()
 

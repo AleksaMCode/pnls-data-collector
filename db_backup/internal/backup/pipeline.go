@@ -28,6 +28,7 @@ const (
 	TaskEncryptName  = "encryption_task"
 	TaskCompressName = "compress_task"
 	TaskUploadName   = "upload_to_r2_task"
+	TaskCleanupName  = "cleanup_local_files_task"
 )
 
 type Pipeline struct {
@@ -169,7 +170,6 @@ func (p *Pipeline) RunUploadTask(ctx context.Context, task *conductormodel.Task)
 		return localmodel.UploadTaskOutput{}, err
 	}
 
-	// _ = os.RemoveAll(baseDir)
 	nowUnix := time.Now().Unix()
 	return localmodel.UploadTaskOutput{
 		ObjectKey:      objectKey,
@@ -180,6 +180,23 @@ func (p *Pipeline) RunUploadTask(ctx context.Context, task *conductormodel.Task)
 		EncryptedName:  encFileName,
 		CompressedName: compressedFileName,
 		UploadedAtUnix: nowUnix,
+	}, nil
+}
+
+func (p *Pipeline) RunCleanupTask(_ context.Context, task *conductormodel.Task) (localmodel.CleanupTaskOutput, error) {
+	baseDir, err := requiredInput(task, "base_dir")
+	if err != nil {
+		return localmodel.CleanupTaskOutput{}, err
+	}
+
+	if err := os.RemoveAll(baseDir); err != nil {
+		return localmodel.CleanupTaskOutput{}, err
+	}
+
+	return localmodel.CleanupTaskOutput{
+		WorkflowID:     task.WorkflowInstanceId,
+		DeletedBaseDir: baseDir,
+		CleanedAtUnix:  time.Now().Unix(),
 	}, nil
 }
 

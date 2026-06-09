@@ -7,6 +7,7 @@ Pipeline per task execution:
 2. AES-256-GCM encryption
 3. gzip compression
 4. upload to S3-compatible storage (Cloudflare R2)
+5. local artifact cleanup
 
 Returned task output includes uploaded object path and key.
 
@@ -28,6 +29,8 @@ Returned task output includes uploaded object path and key.
 | `R2_BUCKET_NAME` | Bucket name for backup artifacts                                                                          |
 | `R2_BUCKET_PUBLIC_URL` | Base URL for public object access (e.g. `https://pub-xxx.r2.dev`)                                         |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID (for R2 endpoint; omit if using `R2_ENDPOINT`)                                      |
+| `SENTRY_DSN` | Optional Sentry DSN for fatal error reporting                                                               |
+| `SERVICE_NAME` | Service name shown in Sentry (defaults to `db_backup_worker`)                                               |
 
 ## Run with Docker
 
@@ -49,6 +52,7 @@ The workflow runs four Conductor simple tasks in sequence:
 - `encryption_task`
 - `compress_task`
 - `upload_to_r2_task`
+- `cleanup_local_files_task`
 
 ## Local run (without Docker)
 

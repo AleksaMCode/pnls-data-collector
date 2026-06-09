@@ -15,3 +15,7 @@ popd
 pushd cloudflare_limit_notifier
 make fmt
 popd
+
+pushd db_backup
+make fmt
+popd
