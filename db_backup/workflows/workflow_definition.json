@@ -56,6 +56,16 @@
         "encrypted_file_name": "${compress_task_ref.output.encrypted_file_name}",
         "compressed_file_name": "${compress_task_ref.output.compressed_file_name}"
       }
+    },
+    {
+      "name": "cleanup_local_files_task",
+      "taskReferenceName": "cleanup_local_files_task_ref",
+      "type": "SIMPLE",
+      "startDelay": 0,
+      "optional": false,
+      "inputParameters": {
+        "base_dir": "${compress_task_ref.output.base_dir}"
+      }
     }
   ],
   "outputParameters": {

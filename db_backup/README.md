@@ -7,6 +7,7 @@ Pipeline per task execution:
 2. AES-256-GCM encryption
 3. gzip compression
 4. upload to S3-compatible storage (Cloudflare R2)
+5. local artifact cleanup
 
 Returned task output includes uploaded object path and key.
 
@@ -49,6 +50,7 @@ The workflow runs four Conductor simple tasks in sequence:
 - `encryption_task`
 - `compress_task`
 - `upload_to_r2_task`
+- `cleanup_local_files_task`
 
 ## Local run (without Docker)
 

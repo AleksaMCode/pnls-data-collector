@@ -36,3 +36,9 @@ type UploadTaskOutput struct {
 	CompressedName string `json:"compressed_file_name"`
 	UploadedAtUnix int64  `json:"uploaded_at_unix"`
 }
+
+type CleanupTaskOutput struct {
+	WorkflowID     string `json:"workflow_id"`
+	DeletedBaseDir string `json:"deleted_base_dir"`
+	CleanedAtUnix  int64  `json:"cleaned_at_unix"`
+}

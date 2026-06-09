@@ -52,6 +52,9 @@ func main() {
 	uploadHandler := func(task *conductormodel.Task) (any, error) {
 		return pipeline.RunUploadTask(ctx, task)
 	}
+	cleanupHandler := func(task *conductormodel.Task) (any, error) {
+		return pipeline.RunCleanupTask(ctx, task)
+	}
 
 	if err := taskRunner.StartWorker(
 		backup.TaskPgDumpName,
@@ -85,13 +88,22 @@ func main() {
 	); err != nil {
 		log.Fatalf("upload worker start error: %v", err)
 	}
+	if err := taskRunner.StartWorker(
+		backup.TaskCleanupName,
+		cleanupHandler,
+		cfg.WorkerCount,
+		cfg.PollInterval,
+	); err != nil {
+		log.Fatalf("cleanup worker start error: %v", err)
+	}
 
 	log.Printf(
-		"db_backup worker started. tasks=[%s,%s,%s,%s] conductor=%s",
+		"db_backup worker started. tasks=[%s,%s,%s,%s,%s] conductor=%s",
 		backup.TaskPgDumpName,
 		backup.TaskEncryptName,
 		backup.TaskCompressName,
 		backup.TaskUploadName,
+		backup.TaskCleanupName,
 		cfg.ConductorServerURL,
 	)
 
@@ -103,5 +115,6 @@ func main() {
 	taskRunner.Shutdown(backup.TaskEncryptName)
 	taskRunner.Shutdown(backup.TaskCompressName)
 	taskRunner.Shutdown(backup.TaskUploadName)
+	taskRunner.Shutdown(backup.TaskCleanupName)
 	taskRunner.WaitWorkers()
 }

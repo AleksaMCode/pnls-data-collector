@@ -95,5 +95,23 @@
       "compressed_file_name",
       "uploaded_at_unix"
     ]
+  },
+  {
+    "name": "cleanup_local_files_task",
+    "description": "Deletes local temporary backup artifacts after successful upload.",
+    "retryCount": 2,
+    "retryLogic": "FIXED",
+    "retryDelaySeconds": 30,
+    "timeoutSeconds": 300,
+    "responseTimeoutSeconds": 120,
+    "timeoutPolicy": "TIME_OUT_WF",
+    "inputKeys": [
+      "base_dir"
+    ],
+    "outputKeys": [
+      "workflow_id",
+      "deleted_base_dir",
+      "cleaned_at_unix"
+    ]
   }
 ]
