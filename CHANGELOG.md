@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Mattermost bot icon support added for Go services through service-name-based icon mapping, with custom bot icon assets under `resources/bot_icons/`. PR #296
 - Datadog heartbeat status validation added to `collector_status_notifier` as the primary device-health source, with periodic checks and Datadog API integration for configured devices. PR #302
 - New `FIREBASE_MONGO_BACKUP_ENABLED` usage flag added to `firebase_housekeeping` to control MongoDB backup behavior during cleanup workflows. PR #301
+- `db_backup` workflow now includes `cleanup_local_files_task`, which deletes local temporary backup artifacts after successful upload. PR #307
+- Internal Sentry fatal logging was added to `db_backup` via `internal/logging`, configurable through `SENTRY_DSN` and `SERVICE_NAME`. PR #307
+- Aggregator now sends a Mattermost message when the workflow starts. PR #308
 
 ### Changed
 - Changed Firebase cleanup to use batch-delete workflow. PR #267
@@ -18,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Go formatter automation updated to include a previously missing service target. PR #284
 - README documentation updated and refined across multiple passes (wording, spelling, and clarity improvements).
 - `collector_status_notifier` now performs device status checks every 5 minutes via Datadog and falls back to Firebase status checks when Datadog is unavailable. PR #302
+- `firebase_housekeeping` logging was expanded with additional runtime messages for better operational visibility.
 
 ## [1.0.0] - 2026-05-30
 
