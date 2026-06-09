@@ -98,3 +98,7 @@ def publish_to_channel(data: dict, probe_req_count: int, import_date: date = Non
         + f"* Total captured unique SSIDs: {data['ssid_count']:,}\n"
     )
     send_webhook_message(mattermost_msg, webhook=SLACK_WEBHOOK_URL)
+
+
+def publish_message_to_channel(message: str):
+    send_webhook_message(message, webhook=SLACK_WEBHOOK_URL)

@@ -13,7 +13,7 @@ from aggregator.core.firebase.helpers import (
 # This import is needed in order for listener to work!! - from aggregator.core.orm import event
 from aggregator.core.orm.helpers import get_latest_import_date, import_data
 from aggregator.settings import TIMEZONE
-from aggregator.util.util import publish_to_channel
+from aggregator.util.util import publish_message_to_channel, publish_to_channel
 from util.logger import get_logger
 from util.util import is_after_six
 
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 IMPORT_DATE_START = get_latest_import_date() + timedelta(days=1)
 
-# If server doesn't run for multiple days, there is import for more than one day.
+# If server doesn't run for multiple days, import is done for more than one day.
 IMPORT_DATES = [
     IMPORT_DATE_START + timedelta(days=n)
     for n in range(
@@ -67,8 +67,11 @@ def transfer_data_all():
         return
 
     for import_date in IMPORT_DATES:
-        logger.info(f"Transfer data from {import_date}.")
+        msg = f"Transfer data from {import_date} workflow started."
+        publish_message_to_channel(msg)
+        logger.info(msg)
         transfer_data(import_date)
+    logger.info("Data aggregation workflow completed.")
 
 
 if __name__ == "__main__":
