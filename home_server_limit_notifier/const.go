@@ -4,7 +4,7 @@ const (
 	SERVICE_NAME = "Home Server limit notifier"
 	LOG_FILE     = "home_server_limit_notifier.log"
 
-	DEFAULT_HTTP_PORT     = "8080"
+	DEFAULT_HTTP_PORT     = "9091"
 	DEFAULT_ENDPOINT_PATH = "/check"
 	DEFAULT_DISK_MOUNT    = "/"
 
