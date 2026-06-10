@@ -2,7 +2,6 @@ package common
 
 import (
 	"log"
-	"os"
 	"time"
 )
 
@@ -10,7 +9,6 @@ func GetTimeNow(timezone string) time.Time {
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
 		log.Fatalf("Error loading timezone: %v", err)
-		os.Exit(1)
 	}
 
 	return time.Now().In(location)
