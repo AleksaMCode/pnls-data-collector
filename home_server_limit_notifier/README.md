@@ -1,6 +1,6 @@
 # Home Server Limit Notifier (`home_server_limit_notifier`)
 
-`home_server_limit_notifier` is a Go microservice that exposes an HTTP endpoint for on-demand SSD usage checks.
+`home_server_limit_notifier` is a Go microservice that exposes an HTTP endpoint for on-demand memory usage checks.
 
 When triggered, it:
 
