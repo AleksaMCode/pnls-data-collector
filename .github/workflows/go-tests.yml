@@ -9,6 +9,7 @@ on:
       - "util-go/**/*.go"
       - "db_backup/**/*.go"
       - "cloudflare_limit_notifier/**/*.go"
+      - "home_server_limit_notifier/**/*.go"
   pull_request:
     branches: [master]
     paths:
@@ -17,6 +18,7 @@ on:
       - "util-go/**/*.go"
       - "db_backup/**/*.go"
       - "cloudflare_limit_notifier/**/*.go"
+      - "home_server_limit_notifier/**/*.go"
 
 jobs:
   test:
@@ -36,6 +38,7 @@ jobs:
             firebase_limit_notifier/go.sum
             util-go/go.sum
             cloudflare_limit_notifier/go.sum
+            home_server_limit_notifier/go.sum
 
       - name: Run collector_status_notifier tests
         run: |
@@ -64,5 +67,11 @@ jobs:
       - name: Run cloudflare_limit_notifier tests
         run: |
           cd cloudflare_limit_notifier
+          go mod download
+          go test -v ./...
+
+      - name: Run home_server_limit_notifier tests
+        run: |
+          cd home_server_limit_notifier
           go mod download
           go test -v ./...

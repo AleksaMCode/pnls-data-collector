@@ -57,3 +57,9 @@ jobs:
           cd cloudflare_limit_notifier
           golangci-lint fmt
           git diff --exit-code
+
+      - name: Run golangci-lint fmt check (home_server_limit_notifier)
+        run: |
+          cd home_server_limit_notifier
+          golangci-lint fmt
+          git diff --exit-code
