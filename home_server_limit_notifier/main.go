@@ -19,7 +19,7 @@ func main() {
 	}
 
 	http.HandleFunc(CHECK_ENDPOINT_PATH, checkDiskAndNotifyHandler)
-	log.Printf("Home server limit notifier listening on :%s%s", HTTP_PORT, CHECK_ENDPOINT_PATH)
+	log.Printf("%s listening on :%s%s", SERVICE_NAME, HTTP_PORT, CHECK_ENDPOINT_PATH)
 
 	if err := http.ListenAndServe(":"+HTTP_PORT, nil); err != nil {
 		logging.Fatal(fmt.Sprintf("HTTP server failed: %v", err))
@@ -44,7 +44,7 @@ func checkDiskAndNotifyHandler(responseWriter http.ResponseWriter, request *http
 	mattermost.SendMattermostMessage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message)
 
 	responseWriter.WriteHeader(http.StatusOK)
-	if _, err := responseWriter.Write([]byte("Disk usage check sent to Mattermost")); err != nil {
+	if _, err := responseWriter.Write([]byte("Disk usage check sent to Mattermost info channel.")); err != nil {
 		log.Printf("Failed to write response body: %v", err)
 	}
 }
