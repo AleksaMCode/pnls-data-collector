@@ -9,14 +9,14 @@ func TestNormalizePath(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "empty path falls back to default",
+			name:     "empty path stays empty",
 			input:    "",
-			expected: DEFAULT_ENDPOINT_PATH,
+			expected: "",
 		},
 		{
-			name:     "whitespace path falls back to default",
+			name:     "whitespace path stays empty",
 			input:    "   ",
-			expected: DEFAULT_ENDPOINT_PATH,
+			expected: "",
 		},
 		{
 			name:     "already normalized path remains unchanged",

@@ -4,7 +4,7 @@
 
 When triggered, it:
 
-- reads filesystem usage for a configured mount path (default `/`)
+- reads filesystem usage for a configured mount path
 - computes used/free/total storage and usage percentage
 - sends a plain-text report to Mattermost
 - returns `200 OK` to the caller on success
@@ -23,5 +23,5 @@ go run .
 ## Trigger check
 
 ```bash
-curl -X POST http://localhost:8080/check
+curl -X POST http://localhost:<HTTP_PORT><CHECK_ENDPOINT_PATH>
 ```

@@ -22,23 +22,11 @@ func loadEnvVariables() {
 		logging.Fatal("Error loading .env file")
 	}
 
-	MATTERMOST_WEBHOOK_URL = os.Getenv("MATTERMOST_WEBHOOK_URL")
-	SENTRY_DSN = os.Getenv("SENTRY_DSN")
-	HTTP_PORT = os.Getenv("HTTP_PORT")
-	CHECK_ENDPOINT_PATH = os.Getenv("CHECK_ENDPOINT_PATH")
-	DISK_MOUNT_PATH = os.Getenv("DISK_MOUNT_PATH")
-
-	if HTTP_PORT == "" {
-		HTTP_PORT = DEFAULT_HTTP_PORT
-	}
-
-	if CHECK_ENDPOINT_PATH == "" {
-		CHECK_ENDPOINT_PATH = DEFAULT_ENDPOINT_PATH
-	}
-
-	if DISK_MOUNT_PATH == "" {
-		DISK_MOUNT_PATH = DEFAULT_DISK_MOUNT
-	}
+	MATTERMOST_WEBHOOK_URL = strings.TrimSpace(os.Getenv("MATTERMOST_WEBHOOK_URL"))
+	SENTRY_DSN = strings.TrimSpace(os.Getenv("SENTRY_DSN"))
+	HTTP_PORT = strings.TrimSpace(os.Getenv("HTTP_PORT"))
+	CHECK_ENDPOINT_PATH = strings.TrimSpace(os.Getenv("CHECK_ENDPOINT_PATH"))
+	DISK_MOUNT_PATH = strings.TrimSpace(os.Getenv("DISK_MOUNT_PATH"))
 
 	CHECK_ENDPOINT_PATH = normalizePath(CHECK_ENDPOINT_PATH)
 }
@@ -47,13 +35,22 @@ func validateRequiredEnv() error {
 	if MATTERMOST_WEBHOOK_URL == "" {
 		return fmt.Errorf("missing MATTERMOST_WEBHOOK_URL")
 	}
+	if HTTP_PORT == "" {
+		return fmt.Errorf("missing HTTP_PORT")
+	}
+	if CHECK_ENDPOINT_PATH == "" {
+		return fmt.Errorf("missing CHECK_ENDPOINT_PATH")
+	}
+	if DISK_MOUNT_PATH == "" {
+		return fmt.Errorf("missing DISK_MOUNT_PATH")
+	}
 	return nil
 }
 
 func normalizePath(path string) string {
 	trimmedPath := strings.TrimSpace(path)
 	if trimmedPath == "" {
-		return DEFAULT_ENDPOINT_PATH
+		return ""
 	}
 
 	if strings.HasPrefix(trimmedPath, "/") {
