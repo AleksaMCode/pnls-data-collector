@@ -12,13 +12,7 @@ When triggered, it:
 ## Setup
 
 1. Copy `.env.template` to `.env`.
-2. Fill required values:
-   - `MATTERMOST_WEBHOOK_URL` (required)
-3. Optional values:
-   - `HTTP_PORT` (default: `8080`)
-   - `CHECK_ENDPOINT_PATH` (default: `/check`)
-   - `DISK_MOUNT_PATH` (default: `/`)
-   - `SENTRY_DSN`
+2. Fill required values.
 
 ## Run
 
