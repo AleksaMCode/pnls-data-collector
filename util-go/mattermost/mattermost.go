@@ -14,8 +14,9 @@ const (
 
 var botIconFilenameByService = map[string]string{
 	// https://www.flaticon.com/free-icon/limitation_12642584
-	"Cloudflare limit notifier": "limit_notifier.png",
-	"Firebase limit notifier":   "limit_notifier.png",
+	"Cloudflare limit notifier":  "limit_notifier.png",
+	"Firebase limit notifier":    "limit_notifier.png",
+	"Home Server limit notifier": "limit_notifier.png",
 	// https://www.flaticon.com/free-icon/login-warning_18841837
 	"Collector status notifier": "status_notifier.png",
 }
