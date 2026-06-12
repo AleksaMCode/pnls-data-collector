@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+
 - Sentry fatal-error logging integrated into the Go notifier services: `cloudflare_limit_notifier`, `collector_status_notifier`, and `firebase_limit_notifier`. PR #296
 - Mattermost bot icon support added for Go services through service-name-based icon mapping, with custom bot icon assets under `resources/bot_icons/`. PR #296
 - Datadog heartbeat status validation added to `collector_status_notifier` as the primary device-health source, with periodic checks and Datadog API integration for configured devices. PR #302
@@ -14,8 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `db_backup` workflow now includes `cleanup_local_files_task`, which deletes local temporary backup artifacts after successful upload. PR #307
 - Internal Sentry fatal logging was added to `db_backup` via `internal/logging`, configurable through `SENTRY_DSN` and `SERVICE_NAME`. PR #307
 - Aggregator now sends a Mattermost message when the workflow starts. PR #308
+- New `home_server_limit_notifier` Go microservice added to monitor host SSD usage and send Mattermost reports on-demand via an HTTP trigger endpoint. PR #312
 
 ### Changed
+
 - Changed Firebase cleanup to use batch-delete workflow. PR #267
 - Firebase cleanup batch-delete flow now skips nodes for the current day to avoid removing fresh data. PR #267
 - Go formatter automation updated to include a previously missing service target. PR #284
@@ -24,11 +27,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `firebase_housekeeping` logging was expanded with additional runtime messages for better operational visibility.
 
 ### Fixed
+
 - `db_backup` Conductor Docker healthcheck endpoint was corrected from `/api/health` to `/health`, resolving false `unhealthy` container status after worker runs.
 
 ## [1.0.0] - 2026-05-30
 
 ### Added
+
 - Public stable release of the PNLS-DC distributed data collection platform.
 - Distributed edge `collector` service for Wi-Fi probe request capture with preprocessing and encryption before ingestion.
 - Event-driven ingestion layer on Firebase Realtime Database for real-time capture workflows.
@@ -44,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Centralized observability and alerting integrations with Sentry and Mattermost-compatible channels.
 
 ### Changed
+
 - Collector pipeline improvements and throughput optimizations, including channel hopping, filtering, parser refactors, and concurrency fixes.
 - Data model and ETL updates to support Wi-Fi channel capture in downstream analytics.
 - Reliability and deployment hardening across microservices through test, pipeline, and runtime fixes.
@@ -51,5 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Documentation expanded in `README.md` with architecture overview, deployment notes, and operational context for the public release.
 
 ### Fixed
+
 - Multiple bug fixes across collector, aggregator, dashboard, and metrics-agent workflows to improve production stability.
 - Import/runtime issues, CI formatting checks, and service-level regressions identified during pre-release stabilization.
+
