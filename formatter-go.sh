@@ -19,3 +19,7 @@ popd
 pushd db_backup
 make fmt
 popd
+
+pushd home_server_limit_notifier
+make fmt
+popd
