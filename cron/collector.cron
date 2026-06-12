@@ -1,0 +1,6 @@
+@reboot sudo ip link set wlan0 down
+@reboot sudo macchanger -m xx:xx:xx:xx:xx:xx wlan0
+@reboot sudo ip link set wlan0 up
+@reboot sudo arimon-ng start wlan1
+@reboot /bin/bash /home/kali/Desktop/pnls-data-collector/start_collector.sh &
+@reboot /bin/bash /home/kali/Desktop/pnls-data-collector/start_agent.sh &
