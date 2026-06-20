@@ -1,4 +1,21 @@
 services:
+  aggregator:
+    build:
+      context: ..
+      dockerfile: aggregator/Dockerfile
+    container_name: aggregator
+    networks:
+      - pnls
+    env_file:
+      - ./.env
+    environment:
+      SERVER_URL: 0.0.0.0
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+
   postgres:
     image: postgres:latest
     container_name: postgres
