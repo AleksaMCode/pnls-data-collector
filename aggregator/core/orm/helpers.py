@@ -27,9 +27,11 @@ from .models import (
     IEEEMacOuiView,
     IEEERegistry,
     ImportsInfo,
+    ImportsWorkflow,
     LocationMapping,
     LocationMappingResolved,
     TotalCapturedPerDevice,
+    WorkflowStatus,
 )
 
 logger = get_logger(__name__)
@@ -187,6 +189,17 @@ def import_data(
     """
     logger.info("Starting import of data from Firebase to local database.")
     with _session() as db:
+        workflow = ImportsWorkflow(status=WorkflowStatus.STARTED)
+        db.add(workflow)
+        try:
+            # Persist workflow first so it can be marked FAILED/COMPLETED reliably.
+            db.commit()
+            db.refresh(workflow)
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to start import workflow - {str(e)}")
+            return 0
+
         try:
             # Cache existing SSIDs and MACs for fast lookup
             ssid_map = {s.ssid: s.id for s in db.query(SSID).all()}
@@ -256,32 +269,44 @@ def import_data(
                     f"Skipping import for {today}: import already occurred today."
                 )
                 raise Exception("Import already occurred today.")
+            if captured_records:
+                db.add_all(captured_records)
+                # Only update stats when importing from Firebase.
+                # For import of local data manually update stats.
+                # TODO Maybe fix this (automate stats update) in the future #techdebt
+                if firebase_import:
+                    if manual_import_date:
+                        db.add(
+                            ImportsInfo(
+                                captured=len(captured_records),
+                                timestamp=manual_import_date,
+                                workflow_id=workflow.id,
+                            )
+                        )
+                    else:
+                        db.add(
+                            ImportsInfo(
+                                captured=len(captured_records), workflow_id=workflow.id
+                            )
+                        )
+
+            workflow.status = WorkflowStatus.COMPLETED
+            db.commit()
+            logger.info(f"Imported {len(captured_records)} new captured records.")
+            return len(captured_records)
         except Exception as e:
             db.rollback()
             logger.error(f"Error occurred during data import - {str(e)}")
-            return 0
-
-        if captured_records:
-            db.add_all(captured_records)
-            # Only update stats when importing from Firebase.
-            # For import of local data manually update stats.
-            # TODO Maybe fix this (automate stats update) in the future #techdebt
-            if firebase_import:
-                if manual_import_date:
-                    db.add(
-                        ImportsInfo(
-                            captured=len(captured_records), timestamp=manual_import_date
-                        )
-                    )
-                else:
-                    db.add(ImportsInfo(captured=len(captured_records)))
             try:
-                db.commit()
-                logger.info(f"Imported {len(captured_records)} new captured records.")
-                return len(captured_records)
+                workflow_row = (
+                    db.query(ImportsWorkflow).filter_by(id=workflow.id).one_or_none()
+                )
+                if workflow_row:
+                    workflow_row.status = WorkflowStatus.FAILED
+                    db.commit()
             except Exception as e:
                 db.rollback()
-                logger.error(f"Failed to add new captured records - {str(e)}")
-                return 0
-        else:
+                logger.error(
+                    f"Failed to set import workflow status to FAILED - {str(e)}"
+                )
             return 0
