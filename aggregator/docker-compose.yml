@@ -12,9 +12,11 @@ services:
       SERVER_URL: 0.0.0.0
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   postgres:
     image: postgres:latest
@@ -54,8 +56,26 @@ services:
       postgres:
         condition: service_healthy
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    networks:
+      - pnls
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
 volumes:
   pnls:
+  redis_data:
 
 networks:
   pnls:
