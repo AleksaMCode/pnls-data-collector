@@ -111,7 +111,11 @@ class ImportsWorkflow(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     start = Column(DateTime(timezone=True), nullable=False, default=workflow_now)
     end = Column(DateTime(timezone=True), nullable=True)
-    status = Column(SQLEnum(WorkflowStatus, name="workflow_status"), nullable=False)
+    status = Column(
+        SQLEnum(WorkflowStatus, name="workflow_status"),
+        nullable=False,
+        default=WorkflowStatus.STARTED,
+    )
 
     imports = relationship("ImportsInfo", back_populates="workflow")
 
