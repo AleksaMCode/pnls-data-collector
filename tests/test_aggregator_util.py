@@ -1,7 +1,13 @@
 import unittest
+from datetime import date
 
 from aggregator.core.orm.models import IEEERegistry
-from aggregator.util.util import clean_string, mac_normalize, mac_to_oui_candidates
+from aggregator.util.util import (
+    clean_string,
+    get_pending_import_dates,
+    mac_normalize,
+    mac_to_oui_candidates,
+)
 from util.util import extract_device_name
 
 
@@ -82,6 +88,41 @@ class TestMacUtils(unittest.TestCase):
             with self.subTest(mac=case["input"]):
                 result = mac_to_oui_candidates(case["input"])
                 self.assertEqual(result, case["expected"])
+
+
+class TestImportDateUtils(unittest.TestCase):
+
+    def test_returns_empty_when_latest_import_is_today(self):
+        latest_import_date = date(2026, 6, 14)
+        current_date = date(2026, 6, 14)
+
+        self.assertEqual(
+            get_pending_import_dates(latest_import_date, current_date),
+            [],
+        )
+
+    def test_returns_next_day_when_one_day_is_pending(self):
+        latest_import_date = date(2026, 6, 13)
+        current_date = date(2026, 6, 14)
+
+        self.assertEqual(
+            get_pending_import_dates(latest_import_date, current_date),
+            [date(2026, 6, 14)],
+        )
+
+    def test_returns_all_missing_days_inclusive(self):
+        latest_import_date = date(2026, 6, 10)
+        current_date = date(2026, 6, 14)
+
+        self.assertEqual(
+            get_pending_import_dates(latest_import_date, current_date),
+            [
+                date(2026, 6, 11),
+                date(2026, 6, 12),
+                date(2026, 6, 13),
+                date(2026, 6, 14),
+            ],
+        )
 
 
 if __name__ == "__main__":
