@@ -55,6 +55,12 @@ class TestImportsWorkflowDefaults(unittest.TestCase):
         self.assertEqual(WorkflowStatus.COMPLETED.value, "COMPLETED")
         self.assertEqual(WorkflowStatus.FAILED.value, "FAILED")
 
+    def test_status_default_is_started(self):
+        self.assertEqual(
+            ImportsWorkflow.__table__.c.status.default.arg,
+            WorkflowStatus.STARTED,
+        )
+
     def test_start_default_is_timezone_aware_datetime(self):
         default_callable = ImportsWorkflow.__table__.c.start.default.arg
         value = default_callable(None)
