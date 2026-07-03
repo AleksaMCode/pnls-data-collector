@@ -1,3 +1,4 @@
+import json
 import os
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
@@ -23,6 +24,7 @@ from aggregator.core.orm.helpers import (
     set_import_workflow_status,
 )
 from aggregator.core.orm.models import WorkflowStatus
+from aggregator.core.redis.helpers import set_key_value
 from aggregator.settings import (
     SERVICE_DESCRIPTION,
     SERVICE_NAME,
@@ -38,6 +40,7 @@ from util.logger import get_logger
 from util.util import is_after_six
 
 logger = get_logger(__name__)
+WORKFLOW_STATUS_TTL_SECONDS = 120
 
 
 # If server doesn't run for multiple days, import is done for more than one day.
@@ -126,10 +129,20 @@ async def aggregate():
     if not workflow_id:
         return {"status": "error", "message": "Failed to create import workflow."}
 
+    set_key_value(
+        str(workflow_id),
+        json.dumps({"status": WorkflowStatus.STARTED.value}),
+    )
+
     logger.info("Starting aggregator.")
     try:
         transfer_data_all(import_dates, workflow_id=workflow_id)
         set_import_workflow_status(workflow_id, WorkflowStatus.COMPLETED)
+        set_key_value(
+            str(workflow_id),
+            json.dumps({"status": WorkflowStatus.COMPLETED.value}),
+            ttl=WORKFLOW_STATUS_TTL_SECONDS,
+        )
         return {
             "status": "ok",
             "workflow_id": str(workflow_id),
@@ -137,6 +150,11 @@ async def aggregate():
         }
     except Exception:
         set_import_workflow_status(workflow_id, WorkflowStatus.FAILED)
+        set_key_value(
+            str(workflow_id),
+            json.dumps({"status": WorkflowStatus.FAILED.value}),
+            ttl=WORKFLOW_STATUS_TTL_SECONDS,
+        )
         raise
 
 

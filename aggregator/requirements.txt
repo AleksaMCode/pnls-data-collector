@@ -10,3 +10,4 @@ sentry_sdk
 geopy
 fastapi
 uvicorn
+redis
