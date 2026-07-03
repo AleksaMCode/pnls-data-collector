@@ -73,9 +73,24 @@ services:
       timeout: 10s
       retries: 20
 
+  redisinsight:
+    image: redis/redisinsight:3.6
+    container_name: redisinsight
+    networks:
+      - pnls
+    ports:
+      - "${REDIS_INSIGHT_PORT}:5540"
+    volumes:
+      - redisinsight_data:/data
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   pnls:
   redis_data:
+  redisinsight_data:
 
 networks:
   pnls:
