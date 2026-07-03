@@ -57,7 +57,7 @@ services:
         condition: service_healthy
 
   redis:
-    image: redis:latest
+    image: redis:8.8.0
     container_name: redis
     networks:
       - pnls
