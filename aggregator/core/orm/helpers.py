@@ -1,5 +1,6 @@
 import logging
 from datetime import date, datetime
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import desc, func
@@ -179,9 +180,42 @@ def resolve_oui(session, mac: MAC):
     mac.oui = None
 
 
+def create_import_workflow() -> UUID | None:
+    with _session() as db:
+        workflow = ImportsWorkflow(status=WorkflowStatus.STARTED)
+        db.add(workflow)
+        try:
+            db.commit()
+            db.refresh(workflow)
+            return workflow.id
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Failed to start import workflow - {str(e)}")
+            return None
+
+
+def set_import_workflow_status(workflow_id: UUID, status: WorkflowStatus):
+    with _session() as db:
+        try:
+            workflow = db.query(ImportsWorkflow).filter_by(id=workflow_id).one_or_none()
+            if not workflow:
+                logger.warning(f"Import workflow {workflow_id} not found.")
+                return
+            workflow.status = status
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                f"Failed to set import workflow status to {status.value} - {str(e)}"
+            )
+
+
 @yaspin(text="Importing data from Firebase to local database...")
 def import_data(
-    data, firebase_import: bool = True, manual_import_date: date = None
+    data,
+    firebase_import: bool = True,
+    manual_import_date: date = None,
+    workflow_id: UUID | None = None,
 ) -> int:
     """
     Imports data from Firebase to local database.
@@ -189,17 +223,6 @@ def import_data(
     """
     logger.info("Starting import of data from Firebase to local database.")
     with _session() as db:
-        workflow = ImportsWorkflow(status=WorkflowStatus.STARTED)
-        db.add(workflow)
-        try:
-            # Persist workflow first so it can be marked FAILED/COMPLETED reliably.
-            db.commit()
-            db.refresh(workflow)
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Failed to start import workflow - {str(e)}")
-            return 0
-
         try:
             # Cache existing SSIDs and MACs for fast lookup
             ssid_map = {s.ssid: s.id for s in db.query(SSID).all()}
@@ -280,33 +303,20 @@ def import_data(
                             ImportsInfo(
                                 captured=len(captured_records),
                                 timestamp=manual_import_date,
-                                workflow_id=workflow.id,
+                                workflow_id=workflow_id,
                             )
                         )
                     else:
                         db.add(
                             ImportsInfo(
-                                captured=len(captured_records), workflow_id=workflow.id
+                                captured=len(captured_records), workflow_id=workflow_id
                             )
                         )
 
-            workflow.status = WorkflowStatus.COMPLETED
             db.commit()
             logger.info(f"Imported {len(captured_records)} new captured records.")
             return len(captured_records)
         except Exception as e:
             db.rollback()
             logger.error(f"Error occurred during data import - {str(e)}")
-            try:
-                workflow_row = (
-                    db.query(ImportsWorkflow).filter_by(id=workflow.id).one_or_none()
-                )
-                if workflow_row:
-                    workflow_row.status = WorkflowStatus.FAILED
-                    db.commit()
-            except Exception as e:
-                db.rollback()
-                logger.error(
-                    f"Failed to set import workflow status to FAILED - {str(e)}"
-                )
             return 0

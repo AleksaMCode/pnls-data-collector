@@ -1,6 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI
@@ -15,7 +16,13 @@ from aggregator.core.firebase.helpers import (
 )
 
 # This import is needed in order for listener to work!! - from aggregator.core.orm import event
-from aggregator.core.orm.helpers import get_latest_import_date, import_data
+from aggregator.core.orm.helpers import (
+    create_import_workflow,
+    get_latest_import_date,
+    import_data,
+    set_import_workflow_status,
+)
+from aggregator.core.orm.models import WorkflowStatus
 from aggregator.settings import (
     SERVICE_DESCRIPTION,
     SERVICE_NAME,
@@ -34,16 +41,18 @@ logger = get_logger(__name__)
 
 
 # If server doesn't run for multiple days, import is done for more than one day.
-def transfer_all_data_from_firebase_to_db():
+def transfer_all_data_from_firebase_to_db(workflow_id: UUID | None = None):
     """
     Imports data to local DB only for the next import date based on the information about import in the DB.
     """
     import_date_start = get_latest_import_date() + timedelta(days=1)
     data = fetch_all_data(import_date_start)
-    import_data(data)
+    import_data(data, workflow_id=workflow_id)
 
 
-def transfer_data(import_date: date, manual_import=False):
+def transfer_data(
+    import_date: date, manual_import=False, workflow_id: UUID | None = None
+):
     """
     Transfer data for `import_date` date.
     """
@@ -52,6 +61,7 @@ def transfer_data(import_date: date, manual_import=False):
         data,
         firebase_import=True,
         manual_import_date=import_date if manual_import else None,
+        workflow_id=workflow_id,
     )
     stats = publish_stats_data()
     publish_manufacturers_data()
@@ -63,7 +73,7 @@ def transfer_data(import_date: date, manual_import=False):
         logger.error(f"Publishing stats data to Mattermost failed: {str(e)}")
 
 
-def transfer_data_all(import_dates: list[date]):
+def transfer_data_all(import_dates: list[date], workflow_id: UUID | None = None):
     """
     Transfer data for days after latest_import.
     """
@@ -75,7 +85,7 @@ def transfer_data_all(import_dates: list[date]):
         msg = f"Transfer data from {import_date} workflow started."
         publish_message_to_channel(msg)
         logger.info(msg)
-        transfer_data(import_date)
+        transfer_data(import_date, workflow_id=workflow_id)
     logger.info("Data aggregation workflow completed.")
 
 
@@ -112,9 +122,22 @@ async def aggregate():
         logger.info("Aggregator can only run after 18:00.")
         return {"status": "skipped", "message": "Aggregator can only run after 18:00."}
 
+    workflow_id = create_import_workflow()
+    if not workflow_id:
+        return {"status": "error", "message": "Failed to create import workflow."}
+
     logger.info("Starting aggregator.")
-    transfer_data_all(import_dates)
-    return {"status": "ok", "message": "Data aggregation workflow completed."}
+    try:
+        transfer_data_all(import_dates, workflow_id=workflow_id)
+        set_import_workflow_status(workflow_id, WorkflowStatus.COMPLETED)
+        return {
+            "status": "ok",
+            "workflow_id": str(workflow_id),
+            "message": "Data aggregation workflow completed.",
+        }
+    except Exception:
+        set_import_workflow_status(workflow_id, WorkflowStatus.FAILED)
+        raise
 
 
 if __name__ == "__main__":
