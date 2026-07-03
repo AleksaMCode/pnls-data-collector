@@ -1,0 +1,9 @@
+testcontainers
+redis
+pycryptodome
+sentry-sdk
+python-dotenv
+tenacity
+sqlalchemy
+scapy
+yaspin
