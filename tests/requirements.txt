@@ -8,3 +8,4 @@ tenacity
 sqlalchemy
 scapy
 yaspin
+tqdm
