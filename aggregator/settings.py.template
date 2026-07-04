@@ -22,3 +22,5 @@ RSA_KEY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "private
 
 # Project uses CERN's Mattermost
 SLACK_WEBHOOK_URL = "mattermost_webhook_url"
+
+WORKFLOW_STATUS_TTL_SECONDS = 120
