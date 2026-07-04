@@ -210,6 +210,12 @@ def set_import_workflow_status(workflow_id: UUID, status: WorkflowStatus):
             )
 
 
+def get_import_workflow_status(workflow_id: UUID) -> WorkflowStatus | None:
+    with _session() as db:
+        workflow = db.query(ImportsWorkflow).filter_by(id=workflow_id).one_or_none()
+        return workflow.status if workflow else None
+
+
 @yaspin(text="Importing data from Firebase to local database...")
 def import_data(
     data,
