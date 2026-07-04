@@ -1,5 +1,6 @@
 testcontainers
 redis
+psycopg2-binary
 pycryptodome
 sentry-sdk
 python-dotenv
