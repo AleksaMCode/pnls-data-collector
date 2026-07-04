@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def _redis_auth() -> str:
     password = os.getenv("REDIS_PASSWORD")
     if not password:

@@ -2,8 +2,6 @@ import json
 from datetime import date
 from uuid import UUID
 
-# This import is needed in order for listener to work.
-from aggregator.core.orm import event  # noqa: F401
 from aggregator.background.celery import celery
 from aggregator.core.firebase.helpers import (
     fetch_data,
@@ -11,6 +9,9 @@ from aggregator.core.firebase.helpers import (
     publish_sankey_data,
     publish_stats_data,
 )
+
+# This import is needed in order for listener to work.
+from aggregator.core.orm import event  # noqa: F401
 from aggregator.core.orm.helpers import import_data, set_import_workflow_status
 from aggregator.core.orm.models import WorkflowStatus
 from aggregator.core.redis.helpers import set_key_value
@@ -19,6 +20,7 @@ from aggregator.util.util import publish_message_to_channel, publish_to_channel
 from util.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 def transfer_data(import_date: date, workflow_id: UUID):
     data = fetch_data(import_date)
