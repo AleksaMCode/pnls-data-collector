@@ -25,10 +25,19 @@ def clean_string(s: str) -> str:
 def get_pending_import_dates(
     latest_import_date: date, current_date: date
 ) -> list[date]:
+    """
+    Returns pending import dates from day after `latest_import_date` up to yesterday.
+    Current day is intentionally excluded.
+    """
     import_date_start = latest_import_date + timedelta(days=1)
+    import_date_end = current_date - timedelta(days=1)
+
+    if import_date_start > import_date_end:
+        return []
+
     return [
         import_date_start + timedelta(days=n)
-        for n in range((current_date - import_date_start).days + 1)
+        for n in range((import_date_end - import_date_start).days + 1)
     ]
 
 

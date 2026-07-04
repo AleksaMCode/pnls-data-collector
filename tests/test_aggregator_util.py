@@ -103,7 +103,7 @@ class TestImportDateUtils(unittest.TestCase):
 
     def test_returns_next_day_when_one_day_is_pending(self):
         latest_import_date = date(2026, 6, 13)
-        current_date = date(2026, 6, 14)
+        current_date = date(2026, 6, 15)
 
         self.assertEqual(
             get_pending_import_dates(latest_import_date, current_date),
@@ -120,7 +120,6 @@ class TestImportDateUtils(unittest.TestCase):
                 date(2026, 6, 11),
                 date(2026, 6, 12),
                 date(2026, 6, 13),
-                date(2026, 6, 14),
             ],
         )
 
