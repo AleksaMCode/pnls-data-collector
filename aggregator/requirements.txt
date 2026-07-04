@@ -11,3 +11,5 @@ geopy
 fastapi
 uvicorn
 redis
+celery
+flower
