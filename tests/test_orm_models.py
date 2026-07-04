@@ -2,7 +2,13 @@ import unittest
 import uuid
 from datetime import date, datetime
 
-from aggregator.core.orm.models import MAC, ImportsInfo, ImportsWorkflow, WorkflowStatus
+from aggregator.core.orm.models import (
+    MAC,
+    ImportsInfo,
+    ImportsWorkflow,
+    WorkflowStatus,
+    workflow_now,
+)
 
 
 class TestMACValidator(unittest.TestCase):
@@ -65,6 +71,11 @@ class TestImportsWorkflowDefaults(unittest.TestCase):
         default_callable = ImportsWorkflow.__table__.c.start.default.arg
         value = default_callable(None)
 
+        self.assertIsInstance(value, datetime)
+        self.assertIsNotNone(value.tzinfo)
+
+    def test_workflow_now_returns_timezone_aware_datetime(self):
+        value = workflow_now()
         self.assertIsInstance(value, datetime)
         self.assertIsNotNone(value.tzinfo)
 
