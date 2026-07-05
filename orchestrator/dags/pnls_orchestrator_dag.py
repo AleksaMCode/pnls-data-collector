@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -12,6 +13,8 @@ from airflow.providers.standard.operators.python import (
 )
 from airflow.providers.standard.sensors.python import PythonSensor
 from airflow.sdk import TriggerRule
+
+logger = logging.getLogger(__name__)
 
 AGGREGATOR_BASE_URL = os.getenv("AGGREGATOR_BASE_URL", "http://aggregator:9091")
 HOUSEKEEPING_BASE_URL = os.getenv(
@@ -53,7 +56,7 @@ def run_aggregator() -> dict:
 
 def wait_for_workflow_completion(**context) -> bool:
     trigger_response = context["ti"].xcom_pull(task_ids="run_aggregator") or {}
-    workflow_id = trigger_response.get("workflow_id")
+    workflow_id = trigger_response.get("workflow_id", None)
     if not workflow_id:
         raise AirflowException("No workflow_id found in aggregator response.")
 
@@ -78,6 +81,16 @@ def choose_housekeeping_branch(**context) -> str:
 
     logical_date = context["logical_date"].date()
     days_since_anchor = (logical_date - HOUSEKEEPING_ANCHOR_DATE).days
+
+    logger.info(
+        "Branch decision inputs: final_workflow_status=%s logical_date=%s anchor=%s every_n_days=%s days_since_anchor=%s",
+        final_workflow_status,
+        logical_date,
+        HOUSEKEEPING_ANCHOR_DATE,
+        HOUSEKEEPING_EVERY_N_DAYS,
+        days_since_anchor,
+    )
+
     should_run_housekeeping = (
         days_since_anchor >= 0 and days_since_anchor % HOUSEKEEPING_EVERY_N_DAYS == 0
     )
