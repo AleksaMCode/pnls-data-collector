@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -145,16 +146,41 @@ func (p *Pipeline) RunCompressTask(
 }
 
 func (p *Pipeline) RunUploadTask(ctx context.Context, task *conductormodel.Task) (localmodel.UploadTaskOutput, error) {
+	startedAt := time.Now()
+	log.Printf(
+		"upload_to_r2_task started: workflow_id=%s task_id=%s",
+		task.WorkflowInstanceId,
+		task.TaskId,
+	)
+
 	gzipPath, err := requiredInput(task, "compressed_path")
 	if err != nil {
+		log.Printf(
+			"upload_to_r2_task input error: workflow_id=%s task_id=%s key=compressed_path err=%v",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			err,
+		)
 		return localmodel.UploadTaskOutput{}, err
 	}
 	timestamp, err := requiredInput(task, "timestamp")
 	if err != nil {
+		log.Printf(
+			"upload_to_r2_task input error: workflow_id=%s task_id=%s key=timestamp err=%v",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			err,
+		)
 		return localmodel.UploadTaskOutput{}, err
 	}
-	_, err = requiredInput(task, "base_dir")
+	baseDir, err := requiredInput(task, "base_dir")
 	if err != nil {
+		log.Printf(
+			"upload_to_r2_task input error: workflow_id=%s task_id=%s key=base_dir err=%v",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			err,
+		)
 		return localmodel.UploadTaskOutput{}, err
 	}
 	dumpFileName, _ := optionalInput(task, "dump_file_name")
@@ -162,15 +188,53 @@ func (p *Pipeline) RunUploadTask(ctx context.Context, task *conductormodel.Task)
 	compressedFileName, _ := optionalInput(task, "compressed_file_name")
 
 	objectKey := fmt.Sprintf("db-backup/%s/%s-%s.sql.enc.gz", timestamp, task.WorkflowInstanceId, task.TaskId)
+	fileInfo, statErr := os.Stat(gzipPath)
+	if statErr != nil {
+		log.Printf(
+			"upload_to_r2_task unable to stat compressed file: workflow_id=%s task_id=%s path=%s err=%v",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			gzipPath,
+			statErr,
+		)
+	} else {
+		log.Printf(
+			"upload_to_r2_task prepared upload: workflow_id=%s task_id=%s path=%s size_bytes=%d object_key=%s base_dir=%s",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			gzipPath,
+			fileInfo.Size(),
+			objectKey,
+			baseDir,
+		)
+	}
+
 	uploadCtx, cancel := context.WithTimeout(ctx, p.cfg.UploadTimeout)
 	defer cancel()
 
 	objectPath, err := p.uploader.UploadFile(uploadCtx, objectKey, gzipPath)
 	if err != nil {
+		log.Printf(
+			"upload_to_r2_task upload failed: workflow_id=%s task_id=%s object_key=%s path=%s timeout=%s err=%v",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			objectKey,
+			gzipPath,
+			p.cfg.UploadTimeout.String(),
+			err,
+		)
 		return localmodel.UploadTaskOutput{}, err
 	}
 
 	nowUnix := time.Now().Unix()
+	log.Printf(
+		"upload_to_r2_task completed: workflow_id=%s task_id=%s object_key=%s object_path=%s elapsed=%s",
+		task.WorkflowInstanceId,
+		task.TaskId,
+		objectKey,
+		objectPath,
+		time.Since(startedAt).String(),
+	)
 	return localmodel.UploadTaskOutput{
 		ObjectKey:      objectKey,
 		ObjectPath:     objectPath,
