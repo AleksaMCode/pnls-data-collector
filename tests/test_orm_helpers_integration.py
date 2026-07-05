@@ -83,6 +83,27 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         status = self.helpers.get_import_workflow_status(missing_workflow_id)
         self.assertIsNone(status)
 
+    def test_get_running_import_workflow_id_returns_started_workflow(self):
+        started_workflow_id = self.helpers.create_import_workflow()
+        completed_workflow_id = self.helpers.create_import_workflow()
+        self.helpers.set_import_workflow_status(
+            completed_workflow_id, self.models.WorkflowStatus.COMPLETED
+        )
+
+        running_workflow_id = self.helpers.get_running_import_workflow_id()
+
+        self.assertEqual(running_workflow_id, started_workflow_id)
+
+    def test_get_running_import_workflow_id_returns_none_without_started_workflow(self):
+        workflow_id = self.helpers.create_import_workflow()
+        self.helpers.set_import_workflow_status(
+            workflow_id, self.models.WorkflowStatus.FAILED
+        )
+
+        running_workflow_id = self.helpers.get_running_import_workflow_id()
+
+        self.assertIsNone(running_workflow_id)
+
 
 if __name__ == "__main__":
     unittest.main()

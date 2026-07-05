@@ -194,6 +194,17 @@ def create_import_workflow() -> UUID | None:
             return None
 
 
+def get_running_import_workflow_id() -> UUID | None:
+    with _session() as db:
+        running_workflow = (
+            db.query(ImportsWorkflow)
+            .filter_by(status=WorkflowStatus.STARTED)
+            .order_by(desc(ImportsWorkflow.start))
+            .first()
+        )
+        return running_workflow.id if running_workflow else None
+
+
 def set_import_workflow_status(workflow_id: UUID, status: WorkflowStatus):
     with _session() as db:
         try:

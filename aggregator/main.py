@@ -16,6 +16,7 @@ from aggregator.core.orm.helpers import (
     create_import_workflow,
     get_import_workflow_status,
     get_latest_import_date,
+    get_running_import_workflow_id,
 )
 from aggregator.core.orm.models import WorkflowStatus
 from aggregator.core.redis.helpers import get_key_value, set_key_value
@@ -59,6 +60,17 @@ app.add_middleware(
 
 @app.post("/aggregate", status_code=202)
 async def aggregate():
+    running_workflow_id = get_running_import_workflow_id()
+    if running_workflow_id:
+        msg = f"Aggregation workflow already running. workflow_id={running_workflow_id}"
+        logger.info(msg)
+        return {
+            "status": AggregateWorkflowStatus.ACCEPTED.value,
+            "workflow_id": str(running_workflow_id),
+            "task_id": None,
+            "message": msg,
+        }
+
     import_dates = get_pending_import_dates(
         latest_import_date=get_latest_import_date(),
         current_date=datetime.now(ZoneInfo(TIMEZONE)).date(),
