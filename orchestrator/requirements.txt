@@ -1,0 +1,2 @@
+httpx==0.28.1
+apache-airflow[sentry]==3.2.2
