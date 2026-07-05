@@ -53,7 +53,31 @@ func main() {
 		return pipeline.RunCompressTask(ctx, task)
 	}
 	uploadHandler := func(task *conductormodel.Task) (any, error) {
-		return pipeline.RunUploadTask(ctx, task)
+		log.Printf(
+			"upload handler started: workflow_id=%s task_id=%s retry_count=%d",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			task.RetryCount,
+		)
+		output, err := pipeline.RunUploadTask(ctx, task)
+		if err != nil {
+			log.Printf(
+				"upload handler failed: workflow_id=%s task_id=%s err=%v",
+				task.WorkflowInstanceId,
+				task.TaskId,
+				err,
+			)
+			return nil, err
+		}
+		log.Printf(
+			"upload handler completed: workflow_id=%s task_id=%s object_key=%s object_path=%s uploaded_at_unix=%d",
+			task.WorkflowInstanceId,
+			task.TaskId,
+			output.ObjectKey,
+			output.ObjectPath,
+			output.UploadedAtUnix,
+		)
+		return output, nil
 	}
 	cleanupHandler := func(task *conductormodel.Task) (any, error) {
 		return pipeline.RunCleanupTask(ctx, task)
