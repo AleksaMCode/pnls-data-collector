@@ -30,3 +30,5 @@ FIREBASE_TIMEOUT_STATUS = 60 * 10
 MAC_FILTER = []
 
 RSA_KEY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public_key.pem")
+
+CAPTURE_24_7 = True
