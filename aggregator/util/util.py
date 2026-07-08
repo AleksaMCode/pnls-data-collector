@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from aggregator.core.orm.models import Country, IEEERegistry
 from util.mattermost.helpers import send_webhook_message
@@ -19,6 +19,26 @@ from . import logger
 def clean_string(s: str) -> str:
     # Remove NULL and control characters, but keep UTF-8 characters
     return re.sub(r"[\x00-\x1F\x7F-\x9F]", "", s)
+
+
+# If server doesn't run for multiple days, import is done for more than one day.
+def get_pending_import_dates(
+    latest_import_date: date, current_date: date
+) -> list[date]:
+    """
+    Returns pending import dates from day after `latest_import_date` up to yesterday.
+    Current day is intentionally excluded.
+    """
+    import_date_start = latest_import_date + timedelta(days=1)
+    import_date_end = current_date - timedelta(days=1)
+
+    if import_date_start > import_date_end:
+        return []
+
+    return [
+        import_date_start + timedelta(days=n)
+        for n in range((import_date_end - import_date_start).days + 1)
+    ]
 
 
 def parse_data_local(file_name):

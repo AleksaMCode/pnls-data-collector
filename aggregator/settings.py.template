@@ -1,5 +1,11 @@
 import os
 
+SERVICE_NAME = "Aggregator"
+
+SERVICE_DESCRIPTION = "Aggregator microservice"
+
+SERVICE_VERSION = "v1"
+
 TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 TIMEZONE = "Europe/Paris"
@@ -16,3 +22,7 @@ RSA_KEY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "private
 
 # Project uses CERN's Mattermost
 SLACK_WEBHOOK_URL = "mattermost_webhook_url"
+
+WORKFLOW_FINAL_STATUS_TTL_SECONDS = 120
+
+REDIS_CACHE_DB = 2

@@ -8,3 +8,8 @@ tenacity
 tqdm
 sentry_sdk
 geopy
+fastapi
+uvicorn
+redis
+celery
+flower

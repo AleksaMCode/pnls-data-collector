@@ -2,41 +2,46 @@ name: PNLS-DC Python Tests
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - 'aggregator/**/*.py'
-      - 'collector/**/*.py'
-      - 'tests/**/*.py'
-      - 'util/**/*.py'
+      - "aggregator/**/*.py"
+      - "collector/**/*.py"
+      - "tests/**/*.py"
+      - "util/**/*.py"
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - 'aggregator/**/*.py'
-      - 'collector/**/*.py'
-      - 'tests/**/*.py'
-      - 'util/**/*.py'
+      - "aggregator/**/*.py"
+      - "collector/**/*.py"
+      - "tests/**/*.py"
+      - "util/**/*.py"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.13" ]
+        python-version: ["3.13"]
 
     env:
       ENV: test
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: python -m pip install --upgrade pip && python -m pip install pycryptodome sentry_sdk dotenv tenacity sqlalchemy scapy yaspin
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r tests/requirements.txt
 
-    - name: Run tests (unittest discover)
-      run: python -m unittest discover -v
+      - name: Prepare settings modules
+        run: |
+          cp aggregator/settings.py.template aggregator/settings.py
+          cp firebase_housekeeping/settings.py.template firebase_housekeeping/settings.py
+
+      - name: Run tests (unittest discover)
+        run: python -m unittest discover -v

@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
+from typing_extensions import deprecated
 
 
 def is_working_hours(tz="Europe/Paris"):
@@ -15,6 +16,7 @@ def is_working_hours(tz="Europe/Paris"):
     return time(7, 0) <= now <= time(18, 0)
 
 
+@deprecated("This is no longer used as part of the aggregator import")
 def is_after_six(tz="Europe/Paris"):
     """
     Returns True if the current time after 6 PM.

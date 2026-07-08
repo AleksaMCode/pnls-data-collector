@@ -1,5 +1,7 @@
-from datetime import date
+import uuid
+from datetime import date, datetime
 from enum import Enum
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     CHAR,
@@ -7,12 +9,21 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
+)
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
     String,
 )
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship, validates
+
+try:
+    from aggregator.settings import TIMEZONE
+except ImportError:
+    TIMEZONE = "Europe/Paris"
 
 Base = declarative_base()
 
@@ -23,11 +34,21 @@ class IEEERegistry(Enum):
     MA_S = "MA-S"
 
 
+class WorkflowStatus(Enum):
+    STARTED = "STARTED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 IEEE_PRIORITY = (
     IEEERegistry.MA_S,
     IEEERegistry.MA_M,
     IEEERegistry.MA_L,
 )
+
+
+def workflow_now(ctx=None) -> datetime:
+    return datetime.now(ZoneInfo(TIMEZONE))
 
 
 class SSID(Base):
@@ -75,6 +96,28 @@ class ImportsInfo(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(Date, nullable=False, default=date.today)
     captured = Column(Integer, nullable=False, default=0)
+    workflow_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("imports_workflow.id"),
+        nullable=True,
+        default=None,
+    )
+    workflow = relationship("ImportsWorkflow", back_populates="imports")
+
+
+class ImportsWorkflow(Base):
+    __tablename__ = "imports_workflow"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    start = Column(DateTime(timezone=True), nullable=False, default=workflow_now)
+    end = Column(DateTime(timezone=True), nullable=True)
+    status = Column(
+        SQLEnum(WorkflowStatus, name="workflow_status"),
+        nullable=False,
+        default=WorkflowStatus.STARTED,
+    )
+
+    imports = relationship("ImportsInfo", back_populates="workflow")
 
 
 class CapturedInfo(Base):

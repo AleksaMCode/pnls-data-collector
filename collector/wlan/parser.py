@@ -6,6 +6,7 @@ from scapy.layers.dot11 import Dot11ProbeReq
 import collector.wlan.helpers as wifi_helpers
 from collector.core.firebase.helpers import publish_captured_date
 from collector.settings import (
+    CAPTURE_24_7,
     MAC_FILTER,
     RSA_KEY_PATH,
     SSID_FILTER,
@@ -25,8 +26,7 @@ def parse_ip_packet(packet):
     """
     Filters the packet and broadcasts sniffed data (MAC + SSID + timestamp) through a Firebase Realtime DB.
     """
-    # Only capture data between 7 AM and 6 PM.
-    if not is_working_hours(TIMEZONE):
+    if not CAPTURE_24_7 and not is_working_hours(TIMEZONE):
         return
     # Filter only Probe Request. This is probably no longer needed due to utilization of filter in AsyncSniffer.
     # This just to safe in case the filter fails.

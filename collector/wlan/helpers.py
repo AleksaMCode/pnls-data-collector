@@ -10,7 +10,7 @@ from util.util import is_working_hours
 
 # Fix for pipeline. See #10
 if os.getenv("ENV") != "test":
-    from collector.settings import INTERFACES, TIMEZONE
+    from collector.settings import CAPTURE_24_7, INTERFACES, TIMEZONE
 
 INTERFACE = ""
 logger = get_logger(__name__)
@@ -150,7 +150,7 @@ def channel_hopper(interface: str, interval: float, channels=range(1, 14)):
         while True:
             # Data is captured only between 7 AM and 6 PM.
             # No need to change channel during idle time.
-            if not is_working_hours(TIMEZONE):
+            if not CAPTURE_24_7 and not is_working_hours(TIMEZONE):
                 continue
             # There are 14 channels in the 2.4 GHz band. We use 13 as the 14th is
             # primarily restricted to Japan for use with 802.11b legacy devices.

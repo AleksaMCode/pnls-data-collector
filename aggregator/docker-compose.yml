@@ -1,4 +1,40 @@
 services:
+  aggregator:
+    build:
+      context: ..
+      dockerfile: aggregator/Dockerfile
+    container_name: aggregator
+    networks:
+      - pnls
+    env_file:
+      - ./.env
+    environment:
+      SERVER_URL: 0.0.0.0
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  aggregator_worker:
+    build:
+      context: ..
+      dockerfile: aggregator/Dockerfile
+    container_name: aggregator_worker
+    networks:
+      - pnls
+    env_file:
+      - ./.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: celery -A aggregator.background.celery:celery worker -E --loglevel=info
+    restart: unless-stopped
+
   postgres:
     image: postgres:latest
     container_name: postgres
@@ -37,8 +73,58 @@ services:
       postgres:
         condition: service_healthy
 
+  redis:
+    image: redis:8.8.0
+    container_name: redis
+    networks:
+      - pnls
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  redisinsight:
+    image: redis/redisinsight:3.6
+    container_name: redisinsight
+    networks:
+      - pnls
+    ports:
+      - "${REDIS_INSIGHT_PORT}:5540"
+    volumes:
+      - redisinsight_data:/data
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  flower:
+    build:
+      context: ..
+      dockerfile: aggregator/Dockerfile
+    container_name: flower
+    networks:
+      - pnls
+    env_file:
+      - ./.env
+    ports:
+      - "${FLOWER_PORT}:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A aggregator.background.celery:celery flower --port=5555
+    restart: unless-stopped
+
 volumes:
   pnls:
+  redis_data:
+  redisinsight_data:
 
 networks:
   pnls:
