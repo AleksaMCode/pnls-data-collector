@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Internal Sentry fatal logging was added to `db_backup` via `internal/logging`, configurable through `SENTRY_DSN` and `SERVICE_NAME`. PR #307
 - Aggregator now sends a Mattermost message when the workflow starts. PR #308
 - New `home_server_limit_notifier` Go microservice added to monitor host SSD usage and send Mattermost reports on-demand via an HTTP trigger endpoint. PR #312
+- New `orchestrator` added that now governs `aggregate`, `firebase_housekeeping` and `db_backup` services. Backup is now triggered after the main aggregation/housekeeping flow. PR #319
+  - `aggregate` service restrucered to be an API with Celery worker that governs the import process.
 
 ### Changed
 
@@ -25,10 +27,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - README documentation updated and refined across multiple passes (wording, spelling, and clarity improvements).
 - `collector_status_notifier` now performs device status checks every 5 minutes via Datadog and falls back to Firebase status checks when Datadog is unavailable. PR #302
 - `firebase_housekeeping` logging was expanded with additional runtime messages for better operational visibility.
+- Aggregator `/aggregate` endpoint now behaves idempotently for concurrent triggers by returning the already running workflow id instead of creating a duplicate active workflow. PR #319
+- `collector` capture scheduling now supports a `CAPTURE_24_7` configuration flag to allow continuous capture outside working-hours windows. PR #319
+- Dashboard live-toggle condition was updated to support always-live operation. PR #327
 
 ### Fixed
 
 - `db_backup` Conductor Docker healthcheck endpoint was corrected from `/api/health` to `/health`, resolving false `unhealthy` container status after worker runs.
+- `orchestrator` db backup trigger now accepts both JSON and plain-text Conductor workflow id responses (including `raw_response` fallback), preventing false "missing workflow id" failures. PR #319
+- `db_backup` upload pipeline and worker now emit detailed runtime diagnostics (input validation, file size/path, object key, elapsed time, and upload errors) to improve R2 upload troubleshooting. PR #324
+- `db_backup` upload timeout handling was improved for backup artifact transfers to R2. PR #324
+- `monitor_dashboard` live Probe Request card no longer spikes to an incorrect percentage on first live update due to stale-state percentage calculation. PR #327
 
 ## [1.0.0] - 2026-05-30
 
