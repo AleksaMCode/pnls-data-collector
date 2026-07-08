@@ -5,6 +5,9 @@ import { FormControlLabel, Switch, Tooltip, useTheme } from '@mui/material';
 import { useLiveCount } from './LiveCountProvider';
 import { toast } from 'react-toastify';
 
+/**
+ * @deprecated At the moment there is no need to use this helper function as devices are always live.
+ */
 function isWorkingHours() {
   const now = new Date();
 
@@ -26,14 +29,14 @@ export default function Header() {
   const handleLiveToggle = (checked) => {
     setEnabled(checked);
 
-    if (!isWorkingHours() && checked) {
-      toast.error('Devices are offline', {
-        toastId: 'devices-offline',
-      });
-      setTimeout(() => {
-        setEnabled(false);
-      }, 0);
-    }
+    // if (!isWorkingHours() && checked) {
+    //   toast.error('Devices are offline', {
+    //     toastId: 'devices-offline',
+    //   });
+    //   setTimeout(() => {
+    //     setEnabled(false);
+    //   }, 0);
+    // }
   };
 
   return (
@@ -56,7 +59,7 @@ export default function Header() {
             control={
               <Switch
                 checked={enabled}
-                disabled={!isWorkingHours()}
+                // disabled={!isWorkingHours()}
                 onChange={(e, checked) => handleLiveToggle(checked)}
               />
             }
