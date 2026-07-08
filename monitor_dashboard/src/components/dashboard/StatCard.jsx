@@ -156,12 +156,13 @@ function StatCard({
     }
 
     if (liveFeed && value > 0 && liveValue - 3 > value) {
-      setDisplayValue(liveValue - 3);
-      setLivePercentage(((displayValue - value) / value) * 100);
+      const nextValue = liveValue - 3;
+      setDisplayValue(nextValue);
+      setLivePercentage(((nextValue - value) / value) * 100);
     } else if (!liveFeed) {
       setDisplayValue(0);
     }
-  }, [liveValue, liveFeed]);
+  }, [liveValue, liveFeed, value]);
 
   return (
     <Card variant="outlined" sx={{ height: '100%', flexGrow: 1 }}>
