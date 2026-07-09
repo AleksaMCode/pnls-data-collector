@@ -2,7 +2,9 @@ import importlib
 import os
 import unittest
 import uuid
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -37,6 +39,7 @@ class TestOrmHelpersIntegration(unittest.TestCase):
 
         cls.engine = create_engine(connection_url, pool_pre_ping=True)
         cls.models.ImportsWorkflow.__table__.create(cls.engine, checkfirst=True)
+        cls.models.DailyCapturedPerDevice.__table__.create(cls.engine, checkfirst=True)
 
         cls.session_factory = sessionmaker(
             bind=cls.engine,
@@ -48,12 +51,14 @@ class TestOrmHelpersIntegration(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.models.DailyCapturedPerDevice.__table__.drop(cls.engine, checkfirst=True)
         cls.models.ImportsWorkflow.__table__.drop(cls.engine, checkfirst=True)
         cls.engine.dispose()
         cls._postgres.stop()
 
     def setUp(self):
         with self.session_factory() as db:
+            db.query(self.models.DailyCapturedPerDevice).delete()
             db.query(self.models.ImportsWorkflow).delete()
             db.commit()
 
@@ -103,6 +108,84 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         running_workflow_id = self.helpers.get_running_import_workflow_id()
 
         self.assertIsNone(running_workflow_id)
+
+    def test_get_today_data_from_daily_captured_stats_per_device_filters_by_import_date(
+        self,
+    ):
+        target_date = datetime.now(ZoneInfo("UTC")).date() - timedelta(days=1)
+        non_target_date = target_date - timedelta(days=1)
+
+        with self.session_factory() as db:
+            db.add_all(
+                [
+                    self.models.DailyCapturedPerDevice(
+                        date=target_date,
+                        device="RPI-1",
+                        ssid=10,
+                        probe_request=100,
+                        mac=20,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=target_date,
+                        device="RPI-2",
+                        ssid=30,
+                        probe_request=300,
+                        mac=40,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=non_target_date,
+                        device="RPI-3",
+                        ssid=50,
+                        probe_request=500,
+                        mac=60,
+                    ),
+                ]
+            )
+            db.commit()
+
+        rows = self.helpers.get_today_data_from_daily_captured_stats_per_device(
+            tz="UTC",
+            import_date=target_date,
+        )
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual({row.device for row in rows}, {"RPI-1", "RPI-2"})
+        self.assertTrue(all(row.date == target_date for row in rows))
+
+    def test_get_today_data_from_daily_captured_stats_per_device_uses_today_when_no_import_date(
+        self,
+    ):
+        today = datetime.now(ZoneInfo("UTC")).date()
+        yesterday = today - timedelta(days=1)
+
+        with self.session_factory() as db:
+            db.add_all(
+                [
+                    self.models.DailyCapturedPerDevice(
+                        date=today,
+                        device="RPI-1",
+                        ssid=1,
+                        probe_request=11,
+                        mac=2,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=yesterday,
+                        device="RPI-2",
+                        ssid=3,
+                        probe_request=33,
+                        mac=4,
+                    ),
+                ]
+            )
+            db.commit()
+
+        rows = self.helpers.get_today_data_from_daily_captured_stats_per_device(
+            tz="UTC"
+        )
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].device, "RPI-1")
+        self.assertEqual(rows[0].date, today)
 
 
 if __name__ == "__main__":
