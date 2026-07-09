@@ -252,7 +252,7 @@ def import_data(
                 mac_str = record.get("mac")
                 channel = util.get_channel(record.get("channel"))
                 if channel is None:
-                    logger.warning(
+                    logger.info(
                         f"Invalid channel value '{record.get('channel')}' for device {device_name}, skipping record."
                     )
                     continue
