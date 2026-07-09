@@ -21,6 +21,15 @@ def clean_string(s: str) -> str:
     return re.sub(r"[\x00-\x1F\x7F-\x9F]", "", s)
 
 
+def get_channel(channel) -> int | None:
+    try:
+        normalized = int(channel)
+    except (TypeError, ValueError):
+        return None
+
+    return normalized if 1 <= normalized <= 14 else None
+
+
 # If server doesn't run for multiple days, import is done for more than one day.
 def get_pending_import_dates(
     latest_import_date: date, current_date: date
