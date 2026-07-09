@@ -40,6 +40,9 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         cls.engine = create_engine(connection_url, pool_pre_ping=True)
         cls.models.ImportsWorkflow.__table__.create(cls.engine, checkfirst=True)
         cls.models.DailyCapturedPerDevice.__table__.create(cls.engine, checkfirst=True)
+        cls.models.Country.__table__.create(cls.engine, checkfirst=True)
+        cls.models.IEEEMacOuiOrg.__table__.create(cls.engine, checkfirst=True)
+        cls.models.IEEEMacOui.__table__.create(cls.engine, checkfirst=True)
         cls.models.SSID.__table__.create(cls.engine, checkfirst=True)
         cls.models.MAC.__table__.create(cls.engine, checkfirst=True)
 
@@ -55,6 +58,9 @@ class TestOrmHelpersIntegration(unittest.TestCase):
     def tearDownClass(cls):
         cls.models.MAC.__table__.drop(cls.engine, checkfirst=True)
         cls.models.SSID.__table__.drop(cls.engine, checkfirst=True)
+        cls.models.IEEEMacOui.__table__.drop(cls.engine, checkfirst=True)
+        cls.models.IEEEMacOuiOrg.__table__.drop(cls.engine, checkfirst=True)
+        cls.models.Country.__table__.drop(cls.engine, checkfirst=True)
         cls.models.DailyCapturedPerDevice.__table__.drop(cls.engine, checkfirst=True)
         cls.models.ImportsWorkflow.__table__.drop(cls.engine, checkfirst=True)
         cls.engine.dispose()
