@@ -62,6 +62,46 @@ class TestRedisHelpersIntegration(unittest.TestCase):
     def test_get_missing_key_returns_none(self):
         self.assertIsNone(self._redis_helpers.get_key_value("missing"))
 
+    def test_set_and_get_cached_ssid_id(self):
+        result = self._redis_helpers.set_cached_ssid_id("MyWifi", 123)
+        self.assertTrue(result)
+
+        self.assertEqual(self._redis_helpers.get_cached_ssid_id("MyWifi"), 123)
+        self.assertTrue(
+            0
+            < self._test_client.ttl(self._redis_helpers.ssid_cache_key("MyWifi"))
+            <= 3600
+        )
+
+    def test_set_and_get_cached_mac_id(self):
+        result = self._redis_helpers.set_cached_mac_id("AA:BB:CC:DD:EE:FF", 987)
+        self.assertTrue(result)
+
+        self.assertEqual(
+            self._redis_helpers.get_cached_mac_id("AA:BB:CC:DD:EE:FF"),
+            987,
+        )
+        self.assertTrue(
+            0
+            < self._test_client.ttl(
+                self._redis_helpers.mac_cache_key("AA:BB:CC:DD:EE:FF")
+            )
+            <= 3600
+        )
+
+    def test_get_cached_ids_return_none_for_missing_keys(self):
+        self.assertIsNone(self._redis_helpers.get_cached_ssid_id("missing-ssid"))
+        self.assertIsNone(self._redis_helpers.get_cached_mac_id("missing-mac"))
+
+    def test_get_cached_ids_return_none_for_non_integer_values(self):
+        self._test_client.set(self._redis_helpers.ssid_cache_key("BadSSID"), "abc")
+        self._test_client.set(
+            self._redis_helpers.mac_cache_key("11:22:33:44:55:66"), "xyz"
+        )
+
+        self.assertIsNone(self._redis_helpers.get_cached_ssid_id("BadSSID"))
+        self.assertIsNone(self._redis_helpers.get_cached_mac_id("11:22:33:44:55:66"))
+
 
 if __name__ == "__main__":
     unittest.main()

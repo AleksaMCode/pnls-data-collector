@@ -40,6 +40,8 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         cls.engine = create_engine(connection_url, pool_pre_ping=True)
         cls.models.ImportsWorkflow.__table__.create(cls.engine, checkfirst=True)
         cls.models.DailyCapturedPerDevice.__table__.create(cls.engine, checkfirst=True)
+        cls.models.SSID.__table__.create(cls.engine, checkfirst=True)
+        cls.models.MAC.__table__.create(cls.engine, checkfirst=True)
 
         cls.session_factory = sessionmaker(
             bind=cls.engine,
@@ -51,6 +53,8 @@ class TestOrmHelpersIntegration(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.models.MAC.__table__.drop(cls.engine, checkfirst=True)
+        cls.models.SSID.__table__.drop(cls.engine, checkfirst=True)
         cls.models.DailyCapturedPerDevice.__table__.drop(cls.engine, checkfirst=True)
         cls.models.ImportsWorkflow.__table__.drop(cls.engine, checkfirst=True)
         cls.engine.dispose()
@@ -58,6 +62,8 @@ class TestOrmHelpersIntegration(unittest.TestCase):
 
     def setUp(self):
         with self.session_factory() as db:
+            db.query(self.models.MAC).delete()
+            db.query(self.models.SSID).delete()
             db.query(self.models.DailyCapturedPerDevice).delete()
             db.query(self.models.ImportsWorkflow).delete()
             db.commit()
@@ -186,6 +192,52 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].device, "RPI-1")
         self.assertEqual(rows[0].date, today)
+
+    def test_get_or_create_ssid_id_returns_existing_id(self):
+        with self.session_factory() as db:
+            existing = self.models.SSID(ssid="MyWifi")
+            db.add(existing)
+            db.commit()
+            db.refresh(existing)
+            existing_id = existing.id
+
+            resolved_id = self.helpers.get_or_create_ssid_id(db, "MyWifi")
+            db.commit()
+
+        self.assertEqual(resolved_id, existing_id)
+
+    def test_get_or_create_ssid_id_creates_row_when_missing(self):
+        with self.session_factory() as db:
+            resolved_id = self.helpers.get_or_create_ssid_id(db, "NewWifi")
+            db.commit()
+
+            persisted = db.query(self.models.SSID).filter_by(ssid="NewWifi").one()
+
+        self.assertEqual(resolved_id, persisted.id)
+
+    def test_get_or_create_mac_id_returns_existing_id(self):
+        with self.session_factory() as db:
+            existing = self.models.MAC(mac="02:11:22:33:44:55")
+            db.add(existing)
+            db.commit()
+            db.refresh(existing)
+            existing_id = existing.id
+
+            resolved_id = self.helpers.get_or_create_mac_id(db, "02:11:22:33:44:55")
+            db.commit()
+
+        self.assertEqual(resolved_id, existing_id)
+
+    def test_get_or_create_mac_id_creates_row_when_missing(self):
+        with self.session_factory() as db:
+            resolved_id = self.helpers.get_or_create_mac_id(db, "06:22:33:44:55:66")
+            db.commit()
+
+            persisted = (
+                db.query(self.models.MAC).filter_by(mac="06:22:33:44:55:66").one()
+            )
+
+        self.assertEqual(resolved_id, persisted.id)
 
 
 if __name__ == "__main__":
