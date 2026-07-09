@@ -33,7 +33,7 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    command: celery -A aggregator.background.celery:celery worker -E --loglevel=info
+    command: celery -A aggregator.background.celery:celery worker -E --loglevel=info --concurrency=1 --max-tasks-per-child=1
     restart: unless-stopped
 
   postgres:
