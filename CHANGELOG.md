@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `db_backup` upload pipeline and worker now emit detailed runtime diagnostics (input validation, file size/path, object key, elapsed time, and upload errors) to improve R2 upload troubleshooting. PR #324
 - `db_backup` upload timeout handling was improved for backup artifact transfers to R2. PR #324
 - `monitor_dashboard` live Probe Request card no longer spikes to an incorrect percentage on first live update due to stale-state percentage calculation. PR #327
+- Collector and aggregator now validate channel values before persistence, preventing invalid channel IDs (e.g., `124`) from causing `captured_info_channel_fkey` foreign key failures during import. PR #328
 
 ## [1.0.0] - 2026-05-30
 
