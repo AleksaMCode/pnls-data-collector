@@ -15,6 +15,12 @@ from util.logger import get_logger
 from ...settings import TIMEZONE
 from ...util import util
 from ...util.util import mac_to_oui_candidates
+from ..redis.helpers import (
+    get_cached_mac_id,
+    get_cached_ssid_id,
+    set_cached_mac_id,
+    set_cached_ssid_id,
+)
 from . import _session
 from .models import (
     IEEE_PRIORITY,
@@ -183,6 +189,39 @@ def resolve_oui(session, mac: MAC):
     mac.oui = None
 
 
+def get_or_create_ssid_id(session, ssid_str: str) -> int:
+    cached_id = get_cached_ssid_id(ssid_str)
+    if cached_id is not None:
+        return cached_id
+
+    ssid_obj = session.query(SSID).filter_by(ssid=ssid_str).one_or_none()
+    if not ssid_obj:
+        ssid_obj = SSID(ssid=ssid_str)
+        session.add(ssid_obj)
+        session.flush()
+
+    set_cached_ssid_id(ssid_str, ssid_obj.id)
+    return ssid_obj.id
+
+
+def get_or_create_mac_id(session, mac_str: str) -> int:
+    cached_id = get_cached_mac_id(mac_str)
+    if cached_id is not None:
+        return cached_id
+
+    mac_obj = session.query(MAC).filter_by(mac=mac_str).one_or_none()
+    if not mac_obj:
+        mac_obj = MAC(mac=mac_str)
+        # Add MAC OUI - explicit call `resolve_oui()`
+        # (this isn't need if event has been imported in the caller)
+        resolve_oui(session, mac_obj)
+        session.add(mac_obj)
+        session.flush()
+
+    set_cached_mac_id(mac_str, mac_obj.id)
+    return mac_obj.id
+
+
 def create_import_workflow() -> UUID | None:
     with _session() as db:
         workflow = ImportsWorkflow(status=WorkflowStatus.STARTED)
@@ -244,10 +283,6 @@ def import_data(
     logger.info("Starting import of data from Firebase to local database.")
     with _session() as db:
         try:
-            # Cache existing SSIDs and MACs for fast lookup
-            ssid_map = {s.ssid: s.id for s in db.query(SSID).all()}
-            mac_map = {m.mac: m.id for m in db.query(MAC).all()}
-
             captured_records = []
             for record in tqdm(data, desc="Importing records", unit="record"):
                 device_name = record.get("device")
@@ -270,24 +305,8 @@ def import_data(
 
                 ts = datetime.strptime(timestamp_str, settings.TIMESTAMP_FORMAT)
 
-                ssid_id = ssid_map.get(ssid_str)
-                if not ssid_id:
-                    ssid_obj = SSID(ssid=ssid_str)
-                    db.add(ssid_obj)
-                    db.flush()
-                    ssid_map[ssid_str] = ssid_obj.id
-                    ssid_id = ssid_obj.id
-
-                mac_id = mac_map.get(mac_str)
-                if not mac_id:
-                    mac_obj = MAC(mac=mac_str)
-                    # Add MAC OUI - explicit call `resolve_oui()`
-                    # (this isn't need if event has been imported in the caller)
-                    resolve_oui(db, mac_obj)
-                    db.add(mac_obj)
-                    db.flush()
-                    mac_map[mac_str] = mac_obj.id
-                    mac_id = mac_obj.id
+                ssid_id = get_or_create_ssid_id(db, ssid_str)
+                mac_id = get_or_create_mac_id(db, mac_str)
 
                 mapping = (
                     db.query(LocationMapping).filter_by(device=device_name).first()
