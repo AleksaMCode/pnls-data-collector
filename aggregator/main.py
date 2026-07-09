@@ -33,6 +33,7 @@ from aggregator.util.util import (
 from util.logger import get_logger
 
 logger = get_logger(__name__)
+WORKFLOW_STARTED_STATUS_TTL_SECONDS = 60 * 60 * 5
 
 
 @asynccontextmanager
@@ -90,6 +91,7 @@ async def aggregate():
     set_key_value(
         str(workflow_id),
         json.dumps({"status": WorkflowStatus.STARTED.value}),
+        ttl=WORKFLOW_STARTED_STATUS_TTL_SECONDS,
     )
 
     import_dates_payload = [d.isoformat() for d in import_dates]

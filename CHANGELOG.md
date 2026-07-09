@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `orchestrator` added that now governs `aggregate`, `firebase_housekeeping` and `db_backup` services. Backup is now triggered after the main aggregation/housekeeping flow. PR #319
   - `aggregate` service restrucered to be an API with Celery worker that governs the import process.
 - Added Datadog dashboard snapshot export for device monitoring, including home server visibility updates under `collector_metrics_agent/datadog/dashboard_snapshots/`. PR #333
+- Redis-backed lookup cache helpers were added for SSID/MAC ID resolution in `aggregator` with a 1-hour TTL. PR #335
 
 ### Changed
 
@@ -32,6 +33,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `collector` capture scheduling now supports a `CAPTURE_24_7` configuration flag to allow continuous capture outside working-hours windows. PR #319
 - Dashboard live-toggle condition was updated to support always-live operation. PR #327
 - `collector_metrics_agent` dependency manifests were updated and the settings template filename typo was fixed (`settings.py.template.py` -> `settings.py.template`). PR #333
+- Aggregator stats publishing now accepts an optional import date and uses it when publishing daily stats, so day-after imports publish daily aggregates for the imported day instead of only for today. PR #335
+- Aggregator import lookup flow now resolves SSID and MAC IDs through dedicated helpers instead of preloading full SSID/MAC tables into memory before import.
+- Aggregator now stores initial workflow `STARTED` status in Redis with a 5-hour TTL to reduce stale in-progress status keys after unexpected worker shutdowns.
+- Invalid-channel skip logging during import was lowered from warning to info to reduce noisy alerting.
 
 ### Fixed
 
