@@ -5,12 +5,9 @@ import time
 from scapy.layers.dot11 import Dot11Elt, RadioTap
 from yaspin import yaspin
 
+from collector.settings import CAPTURE_24_7, CHANNELS, INTERFACES, TIMEZONE
 from util.logger import get_logger
 from util.util import is_working_hours
-
-# Fix for pipeline. See #10
-if os.getenv("ENV") != "test":
-    from collector.settings import CAPTURE_24_7, CHANNELS, INTERFACES, TIMEZONE
 
 INTERFACE = ""
 logger = get_logger(__name__)
