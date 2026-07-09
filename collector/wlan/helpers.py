@@ -5,12 +5,9 @@ import time
 from scapy.layers.dot11 import Dot11Elt, RadioTap
 from yaspin import yaspin
 
+from collector.settings import CAPTURE_24_7, CHANNELS, INTERFACES, TIMEZONE
 from util.logger import get_logger
 from util.util import is_working_hours
-
-# Fix for pipeline. See #10
-if os.getenv("ENV") != "test":
-    from collector.settings import CAPTURE_24_7, INTERFACES, TIMEZONE
 
 INTERFACE = ""
 logger = get_logger(__name__)
@@ -92,7 +89,7 @@ def extract_channel_from_packet(packet):
         frequency = getattr(radiotap, "ChannelFrequency", None)
         if isinstance(frequency, int):
             channel = FREQ_TO_CHANNEL_24GHZ.get(frequency)
-            if channel:
+            if channel in CHANNELS:
                 return channel
 
     # Dot11Elt are 802.11 information elements inside management frames.
@@ -101,7 +98,10 @@ def extract_channel_from_packet(packet):
     element = packet.getlayer(Dot11Elt)
     while element is not None:
         if getattr(element, "ID", None) == 3 and element.info:
-            return int(element.info[0])
+            channel = int(element.info[0])
+            if channel in CHANNELS:
+                return channel
+            return None
         element = element.payload.getlayer(Dot11Elt)
 
     return None

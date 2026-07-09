@@ -4,6 +4,7 @@ from datetime import date
 from aggregator.core.orm.models import IEEERegistry
 from aggregator.util.util import (
     clean_string,
+    get_channel,
     get_pending_import_dates,
     mac_normalize,
     mac_to_oui_candidates,
@@ -122,6 +123,22 @@ class TestImportDateUtils(unittest.TestCase):
                 date(2026, 6, 13),
             ],
         )
+
+
+class TestChannelUtils(unittest.TestCase):
+
+    def test_get_channel_returns_valid_channels(self):
+        self.assertEqual(get_channel(1), 1)
+        self.assertEqual(get_channel(14), 14)
+        self.assertEqual(get_channel("11"), 11)
+
+    def test_get_channel_returns_none_for_invalid_values(self):
+        self.assertIsNone(get_channel(None))
+        self.assertIsNone(get_channel(""))
+        self.assertIsNone(get_channel("abc"))
+        self.assertIsNone(get_channel(0))
+        self.assertIsNone(get_channel(15))
+        self.assertIsNone(get_channel(124))
 
 
 if __name__ == "__main__":

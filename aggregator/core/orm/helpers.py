@@ -250,7 +250,12 @@ def import_data(
                 device_name = record.get("device")
                 ssid_str = util.clean_string(record.get("ssid"))
                 mac_str = record.get("mac")
-                channel = int(record.get("channel")) or 10
+                channel = util.get_channel(record.get("channel"))
+                if channel is None:
+                    logger.warning(
+                        f"Invalid channel value '{record.get('channel')}' for device {device_name}, skipping record."
+                    )
+                    continue
 
                 if mac_str in settings.MAC_FILTER:
                     continue
@@ -301,7 +306,7 @@ def import_data(
                     )
                 )
 
-            # There is still a very small change of a race condition, but this fix is good enough for #198
+            # There is still a very small chance for a race condition, but this fix is good enough for #198
             today = datetime.now(ZoneInfo(TIMEZONE)).date()
             latest_import_date = get_latest_import_date()
             if latest_import_date == today:
