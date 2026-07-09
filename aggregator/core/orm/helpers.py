@@ -86,14 +86,17 @@ def get_all_data_from_daily_captured_stats_per_device() -> list[DailyCapturedPer
 
 
 def get_today_data_from_daily_captured_stats_per_device(
-    tz="Europe/Paris",
+    tz: str = "Europe/Paris",
+    import_date: date | None = None,
 ) -> list[DailyCapturedPerDevice]:
-    logger.info("Getting all data from daily captured stats per device for today.")
-    today = datetime.now(ZoneInfo(tz)).date()
+    target_date = import_date or datetime.now(ZoneInfo(tz)).date()
+    logger.info(
+        f"Getting all data from daily captured stats per device for {target_date}."
+    )
     with _session() as db:
         return (
             db.query(DailyCapturedPerDevice)
-            .filter(DailyCapturedPerDevice.date == today)
+            .filter(DailyCapturedPerDevice.date == target_date)
             .all()
         )
 

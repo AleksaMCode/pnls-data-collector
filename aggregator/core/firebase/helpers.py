@@ -149,7 +149,7 @@ def publish_daily_stats_capture_data(capture: DailyCapturedPerDevice):
 
 
 @yaspin(text="Publishing stats data to Firebase...")
-def publish_stats_data():
+def publish_stats_data(import_date: date | None = None):
     """
     Publishes key statistics to Firebase.
     Returns stats data.
@@ -162,7 +162,9 @@ def publish_stats_data():
         "ssid_count": get_total_captured_ssid_count(),
     }
 
-    daily_stats = get_today_data_from_daily_captured_stats_per_device(TIMEZONE)
+    daily_stats = get_today_data_from_daily_captured_stats_per_device(
+        TIMEZONE, import_date
+    )
 
     try:
         for key, count in stats.items():

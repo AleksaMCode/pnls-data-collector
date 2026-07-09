@@ -30,7 +30,7 @@ def transfer_data(import_date: date, workflow_id: UUID):
         manual_import_date=import_date,
         workflow_id=workflow_id,
     )
-    stats = publish_stats_data()
+    stats = publish_stats_data(import_date)
     publish_manufacturers_data()
     publish_sankey_data()
     try:
