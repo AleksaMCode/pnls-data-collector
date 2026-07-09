@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `home_server_limit_notifier` Go microservice added to monitor host SSD usage and send Mattermost reports on-demand via an HTTP trigger endpoint. PR #312
 - New `orchestrator` added that now governs `aggregate`, `firebase_housekeeping` and `db_backup` services. Backup is now triggered after the main aggregation/housekeeping flow. PR #319
   - `aggregate` service restrucered to be an API with Celery worker that governs the import process.
+- Added Datadog dashboard snapshot export for device monitoring, including home server visibility updates under `collector_metrics_agent/datadog/dashboard_snapshots/`. PR #333
 
 ### Changed
 
@@ -30,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Aggregator `/aggregate` endpoint now behaves idempotently for concurrent triggers by returning the already running workflow id instead of creating a duplicate active workflow. PR #319
 - `collector` capture scheduling now supports a `CAPTURE_24_7` configuration flag to allow continuous capture outside working-hours windows. PR #319
 - Dashboard live-toggle condition was updated to support always-live operation. PR #327
+- `collector_metrics_agent` dependency manifests were updated and the settings template filename typo was fixed (`settings.py.template.py` -> `settings.py.template`). PR #333
 
 ### Fixed
 
