@@ -199,6 +199,91 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         self.assertEqual(rows[0].device, "RPI-1")
         self.assertEqual(rows[0].date, today)
 
+    def test_get_data_from_daily_captured_stats_per_device_between_dates_inclusive(
+        self,
+    ):
+        start_date = datetime.now(ZoneInfo("UTC")).date() - timedelta(days=5)
+        mid_date = start_date + timedelta(days=2)
+        end_date = start_date + timedelta(days=5)
+
+        with self.session_factory() as db:
+            db.add_all(
+                [
+                    # Inside window: start/mid/end dates should be included.
+                    self.models.DailyCapturedPerDevice(
+                        date=start_date,
+                        device="RPI-1",
+                        ssid=10,
+                        probe_request=100,
+                        mac=20,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=mid_date,
+                        device="RPI-2",
+                        ssid=30,
+                        probe_request=300,
+                        mac=40,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=end_date,
+                        device="RPI-3",
+                        ssid=50,
+                        probe_request=500,
+                        mac=60,
+                    ),
+                    # Outside window.
+                    self.models.DailyCapturedPerDevice(
+                        date=start_date - timedelta(days=1),
+                        device="RPI-4",
+                        ssid=70,
+                        probe_request=700,
+                        mac=80,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=end_date + timedelta(days=1),
+                        device="RPI-5",
+                        ssid=90,
+                        probe_request=900,
+                        mac=100,
+                    ),
+                ]
+            )
+            db.commit()
+
+        rows = self.helpers.get_data_from_daily_captured_stats_per_device_between_dates(
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        self.assertEqual(len(rows), 3)
+        self.assertEqual({row.device for row in rows}, {"RPI-1", "RPI-2", "RPI-3"})
+        self.assertTrue(all(start_date <= row.date <= end_date for row in rows))
+
+    def test_get_data_from_daily_captured_stats_per_device_between_dates_returns_empty(
+        self,
+    ):
+        start_date = datetime.now(ZoneInfo("UTC")).date() - timedelta(days=10)
+        end_date = start_date + timedelta(days=2)
+
+        with self.session_factory() as db:
+            db.add(
+                self.models.DailyCapturedPerDevice(
+                    date=end_date + timedelta(days=5),
+                    device="RPI-9",
+                    ssid=1,
+                    probe_request=2,
+                    mac=3,
+                )
+            )
+            db.commit()
+
+        rows = self.helpers.get_data_from_daily_captured_stats_per_device_between_dates(
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        self.assertEqual(rows, [])
+
     def test_get_or_create_ssid_id_returns_existing_id(self):
         with self.session_factory() as db:
             existing = self.models.SSID(ssid="MyWifi")

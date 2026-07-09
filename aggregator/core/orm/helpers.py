@@ -91,6 +91,21 @@ def get_all_data_from_daily_captured_stats_per_device() -> list[DailyCapturedPer
         return db.query(DailyCapturedPerDevice).all()
 
 
+def get_data_from_daily_captured_stats_per_device_between_dates(
+    start_date: date, end_date: date
+) -> list[DailyCapturedPerDevice]:
+    logger.info(
+        f"Getting daily captured stats per device between {start_date} and {end_date}."
+    )
+    with _session() as db:
+        return (
+            db.query(DailyCapturedPerDevice)
+            .filter(DailyCapturedPerDevice.date >= start_date)
+            .filter(DailyCapturedPerDevice.date <= end_date)
+            .all()
+        )
+
+
 def get_today_data_from_daily_captured_stats_per_device(
     tz: str = "Europe/Paris",
     import_date: date | None = None,
