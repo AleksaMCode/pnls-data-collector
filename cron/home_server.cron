@@ -1,5 +1,6 @@
 #5 18 * * * /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_aggregator.sh
 #@reboot /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_aggregator.sh
+@reboot /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_agent.sh
 #0 0 1,5,10,15,20,25,30 * * curl -sS -X DELETE "http://localhost:9090/delete" >> /home/rpi5/Desktop/services/pnls-data-collector/firebase_housekeeping.log 2>&1
 @reboot /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_cs_notifier.sh &
 0 6 * * 0 /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_fl_notifier_cronjob.sh
