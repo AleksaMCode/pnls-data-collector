@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import date, datetime
+from warnings import deprecated
 from zoneinfo import ZoneInfo
 
 import firebase_admin
@@ -148,6 +149,7 @@ def publish_daily_stats_capture_data(capture: DailyCapturedPerDevice):
     )
 
 
+@deprecated("This is no longer used as this data is published to Supabase.")
 @yaspin(text="Publishing stats data to Firebase...")
 def publish_stats_data(import_date: date | None = None):
     """
@@ -179,6 +181,7 @@ def publish_stats_data(import_date: date | None = None):
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
 
 
+@deprecated("This is no longer used as this data is published to Supabase.")
 @yaspin(text="Publishing manufacturers data to Firebase...")
 def publish_manufacturers_data():
     manufacturer_data = get_all_data_from_company_capture_summary()
@@ -202,6 +205,7 @@ def publish_manufacturers_data():
         logger.error(f"Publishing manufacturers data to Firebase failed: {str(e)}")
 
 
+@deprecated("This is no longer used as this data is published to Supabase.")
 @yaspin(text="Publishing device location data to Firebase...")
 def publish_devices_data():
     device_data = get_all_data_from_location_mapping_resolved()
@@ -225,6 +229,7 @@ def publish_devices_data():
         logger.error(f"Publishing devices data to Firebase failed: {str(e)}")
 
 
+@deprecated("This is no longer used as this data is published to Supabase.")
 @yaspin(text="Publishing sankey data to Firebase...")
 def publish_sankey_data():
     try:

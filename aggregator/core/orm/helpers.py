@@ -1,6 +1,7 @@
 import logging
 from datetime import date, datetime
 from uuid import UUID
+from warnings import deprecated
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import desc, func
@@ -85,6 +86,17 @@ def get_total_captured_ssid_count():
         return db.query(func.count(SSID.id)).scalar()
 
 
+def get_totals():
+    """
+    Return totals for Probe Requests, MAC addresses and SSIDs.
+    """
+    return {
+        "total_count": get_total_captured_info_count(),
+        "mac_count": get_total_captured_mac_count(),
+        "ssid_count": get_total_captured_ssid_count(),
+    }
+
+
 def get_all_data_from_daily_captured_stats_per_device() -> list[DailyCapturedPerDevice]:
     logger.info("Getting all data from daily captured stats per device.")
     with _session() as db:
@@ -122,6 +134,9 @@ def get_today_data_from_daily_captured_stats_per_device(
         )
 
 
+@deprecated(
+    "This is no longer used in the Aggregator only in the Stats service which has its own functions."
+)
 def get_all_data_from_company_capture_summary(
     min_percentage: float = 0.001,
 ) -> list[CompanyCaptureSummary]:
@@ -139,6 +154,9 @@ def get_all_data_from_company_capture_summary(
         )
 
 
+@deprecated(
+    "This is no longer used in the Aggregator only in the Stats service which has its own functions."
+)
 def get_all_data_from_company_capture_summary_by_device(
     device: Device, min_percentage: float = 0.001, limit: int = 20
 ) -> list[CompanyCaptureSummaryByDevice]:
@@ -157,12 +175,18 @@ def get_all_data_from_company_capture_summary_by_device(
         )
 
 
+@deprecated(
+    "This is no longer used in the Aggregator only in the Stats service which has its own functions."
+)
 def get_all_data_from_location_mapping_resolved() -> list[LocationMappingResolved]:
     logger.info("Getting all data from location mapping resolved.")
     with _session() as db:
         return db.query(LocationMappingResolved).all()
 
 
+@deprecated(
+    "This is no longer used in the Aggregator only in the Stats service which has its own functions."
+)
 def get_device_total_captured_data(device: Device) -> TotalCapturedPerDevice:
     logger.info(f"Getting total captured data for device {device.value}.")
     with _session() as db:

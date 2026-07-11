@@ -5,14 +5,15 @@ from uuid import UUID
 from aggregator.background.celery import celery
 from aggregator.core.firebase.helpers import (
     fetch_data,
-    publish_manufacturers_data,
-    publish_sankey_data,
-    publish_stats_data,
 )
 
 # This import is needed in order for listener to work.
 from aggregator.core.orm import event  # noqa: F401
-from aggregator.core.orm.helpers import import_data, set_import_workflow_status
+from aggregator.core.orm.helpers import (
+    get_totals,
+    import_data,
+    set_import_workflow_status,
+)
 from aggregator.core.orm.models import WorkflowStatus
 from aggregator.core.redis.helpers import set_key_value
 from aggregator.settings import WORKFLOW_FINAL_STATUS_TTL_SECONDS
@@ -30,9 +31,8 @@ def transfer_data(import_date: date, workflow_id: UUID):
         manual_import_date=import_date,
         workflow_id=workflow_id,
     )
-    stats = publish_stats_data(import_date)
-    publish_manufacturers_data()
-    publish_sankey_data()
+    stats = get_totals()
+
     try:
         publish_to_channel(stats, count, import_date)
     except Exception as e:
