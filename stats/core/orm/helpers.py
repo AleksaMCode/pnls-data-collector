@@ -153,5 +153,5 @@ def get_all_data_from_ssid_first_last_seen(
     with _session() as db:
         query = db.query(SsidFirstLastSeen)
         if updated_from is not None:
-            query = query.filter(SsidFirstLastSeen.last_seen <= updated_from)
+            query = query.filter(SsidFirstLastSeen.last_seen >= updated_from)
         return query.all()
