@@ -8,9 +8,11 @@ from stats.core.orm.helpers import get_daily_totals_all_devices, get_latest_impo
 from stats.core.supabase.helpers import (
     public_mac_all,
     public_probes_all,
+    publish_device_daily_imports_today,
+    publish_device_manufacturer_stats_all,
     publish_ssid_all,
 )
-from stats.settings import SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION
+from stats.settings import SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION, TIMEZONE
 from util.logger import get_logger
 
 logger = get_logger(__name__)
@@ -52,6 +54,8 @@ async def publish_stats():
     publish_ssid_all(daily_totals=daily_totals)
     public_mac_all(daily_totals=daily_totals)
     public_probes_all(daily_totals=daily_totals)
+    publish_device_daily_imports_today(tz=TIMEZONE, import_date=latest_import_date)
+    publish_device_manufacturer_stats_all(target_date=latest_import_date)
 
     msg = (
         f"Published daily totals to Supabase for {len(daily_totals)} day(s), "
