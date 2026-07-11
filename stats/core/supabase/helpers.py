@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from yaspin import yaspin
 
 from stats.core.orm.helpers import (
+    get_all_data_from_daily_captured_stats_per_device,
     get_all_data_from_location_mapping_resolved,
     get_daily_totals_all_devices,
     get_device_total_captured_data,
@@ -11,8 +12,9 @@ from stats.core.supabase.models import (
     DailyImportsMac,
     DailyImportsProbes,
     DailyImportsSsid,
+    Device,
+    DeviceDailyImports,
 )
-from util.core.orm.models import Device
 from util.logger import get_logger
 
 from . import _session
@@ -111,3 +113,153 @@ def public_probes_all(daily_totals: list | None = None):
         metric_key="probes_count",
         daily_totals=daily_totals,
     )
+
+
+@yaspin(text="Publishing all location mapping data about devices to Supabase...")
+def publish_location_mapping_resolved_all(
+    location_data: list | None = None,
+    skip_update: bool = False,
+):
+    data = (
+        location_data
+        if location_data is not None
+        else get_all_data_from_location_mapping_resolved()
+    )
+
+    with _session() as db:
+        try:
+            inserted_count = 0
+            updated_count = 0
+            skipped_count = 0
+            for row in data:
+                payload = {
+                    "device": row.device,
+                    "location": row.location,
+                    "coordinates": row.coordinates,
+                }
+
+                try:
+                    with db.begin_nested():
+                        db.add(Device(**payload))
+                    inserted_count += 1
+                except IntegrityError:
+                    if skip_update:
+                        logger.info(
+                            f"Skipping update for device '{payload['device']}' in table "
+                            f"'{Device.__tablename__}' because skip_update=True."
+                        )
+                        skipped_count += 1
+                        continue
+
+                    with db.begin_nested():
+                        existing = (
+                            db.query(Device)
+                            .filter(Device.device == payload["device"])
+                            .one_or_none()
+                        )
+                        if existing:
+                            existing.location = payload["location"]
+                            existing.coordinates = payload["coordinates"]
+                            updated_count += 1
+                        else:
+                            skipped_count += 1
+                except Exception as row_error:
+                    skipped_count += 1
+                    logger.warning(
+                        "Skipping location mapping row for device "
+                        f"'{payload['device']}' due to error: {str(row_error)}"
+                    )
+                    continue
+
+            db.commit()
+            logger.info(
+                "Published location mapping rows to "
+                f"'{Device.__tablename__}' "
+                f"(inserted={inserted_count}, updated={updated_count}, skipped={skipped_count})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing location mapping rows to "
+                f"'{Device.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing device daily imports to Supabase...")
+def publish_device_daily_imports_all(
+    device_daily_data: list | None = None,
+    skip_update: bool = True,
+):
+    data = (
+        device_daily_data
+        if device_daily_data is not None
+        else get_all_data_from_daily_captured_stats_per_device()
+    )
+
+    with _session() as db:
+        try:
+            inserted_count = 0
+            updated_count = 0
+            skipped_count = 0
+            for row in data:
+                payload = {
+                    "device_id": row.device,
+                    "ssid": int(row.ssid),
+                    "mac": int(row.mac),
+                    "probes": int(row.probe_request),
+                    "date": row.date,
+                }
+
+                try:
+                    with db.begin_nested():
+                        db.add(DeviceDailyImports(**payload))
+                    inserted_count += 1
+                except IntegrityError:
+                    if skip_update:
+                        logger.info(
+                            "Skipping update for "
+                            f"device '{payload['device_id']}' on '{payload['date']}' in table "
+                            f"'{DeviceDailyImports.__tablename__}' because skip_update=True."
+                        )
+                        skipped_count += 1
+                        continue
+
+                    with db.begin_nested():
+                        existing = (
+                            db.query(DeviceDailyImports)
+                            .filter(
+                                DeviceDailyImports.device_id == payload["device_id"],
+                                DeviceDailyImports.date == payload["date"],
+                            )
+                            .one_or_none()
+                        )
+                        if existing:
+                            existing.ssid = payload["ssid"]
+                            existing.mac = payload["mac"]
+                            existing.probes = payload["probes"]
+                            updated_count += 1
+                        else:
+                            skipped_count += 1
+                except Exception as row_error:
+                    skipped_count += 1
+                    logger.warning(
+                        "Skipping device daily import row for device "
+                        f"'{payload['device_id']}' and date '{payload['date']}' "
+                        f"due to error: {str(row_error)}"
+                    )
+                    continue
+
+            db.commit()
+            logger.info(
+                "Published device daily import rows to "
+                f"'{DeviceDailyImports.__tablename__}' "
+                f"(inserted={inserted_count}, updated={updated_count}, skipped={skipped_count})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing device daily import rows to "
+                f"'{DeviceDailyImports.__tablename__}' failed: {str(e)}"
+            )
+            raise
