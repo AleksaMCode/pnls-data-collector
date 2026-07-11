@@ -1,5 +1,6 @@
 from datetime import date
 from datetime import date as dt_date
+from warnings import deprecated
 
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
@@ -423,6 +424,9 @@ def publish_manufacturer_stats_all(summary_data: list | None = None):
             raise
 
 
+@deprecated(
+    "Don't use this as it is too slow for updates. Use `publish_ssid_stats_all_batched` instead."
+)
 @yaspin(text="Publishing ssid stats to Supabase...")
 def publish_ssid_stats_all(
     ssid_stats_data: list | None = None,
