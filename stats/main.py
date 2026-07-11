@@ -10,7 +10,7 @@ from stats.core.supabase.helpers import (
     public_probes_all,
     publish_ssid_all,
 )
-from stats.settings import SERVICE_NAME, SERVICE_DESCRIPTION, SERVICE_VERSION
+from stats.settings import SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION
 from util.logger import get_logger
 
 logger = get_logger(__name__)

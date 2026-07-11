@@ -3,8 +3,8 @@ from sqlalchemy.exc import IntegrityError
 from yaspin import yaspin
 
 from stats.core.orm.helpers import (
-    get_daily_totals_all_devices,
     get_all_data_from_location_mapping_resolved,
+    get_daily_totals_all_devices,
     get_device_total_captured_data,
 )
 from stats.core.supabase.models import (

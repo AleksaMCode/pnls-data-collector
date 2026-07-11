@@ -1,7 +1,7 @@
-from datetime import date
 import uuid
+from datetime import date
 
-from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, UUID
+from sqlalchemy import UUID, Column, Date, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -41,6 +41,7 @@ class LocationMappingResolved(Base):
     location = Column(String, nullable=False)
     coordinates = Column(String, nullable=True)
 
+
 class TotalCapturedPerDevice(Base):
     __tablename__ = "total_captured_per_device"
     __table_args__ = {"info": {"is_view": True}}
@@ -50,6 +51,7 @@ class TotalCapturedPerDevice(Base):
     ssid = Column(Integer, nullable=False)
     probe_request = Column(Integer, nullable=False)
     mac = Column(Integer, nullable=False)
+
 
 class DailyCapturedPerDevice(Base):
     __tablename__ = "daily_captured_per_device"
@@ -62,6 +64,7 @@ class DailyCapturedPerDevice(Base):
     ssid = Column(Integer, nullable=False)
     probe_request = Column(Integer, nullable=False)
     mac = Column(Integer, nullable=False)
+
 
 class ImportsInfo(Base):
     __tablename__ = "imports_info"
