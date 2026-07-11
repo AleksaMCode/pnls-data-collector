@@ -1,6 +1,7 @@
 from datetime import date
+import uuid
 
-from sqlalchemy import Column, Float, Integer, String, Date, UUID, ForeignKey
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, UUID
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -75,3 +76,10 @@ class ImportsInfo(Base):
         default=None,
     )
     workflow = relationship("ImportsWorkflow", back_populates="imports")
+
+
+class ImportsWorkflow(Base):
+    __tablename__ = "imports_workflow"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    imports = relationship("ImportsInfo", back_populates="workflow")
