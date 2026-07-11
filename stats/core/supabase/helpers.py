@@ -1,7 +1,10 @@
 from datetime import date
 from datetime import date as dt_date
 
+from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
+from tqdm import tqdm
 from yaspin import yaspin
 
 from stats.core.orm.helpers import (
@@ -9,6 +12,7 @@ from stats.core.orm.helpers import (
     get_all_data_from_company_capture_summary_by_device,
     get_all_data_from_daily_captured_stats_per_device,
     get_all_data_from_location_mapping_resolved,
+    get_all_data_from_ssid_first_last_seen,
     get_daily_totals_all_devices,
     get_today_data_from_daily_captured_stats_per_device,
 )
@@ -22,6 +26,7 @@ from stats.core.supabase.models import (
     DeviceDailyImports,
     DeviceManufacturerStats,
     ManufacturerStats,
+    SsidStats,
 )
 from util.core.orm.models import Device
 from util.logger import get_logger
@@ -414,6 +419,149 @@ def publish_manufacturer_stats_all(summary_data: list | None = None):
             logger.error(
                 "Publishing manufacturer stats rows to "
                 f"'{ManufacturerStats.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing ssid stats to Supabase...")
+def publish_ssid_stats_all(
+    ssid_stats_data: list | None = None,
+    updated_from: date | None = None,
+):
+    data = (
+        ssid_stats_data
+        if ssid_stats_data is not None
+        else get_all_data_from_ssid_first_last_seen(updated_from=updated_from)
+    )
+
+    with _session() as db:
+        try:
+            inserted_count = 0
+            updated_count = 0
+            skipped_count = 0
+
+            for row in tqdm(data, desc="Publishing ssid stats", unit="row"):
+                payload = {
+                    "ssid": row.ssid,
+                    "seen_count": int(row.seen_count),
+                    "first_seen": row.first_seen,
+                    "last_seen": row.last_seen,
+                }
+
+                try:
+                    with db.begin_nested():
+                        db.add(SsidStats(**payload))
+                    inserted_count += 1
+                except IntegrityError:
+                    with db.begin_nested():
+                        existing = (
+                            db.query(SsidStats)
+                            .filter(SsidStats.ssid == payload["ssid"])
+                            .one_or_none()
+                        )
+                        if existing:
+                            existing.seen_count = payload["seen_count"]
+                            if (
+                                existing.first_seen is None
+                                or payload["first_seen"] < existing.first_seen
+                            ):
+                                existing.first_seen = payload["first_seen"]
+                            if (
+                                existing.last_seen is None
+                                or payload["last_seen"] > existing.last_seen
+                            ):
+                                existing.last_seen = payload["last_seen"]
+                            updated_count += 1
+                        else:
+                            skipped_count += 1
+                except Exception as row_error:
+                    skipped_count += 1
+                    logger.warning(
+                        "Skipping ssid stats row for ssid "
+                        f"'{payload['ssid']}' due to error: {str(row_error)}"
+                    )
+                    continue
+
+            db.commit()
+            logger.info(
+                "Published ssid stats rows to "
+                f"'{SsidStats.__tablename__}' "
+                f"(inserted={inserted_count}, updated={updated_count}, skipped={skipped_count})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing ssid stats rows to "
+                f"'{SsidStats.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing ssid stats to Supabase in batches...")
+def publish_ssid_stats_all_batched(
+    ssid_stats_data: list | None = None,
+    updated_from: date | None = None,
+    batch_size: int = 1000,
+):
+    data = (
+        ssid_stats_data
+        if ssid_stats_data is not None
+        else get_all_data_from_ssid_first_last_seen(updated_from=updated_from)
+    )
+    rows = [
+        {
+            "ssid": row.ssid,
+            "seen_count": int(row.seen_count),
+            "first_seen": row.first_seen,
+            "last_seen": row.last_seen,
+        }
+        for row in data
+    ]
+
+    if not rows:
+        logger.info("No ssid stats rows to publish in batched mode.")
+        return
+
+    if batch_size <= 0:
+        raise ValueError("batch_size must be > 0")
+
+    with _session() as db:
+        try:
+            processed_count = 0
+            for i in tqdm(
+                range(0, len(rows), batch_size),
+                desc="Publishing ssid stats (batches)",
+                unit="batch",
+            ):
+                chunk = rows[i : i + batch_size]
+
+                stmt = insert(SsidStats).values(chunk)
+                upsert_stmt = stmt.on_conflict_do_update(
+                    index_elements=[SsidStats.ssid],
+                    set_={
+                        "seen_count": stmt.excluded.seen_count,
+                        "first_seen": func.least(
+                            SsidStats.first_seen, stmt.excluded.first_seen
+                        ),
+                        "last_seen": func.greatest(
+                            SsidStats.last_seen, stmt.excluded.last_seen
+                        ),
+                    },
+                )
+                db.execute(upsert_stmt)
+                processed_count += len(chunk)
+
+            db.commit()
+            logger.info(
+                "Published ssid stats rows in batches to "
+                f"'{SsidStats.__tablename__}' "
+                f"(processed={processed_count}, batch_size={batch_size})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing ssid stats rows in batches to "
+                f"'{SsidStats.__tablename__}' failed: {str(e)}"
             )
             raise
 

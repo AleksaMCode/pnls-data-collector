@@ -12,6 +12,7 @@ from stats.core.orm.models import (
     DailyCapturedPerDevice,
     ImportsInfo,
     LocationMappingResolved,
+    SsidFirstLastSeen,
     TotalCapturedPerDevice,
 )
 from util.core.orm.models import Device
@@ -143,3 +144,14 @@ def get_today_data_from_daily_captured_stats_per_device(
             .filter(DailyCapturedPerDevice.date == target_date)
             .all()
         )
+
+
+def get_all_data_from_ssid_first_last_seen(
+    updated_from: date | None = None,
+) -> list[SsidFirstLastSeen]:
+    logger.info("Getting all data from ssid first/last seen view.")
+    with _session() as db:
+        query = db.query(SsidFirstLastSeen)
+        if updated_from is not None:
+            query = query.filter(SsidFirstLastSeen.last_seen <= updated_from)
+        return query.all()

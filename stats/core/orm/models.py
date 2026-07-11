@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import UUID, Column, Date, Float, ForeignKey, Integer, String
+from sqlalchemy import UUID, Column, Date, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -64,6 +64,17 @@ class DailyCapturedPerDevice(Base):
     ssid = Column(Integer, nullable=False)
     probe_request = Column(Integer, nullable=False)
     mac = Column(Integer, nullable=False)
+
+
+class SsidFirstLastSeen(Base):
+    __tablename__ = "ssid_first_last_seen"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    ssid = Column(String, primary_key=True)
+    seen_count = Column(Integer, nullable=False)
+    first_seen = Column(DateTime, nullable=False)
+    last_seen = Column(DateTime, nullable=False)
 
 
 class ImportsInfo(Base):

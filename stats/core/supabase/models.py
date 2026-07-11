@@ -5,6 +5,7 @@ from sqlalchemy import (
     BigInteger,
     Column,
     Date,
+    DateTime,
     Float,
     ForeignKey,
     Integer,
@@ -92,3 +93,14 @@ class ManufacturerStats(Base):
     country_alpha3 = Column(String(3), nullable=True)
     total_occurrences = Column(Integer, nullable=False)
     percentage = Column(Float, nullable=False)
+
+
+class SsidStats(Base):
+    __tablename__ = "ssid_stats"
+    __table_args__ = (UniqueConstraint("ssid", name="uq_ssid_stats_ssid"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ssid = Column(String, nullable=False, index=True)
+    seen_count = Column(BigInteger, nullable=False)
+    first_seen = Column(DateTime, nullable=False, index=True)
+    last_seen = Column(DateTime, nullable=False, index=True)
