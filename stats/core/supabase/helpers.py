@@ -1,18 +1,27 @@
+from datetime import date
+from datetime import date as dt_date
+
 from sqlalchemy.exc import IntegrityError
 from yaspin import yaspin
 
 from stats.core.orm.helpers import (
+    get_all_data_from_company_capture_summary_by_device,
     get_all_data_from_daily_captured_stats_per_device,
     get_all_data_from_location_mapping_resolved,
     get_daily_totals_all_devices,
+    get_today_data_from_daily_captured_stats_per_device,
 )
 from stats.core.supabase.models import (
     DailyImportsMac,
     DailyImportsProbes,
     DailyImportsSsid,
-    Device,
-    DeviceDailyImports,
 )
+from stats.core.supabase.models import Device as DeviceModel
+from stats.core.supabase.models import (
+    DeviceDailyImports,
+    DeviceManufacturerStats,
+)
+from util.core.orm.models import Device
 from util.logger import get_logger
 
 from . import _session
@@ -138,21 +147,21 @@ def publish_location_mapping_resolved_all(
 
                 try:
                     with db.begin_nested():
-                        db.add(Device(**payload))
+                        db.add(DeviceModel(**payload))
                     inserted_count += 1
                 except IntegrityError:
                     if skip_update:
                         logger.info(
                             f"Skipping update for device '{payload['device']}' in table "
-                            f"'{Device.__tablename__}' because skip_update=True."
+                            f"'{DeviceModel.__tablename__}' because skip_update=True."
                         )
                         skipped_count += 1
                         continue
 
                     with db.begin_nested():
                         existing = (
-                            db.query(Device)
-                            .filter(Device.device == payload["device"])
+                            db.query(DeviceModel)
+                            .filter(DeviceModel.device == payload["device"])
                             .one_or_none()
                         )
                         if existing:
@@ -172,14 +181,14 @@ def publish_location_mapping_resolved_all(
             db.commit()
             logger.info(
                 "Published location mapping rows to "
-                f"'{Device.__tablename__}' "
+                f"'{DeviceModel.__tablename__}' "
                 f"(inserted={inserted_count}, updated={updated_count}, skipped={skipped_count})."
             )
         except Exception as e:
             db.rollback()
             logger.error(
                 "Publishing location mapping rows to "
-                f"'{Device.__tablename__}' failed: {str(e)}"
+                f"'{DeviceModel.__tablename__}' failed: {str(e)}"
             )
             raise
 
@@ -261,3 +270,79 @@ def publish_device_daily_imports_all(
                 f"'{DeviceDailyImports.__tablename__}' failed: {str(e)}"
             )
             raise
+
+
+@yaspin(text="Publishing device manufacturer stats to Supabase...")
+def publish_device_manufacturer_stats_all(target_date: dt_date | None = None):
+    effective_date = target_date or dt_date.today()
+
+    with _session() as db:
+        try:
+            inserted_count = 0
+            updated_count = 0
+            skipped_count = 0
+
+            for device in Device:
+                manufacturer_rows = get_all_data_from_company_capture_summary_by_device(
+                    device
+                )
+                manufacturer_data = [
+                    {
+                        "company": row.company,
+                        "country": row.country,
+                        "country_alpha3": row.country_alpha3,
+                        "total_occurrences": row.total_occurrences,
+                        "percentage": float(row.percentage),
+                    }
+                    for row in manufacturer_rows
+                ]
+
+                payload = {
+                    "device_id": device.value,
+                    "manufacturer_data": manufacturer_data,
+                    "date": effective_date,
+                }
+
+                try:
+                    with db.begin_nested():
+                        db.add(DeviceManufacturerStats(**payload))
+                    inserted_count += 1
+                except IntegrityError:
+                    logger.info(
+                        "Skipping device manufacturer stats import for device "
+                        f"'{payload['device_id']}' on '{payload['date']}' because it already exists."
+                    )
+                    skipped_count += 1
+                except Exception as row_error:
+                    skipped_count += 1
+                    logger.warning(
+                        "Skipping device manufacturer stats row for device "
+                        f"'{payload['device_id']}' and date '{payload['date']}' "
+                        f"due to error: {str(row_error)}"
+                    )
+                    continue
+
+            db.commit()
+            logger.info(
+                "Published device manufacturer stats rows to "
+                f"'{DeviceManufacturerStats.__tablename__}' "
+                f"(inserted={inserted_count}, updated={updated_count}, skipped={skipped_count})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing device manufacturer stats rows to "
+                f"'{DeviceManufacturerStats.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing today's device daily imports to Supabase...")
+def publish_device_daily_imports_today(
+    tz: str = "Europe/Paris", import_date: date | None = None
+):
+    today_rows = get_today_data_from_daily_captured_stats_per_device(
+        tz=tz,
+        import_date=import_date,
+    )
+    publish_device_daily_imports_all(device_daily_data=today_rows)

@@ -9,4 +9,5 @@ if os.getenv("ENV") != "test":
         DailyImportsSsid,
         Device,
         DeviceDailyImports,
+        DeviceManufacturerStats,
     )

@@ -1,4 +1,7 @@
+from datetime import date as dt_date
+
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Column,
     Date,
@@ -60,3 +63,12 @@ class DeviceDailyImports(Base):
     mac = Column(BigInteger, nullable=False)
     probes = Column(BigInteger, nullable=False)
     date = Column(Date, nullable=False, index=True)
+
+
+class DeviceManufacturerStats(Base):
+    __tablename__ = "device_manufacturer_stats"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    device_id = Column(String, ForeignKey("devices.device"), nullable=False, index=True)
+    manufacturer_data = Column(JSON, nullable=False)
+    date = Column(Date, nullable=False, index=True, default=dt_date.today)
