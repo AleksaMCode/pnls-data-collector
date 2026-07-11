@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from yaspin import yaspin
 
 from stats.core.orm.helpers import (
+    get_all_data_from_company_capture_summary,
     get_all_data_from_company_capture_summary_by_device,
     get_all_data_from_daily_captured_stats_per_device,
     get_all_data_from_location_mapping_resolved,
@@ -20,6 +21,7 @@ from stats.core.supabase.models import Device as DeviceModel
 from stats.core.supabase.models import (
     DeviceDailyImports,
     DeviceManufacturerStats,
+    ManufacturerStats,
 )
 from util.core.orm.models import Device
 from util.logger import get_logger
@@ -333,6 +335,85 @@ def publish_device_manufacturer_stats_all(target_date: dt_date | None = None):
             logger.error(
                 "Publishing device manufacturer stats rows to "
                 f"'{DeviceManufacturerStats.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing manufacturer stats to Supabase...")
+def publish_manufacturer_stats_all(summary_data: list | None = None):
+    data = (
+        summary_data
+        if summary_data is not None
+        else get_all_data_from_company_capture_summary()
+    )
+
+    with _session() as db:
+        try:
+            inserted_count = 0
+            updated_count = 0
+            skipped_count = 0
+
+            for row in data:
+                payload = {
+                    "company": row.company,
+                    "country": row.country,
+                    "country_alpha3": row.country_alpha3,
+                    "total_occurrences": int(row.total_occurrences),
+                    "percentage": float(row.percentage),
+                }
+
+                try:
+                    existing_query = db.query(ManufacturerStats).filter(
+                        ManufacturerStats.company == payload["company"]
+                    )
+                    if payload["country"] is None:
+                        existing_query = existing_query.filter(
+                            ManufacturerStats.country.is_(None)
+                        )
+                    else:
+                        existing_query = existing_query.filter(
+                            ManufacturerStats.country == payload["country"]
+                        )
+
+                    if payload["country_alpha3"] is None:
+                        existing_query = existing_query.filter(
+                            ManufacturerStats.country_alpha3.is_(None)
+                        )
+                    else:
+                        existing_query = existing_query.filter(
+                            ManufacturerStats.country_alpha3
+                            == payload["country_alpha3"]
+                        )
+
+                    existing = existing_query.order_by(
+                        ManufacturerStats.id.desc()
+                    ).first()
+                    if existing:
+                        existing.total_occurrences = payload["total_occurrences"]
+                        existing.percentage = payload["percentage"]
+                        updated_count += 1
+                    else:
+                        db.add(ManufacturerStats(**payload))
+                        inserted_count += 1
+                except Exception as row_error:
+                    skipped_count += 1
+                    logger.warning(
+                        "Skipping manufacturer stats row for company "
+                        f"'{payload['company']}' due to error: {str(row_error)}"
+                    )
+                    continue
+
+            db.commit()
+            logger.info(
+                "Published manufacturer stats rows to "
+                f"'{ManufacturerStats.__tablename__}' "
+                f"(inserted={inserted_count}, updated={updated_count}, skipped={skipped_count})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing manufacturer stats rows to "
+                f"'{ManufacturerStats.__tablename__}' failed: {str(e)}"
             )
             raise
 

@@ -5,6 +5,7 @@ from sqlalchemy import (
     BigInteger,
     Column,
     Date,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -72,3 +73,22 @@ class DeviceManufacturerStats(Base):
     device_id = Column(String, ForeignKey("devices.device"), nullable=False, index=True)
     manufacturer_data = Column(JSON, nullable=False)
     date = Column(Date, nullable=False, index=True, default=dt_date.today)
+
+
+class ManufacturerStats(Base):
+    __tablename__ = "manufacturer_stats"
+    __table_args__ = (
+        UniqueConstraint(
+            "company",
+            "country",
+            "country_alpha3",
+            name="uq_manufacturer_stats_company_country_alpha3",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company = Column(String, nullable=False, index=True)
+    country = Column(String, nullable=True)
+    country_alpha3 = Column(String(3), nullable=True)
+    total_occurrences = Column(Integer, nullable=False)
+    percentage = Column(Float, nullable=False)
