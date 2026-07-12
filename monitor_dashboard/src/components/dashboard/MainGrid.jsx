@@ -1,13 +1,17 @@
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CustomizedDataGrid from './CustomizedDataGrid';
 import ManufacturerDataGrid from './ManufacturerDataGrid';
 import HighlightedCard from './HighlightedCard';
 import CapturedDataBarChart from './CapturedDataBarChart';
 import SessionsChart from './SessionsChart';
 import StatCard from './StatCard';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { subscribeToLiveProbeRequestCount } from '../../firebase/firebase';
 import {
   fetchAllDataSeries,
@@ -104,6 +108,10 @@ export default function MainGrid() {
   const [sankeyData, setSankeyData] = useState({});
   const [isLoadingTotalStats, setIsLoadingTotalStats] = useState(true);
   const [manufacturers, setManufacturers] = useState([]);
+  const [isManufacturerExpanded, setIsManufacturerExpanded] = useState(false);
+  // Guards so the lazy-loaded sections only fire their API call once, on first expand.
+  const hasFetchedManufacturers = useRef(false);
+  const hasFetchedSankey = useRef(false);
 
   useEffect(() => {
     fetchProbeRequestsPerDeviceLastNDays(30)
@@ -208,34 +216,44 @@ export default function MainGrid() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const manufacturersData = await fetchManufacturersData();
-        const sortedData = [...manufacturersData].sort(
-          (a, b) => Number(b.count ?? 0) - Number(a.count ?? 0),
-        );
-        setManufacturers(sortedData);
-      } catch (err) {
-        console.error('Failed to fetch manufacturers data:', err);
-      }
+  // Lazily loaded when the manufacturer accordion is expanded so the single API
+  // call (feeding both the table and the map) only fires when the user opens it.
+  async function loadManufacturers() {
+    try {
+      const manufacturersData = await fetchManufacturersData();
+      const sortedData = [...manufacturersData].sort(
+        (a, b) => Number(b.count ?? 0) - Number(a.count ?? 0),
+      );
+      setManufacturers(sortedData);
+    } catch (err) {
+      console.error('Failed to fetch manufacturers data:', err);
     }
+  }
 
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const data = await fetchSankeyData();
-        setSankeyData(data);
-      } catch (err) {
-        console.error('Failed to fetch sankey data:', err);
-      }
+  // Lazily loaded when the Sankey accordion is expanded.
+  async function loadSankeyData() {
+    try {
+      const data = await fetchSankeyData();
+      setSankeyData(data);
+    } catch (err) {
+      console.error('Failed to fetch sankey data:', err);
     }
+  }
 
-    fetchData();
-  }, []);
+  function handleManufacturerAccordionChange(_, expanded) {
+    setIsManufacturerExpanded(expanded);
+    if (expanded && !hasFetchedManufacturers.current) {
+      hasFetchedManufacturers.current = true;
+      loadManufacturers();
+    }
+  }
+
+  function handleSankeyExpand() {
+    if (!hasFetchedSankey.current) {
+      hasFetchedSankey.current = true;
+      loadSankeyData();
+    }
+  }
 
   return (
     <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
@@ -289,24 +307,26 @@ export default function MainGrid() {
           <MultiSeriesRadarChart totalsPerDeviceData={perDeviceTotalData} />
         </Grid>
       </Grid>
-      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Manufacturer data
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Based on the MAC addresses of devices captured at CERN, the following
-        represents the manufacturers most frequently observed among the recorded
-        devices.
-      </Typography>
-      <Grid
-        container
-        spacing={2}
-        columns={12}
+      <Accordion
         sx={{ mb: (theme) => theme.spacing(2) }}
+        expanded={isManufacturerExpanded}
+        onChange={handleManufacturerAccordionChange}
+        slotProps={{ transition: { unmountOnExit: true } }}
       >
-        <Grid size={{ xs: 12 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography component="h2" variant="h6">
+            Manufacturer data
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Based on the MAC addresses of devices captured at CERN, the
+            following represents the manufacturers most frequently observed
+            among the recorded devices.
+          </Typography>
           <ManufacturerDataGrid manufacturers={manufacturers} />
-        </Grid>
-      </Grid>
+        </AccordionDetails>
+      </Accordion>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Devices
       </Typography>
@@ -317,6 +337,7 @@ export default function MainGrid() {
             totalsPerDeviceData={perDeviceTotalData}
             probeSeries={probeSeriesPerDevice}
             sankeyData={sankeyData}
+            onSankeyExpand={handleSankeyExpand}
           />
         </Grid>
       </Grid>

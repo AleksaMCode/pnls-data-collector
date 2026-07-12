@@ -1,12 +1,8 @@
 import { DataGrid } from '@mui/x-data-grid';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
   ComposableMap,
@@ -62,8 +58,6 @@ const columns = [
 export default function ManufacturerDataGrid({ manufacturers = [] }) {
   const theme = useTheme();
   const [worldGeography, setWorldGeography] = useState(null);
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
-  const [showExpandTooltip, setShowExpandTooltip] = useState(false);
 
   const rows = manufacturers.map((manufacturer, index) => ({
     id: `${manufacturer.company}-${manufacturer.country ?? 'NA'}-${index}`,
@@ -174,90 +168,66 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
         }}
       />
 
-      <Accordion
-        sx={{ mt: 2 }}
-        expanded={isMapExpanded}
-        onChange={(_, expanded) => {
-          setIsMapExpanded(expanded);
-          setShowExpandTooltip(false);
-        }}
-      >
-        <Tooltip
-          title="Click to expand and see the map"
-          arrow
-          open={!isMapExpanded && showExpandTooltip}
-          onOpen={() => setShowExpandTooltip(true)}
-          onClose={() => setShowExpandTooltip(false)}
-          disableHoverListener={isMapExpanded}
-          disableFocusListener
-          disableTouchListener
-          disableInteractive
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle2">
-              Manufacturer data by country (world map)
-            </Typography>
-          </AccordionSummary>
-        </Tooltip>
-        <AccordionDetails>
-          <Paper sx={{ p: 2 }}>
-            {worldGeography ? (
-              <ComposableMap
-                projection="geoMercator"
-                projectionConfig={{
-                  scale: 130,
-                  center: [0, 20],
-                }}
-                style={{ width: '100%', height: 'auto' }}
-              >
-                <Geographies geography={worldGeography}>
-                  {({ geographies }) =>
-                    geographies.map((geo, index) => {
-                      const alpha3 =
-                        geo.properties?.ISO_A3 ??
-                        geo.properties?.iso_a3 ??
-                        geo.properties?.ADM0_A3 ??
-                        geo.id;
-                      const normalizedAlpha3 = String(alpha3 ?? '')
-                        .toUpperCase()
-                        .trim();
-                      const count = countryCounts[normalizedAlpha3] ?? 0;
-                      const hasData = count > 0;
-                      return (
-                        <Geography
-                          key={`${geo.rsmKey ?? 'rsm'}-${geo.id ?? 'noid'}-${normalizedAlpha3 || 'geo'}-${index}`}
-                          geography={geo}
-                          fill={
-                            hasData ? mapColors.withData : mapColors.withoutData
-                          }
-                          stroke={mapColors.stroke}
-                          strokeWidth={0.4}
-                          style={{
-                            default: { outline: 'none' },
-                            hover: {
-                              fill: mapColors.hover,
-                              outline: 'none',
-                              cursor: 'pointer',
-                            },
-                          }}
-                        >
-                          <title>
-                            {`${geo.properties?.name ?? geo.properties?.NAME ?? geo.properties?.ADMIN ?? 'Unknown'}: ${count.toLocaleString()}`}
-                          </title>
-                        </Geography>
-                      );
-                    })
-                  }
-                </Geographies>
-              </ComposableMap>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                Failed to load geography data
-              </Typography>
-            )}
-          </Paper>
-        </AccordionDetails>
-      </Accordion>
+      <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+        Manufacturer data by country (world map)
+      </Typography>
+      <Paper sx={{ p: 2 }}>
+        {worldGeography && manufacturers.length > 0 ? (
+          <ComposableMap
+            key={Object.keys(countryCounts).length}
+            projection="geoMercator"
+            projectionConfig={{
+              scale: 130,
+              center: [0, 20],
+            }}
+            style={{ width: '100%', height: 'auto' }}
+          >
+            <Geographies geography={worldGeography}>
+              {({ geographies }) =>
+                geographies.map((geo, index) => {
+                  const alpha3 =
+                    geo.properties?.ISO_A3 ??
+                    geo.properties?.iso_a3 ??
+                    geo.properties?.ADM0_A3 ??
+                    geo.id;
+                  const normalizedAlpha3 = String(alpha3 ?? '')
+                    .toUpperCase()
+                    .trim();
+                  const count = countryCounts[normalizedAlpha3] ?? 0;
+                  const hasData = count > 0;
+                  return (
+                    <Geography
+                      key={`${geo.rsmKey ?? 'rsm'}-${geo.id ?? 'noid'}-${normalizedAlpha3 || 'geo'}-${index}`}
+                      geography={geo}
+                      fill={
+                        hasData ? mapColors.withData : mapColors.withoutData
+                      }
+                      stroke={mapColors.stroke}
+                      strokeWidth={0.4}
+                      style={{
+                        default: { outline: 'none' },
+                        hover: {
+                          fill: mapColors.hover,
+                          outline: 'none',
+                          cursor: 'pointer',
+                        },
+                      }}
+                    >
+                      <title>
+                        {`${geo.properties?.name ?? geo.properties?.NAME ?? geo.properties?.ADMIN ?? 'Unknown'}: ${count.toLocaleString()}`}
+                      </title>
+                    </Geography>
+                  );
+                })
+              }
+            </Geographies>
+          </ComposableMap>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            Loading map data…
+          </Typography>
+        )}
+      </Paper>
     </Box>
   );
 }
