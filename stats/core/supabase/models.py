@@ -104,3 +104,14 @@ class SsidStats(Base):
     seen_count = Column(BigInteger, nullable=False)
     first_seen = Column(DateTime, nullable=False, index=True)
     last_seen = Column(DateTime, nullable=False, index=True)
+
+
+class MacStats(Base):
+    __tablename__ = "mac_stats"
+    __table_args__ = (UniqueConstraint("mac", name="uq_mac_stats_mac"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    mac = Column(String, nullable=False)
+    seen_count = Column(BigInteger, nullable=False)
+    first_seen = Column(DateTime, nullable=False, index=True)
+    last_seen = Column(DateTime, nullable=False, index=True)
