@@ -1,7 +1,13 @@
-from datetime import date, datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date
 
 from sqlalchemy import asc, desc, func
+
+from util.util import (
+    last_n_dates_excluding_today,
+    previous_n_dates_before_last_n,
+    scalar_to_int,
+    today_in_tz,
+)
 
 from . import _session
 from .models import (
@@ -14,25 +20,6 @@ from .models import (
     ManufacturerStats,
     SsidStats,
 )
-
-
-def _today_in_tz(tz: str) -> date:
-    return datetime.now(ZoneInfo(tz)).date()
-
-
-def _last_n_dates_excluding_today(n_days: int, tz: str) -> list[date]:
-    today = _today_in_tz(tz)
-    return [today - timedelta(days=delta) for delta in range(n_days, 0, -1)]
-
-
-def _previous_n_dates_before_last_n(n_days: int, tz: str) -> list[date]:
-    today = _today_in_tz(tz)
-    start_days_ago = 2 * n_days
-    end_days_ago = n_days + 1
-    return [
-        today - timedelta(days=delta)
-        for delta in range(start_days_ago, end_days_ago - 1, -1)
-    ]
 
 
 def _date_sum_map(model, dates: list[date]) -> dict[date, int]:
@@ -49,12 +36,8 @@ def _date_sum_map(model, dates: list[date]) -> dict[date, int]:
     return {row[0]: int(row[1] or 0) for row in rows}
 
 
-def _scalar_to_int(value) -> int:
-    return int(value or 0)
-
-
 def fetch_last_n_days_totals(n_days: int = 30, tz: str = "Europe/Paris") -> dict:
-    dates = _last_n_dates_excluding_today(n_days=n_days, tz=tz)
+    dates = last_n_dates_excluding_today(n_days=n_days, tz=tz)
     mac_map = _date_sum_map(DailyImportsMac, dates)
     probes_map = _date_sum_map(DailyImportsProbes, dates)
     ssid_map = _date_sum_map(DailyImportsSsid, dates)
@@ -69,7 +52,7 @@ def fetch_last_n_days_totals(n_days: int = 30, tz: str = "Europe/Paris") -> dict
 def fetch_last_n_days_totals_with_series(
     n_days: int = 30, tz: str = "Europe/Paris"
 ) -> dict:
-    dates = _last_n_dates_excluding_today(n_days=n_days, tz=tz)
+    dates = last_n_dates_excluding_today(n_days=n_days, tz=tz)
     mac_map = _date_sum_map(DailyImportsMac, dates)
     probes_map = _date_sum_map(DailyImportsProbes, dates)
     ssid_map = _date_sum_map(DailyImportsSsid, dates)
@@ -93,7 +76,7 @@ def fetch_last_n_days_totals_with_series(
 
 
 def fetch_previous_n_days_totals(n_days: int = 30, tz: str = "Europe/Paris") -> dict:
-    dates = _previous_n_dates_before_last_n(n_days=n_days, tz=tz)
+    dates = previous_n_dates_before_last_n(n_days=n_days, tz=tz)
     mac_map = _date_sum_map(DailyImportsMac, dates)
     probes_map = _date_sum_map(DailyImportsProbes, dates)
     ssid_map = _date_sum_map(DailyImportsSsid, dates)
@@ -110,7 +93,7 @@ def fetch_previous_n_days_totals(n_days: int = 30, tz: str = "Europe/Paris") -> 
 def fetch_probe_requests_per_device_last_n_days(
     n_days: int = 30, tz: str = "Europe/Paris"
 ) -> dict[str, list[int]]:
-    today = _today_in_tz(tz)
+    today = today_in_tz(tz)
 
     with _session() as db:
         date_rows = (
@@ -138,7 +121,7 @@ def fetch_probe_requests_per_device_last_n_days(
 
     per_device: dict[str, list[int]] = {}
     for _, device_id, probes in rows:
-        per_device.setdefault(device_id, []).append(_scalar_to_int(probes))
+        per_device.setdefault(device_id, []).append(scalar_to_int(probes))
     return per_device
 
 
@@ -158,16 +141,16 @@ def fetch_monthly_totals_all_devices() -> dict:
 
     return {
         row.month_key: {
-            "probe_requests": _scalar_to_int(row.probe_requests),
-            "ssid": _scalar_to_int(row.ssid),
-            "mac": _scalar_to_int(row.mac),
+            "probe_requests": scalar_to_int(row.probe_requests),
+            "ssid": scalar_to_int(row.ssid),
+            "mac": scalar_to_int(row.mac),
         }
         for row in rows
     }
 
 
 def fetch_all_data_series(tz: str = "Europe/Paris") -> dict:
-    today = _today_in_tz(tz)
+    today = today_in_tz(tz)
 
     with _session() as db:
         date_rows = (
@@ -200,7 +183,7 @@ def fetch_all_data_series(tz: str = "Europe/Paris") -> dict:
 
 
 def fetch_device_data_series(device_name: str, tz: str = "Europe/Paris") -> dict:
-    today = _today_in_tz(tz)
+    today = today_in_tz(tz)
 
     with _session() as db:
         date_rows = (
@@ -238,9 +221,9 @@ def fetch_device_data_series(device_name: str, tz: str = "Europe/Paris") -> dict
             probe_series.append(0)
             ssid_series.append(0)
         else:
-            mac_series.append(_scalar_to_int(row.mac))
-            probe_series.append(_scalar_to_int(row.probes))
-            ssid_series.append(_scalar_to_int(row.ssid))
+            mac_series.append(scalar_to_int(row.mac))
+            probe_series.append(scalar_to_int(row.probes))
+            ssid_series.append(scalar_to_int(row.ssid))
 
     return {
         "macCount": mac_series,
@@ -270,9 +253,9 @@ def fetch_total_per_device_stats() -> dict:
     for device in device_rows:
         agg = aggregate_by_device.get(device.device)
         totals_per_device[device.device] = {
-            "mac": _scalar_to_int(agg.mac if agg else 0),
-            "probe_requests": _scalar_to_int(agg.probe_requests if agg else 0),
-            "ssid": _scalar_to_int(agg.ssid if agg else 0),
+            "mac": scalar_to_int(agg.mac if agg else 0),
+            "probe_requests": scalar_to_int(agg.probe_requests if agg else 0),
+            "ssid": scalar_to_int(agg.ssid if agg else 0),
             "location": device.location,
             "coordinates": device.coordinates,
         }
@@ -282,9 +265,9 @@ def fetch_total_per_device_stats() -> dict:
         if device_id in totals_per_device:
             continue
         totals_per_device[device_id] = {
-            "mac": _scalar_to_int(agg.mac),
-            "probe_requests": _scalar_to_int(agg.probe_requests),
-            "ssid": _scalar_to_int(agg.ssid),
+            "mac": scalar_to_int(agg.mac),
+            "probe_requests": scalar_to_int(agg.probe_requests),
+            "ssid": scalar_to_int(agg.ssid),
             "location": None,
             "coordinates": None,
         }
@@ -300,13 +283,13 @@ def fetch_total_stats() -> dict:
         summed_ssid_total = db.query(func.sum(DailyImportsSsid.count)).scalar()
 
     return {
-        "macCount": _scalar_to_int(mac_total),
-        "ssidCount": _scalar_to_int(
+        "macCount": scalar_to_int(mac_total),
+        "ssidCount": scalar_to_int(
             unique_ssid_total
             if unique_ssid_total not in (None, 0)
             else summed_ssid_total
         ),
-        "probeRequestCount": _scalar_to_int(probes_total),
+        "probeRequestCount": scalar_to_int(probes_total),
     }
 
 
@@ -322,7 +305,7 @@ def fetch_manufacturers_data() -> list[dict]:
         {
             "company": row.company,
             "country": row.country,
-            "count": _scalar_to_int(row.total_occurrences),
+            "count": scalar_to_int(row.total_occurrences),
             "percentage": float(row.percentage or 0),
         }
         for row in rows
@@ -398,7 +381,7 @@ def fetch_ssid_stats(
         "items": [
             {
                 "ssid": row.ssid,
-                "seen_count": _scalar_to_int(row.seen_count),
+                "seen_count": scalar_to_int(row.seen_count),
                 "first_seen": row.first_seen,
                 "last_seen": row.last_seen,
             }
