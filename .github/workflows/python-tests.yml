@@ -45,7 +45,6 @@ jobs:
           cp aggregator/settings.py.template aggregator/settings.py
           cp firebase_housekeeping/settings.py.template firebase_housekeeping/settings.py
           cp collector/settings.py.template collector/settings.py
-          cp stats/settings.py.template stats/settings.py
 
       - name: Run tests (unittest discover)
         run: python -m unittest discover -v -s tests -t .
