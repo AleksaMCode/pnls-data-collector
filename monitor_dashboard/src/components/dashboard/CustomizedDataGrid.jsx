@@ -76,7 +76,7 @@ export default function CustomizedDataGrid({
       };
     });
     setRows(rowsMapped);
-  }, [totalsPerDeviceData, probeSeries]);
+  }, [totalsPerDeviceData, probeSeries, onlineStatus]);
 
   useEffect(() => {
     const updateStatus = async () => {
