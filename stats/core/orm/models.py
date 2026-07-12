@@ -77,6 +77,17 @@ class SsidFirstLastSeen(Base):
     last_seen = Column(DateTime, nullable=False)
 
 
+class MacFirstLastSeen(Base):
+    __tablename__ = "mac_first_last_seen"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    mac = Column(String, primary_key=True)
+    seen_count = Column(Integer, nullable=False)
+    first_seen = Column(DateTime, nullable=False)
+    last_seen = Column(DateTime, nullable=False)
+
+
 class ImportsInfo(Base):
     __tablename__ = "imports_info"
 

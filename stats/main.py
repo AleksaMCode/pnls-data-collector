@@ -1,6 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -17,6 +18,7 @@ from stats.core.supabase.helpers import (
 from stats.settings import SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION, TIMEZONE
 from util.logger import get_logger
 
+load_dotenv()
 logger = get_logger(__name__)
 
 

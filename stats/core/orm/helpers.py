@@ -12,6 +12,7 @@ from stats.core.orm.models import (
     DailyCapturedPerDevice,
     ImportsInfo,
     LocationMappingResolved,
+    MacFirstLastSeen,
     SsidFirstLastSeen,
     TotalCapturedPerDevice,
 )
@@ -154,4 +155,15 @@ def get_all_data_from_ssid_first_last_seen(
         query = db.query(SsidFirstLastSeen)
         if updated_from is not None:
             query = query.filter(SsidFirstLastSeen.last_seen >= updated_from)
+        return query.all()
+
+
+def get_all_data_from_mac_first_last_seen(
+    updated_from: date | None = None,
+) -> list[MacFirstLastSeen]:
+    logger.info("Getting all data from mac first/last seen view.")
+    with _session() as db:
+        query = db.query(MacFirstLastSeen)
+        if updated_from is not None:
+            query = query.filter(MacFirstLastSeen.last_seen >= updated_from)
         return query.all()

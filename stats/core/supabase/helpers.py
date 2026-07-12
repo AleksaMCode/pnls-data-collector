@@ -1,3 +1,4 @@
+import os
 from datetime import date
 from datetime import date as dt_date
 from warnings import deprecated
@@ -13,6 +14,7 @@ from stats.core.orm.helpers import (
     get_all_data_from_company_capture_summary_by_device,
     get_all_data_from_daily_captured_stats_per_device,
     get_all_data_from_location_mapping_resolved,
+    get_all_data_from_mac_first_last_seen,
     get_all_data_from_ssid_first_last_seen,
     get_daily_totals_all_devices,
     get_today_data_from_daily_captured_stats_per_device,
@@ -26,9 +28,11 @@ from stats.core.supabase.models import Device as DeviceModel
 from stats.core.supabase.models import (
     DeviceDailyImports,
     DeviceManufacturerStats,
+    MacStats,
     ManufacturerStats,
     SsidStats,
 )
+from stats.util.util import hash_mac_hmac_sha256
 from util.core.orm.models import Device
 from util.logger import get_logger
 
@@ -566,6 +570,79 @@ def publish_ssid_stats_all_batched(
             logger.error(
                 "Publishing ssid stats rows in batches to "
                 f"'{SsidStats.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing mac stats to Supabase in batches...")
+def publish_mac_stats_all_batched(
+    mac_stats_data: list | None = None,
+    updated_from: date | None = None,
+    batch_size: int = 1000,
+):
+    pepper = os.getenv("MAC_HASH_PEPPER")
+    if not pepper:
+        raise RuntimeError("MAC_HASH_PEPPER is required to publish MAC stats.")
+
+    data = (
+        mac_stats_data
+        if mac_stats_data is not None
+        else get_all_data_from_mac_first_last_seen(updated_from=updated_from)
+    )
+    rows = [
+        {
+            "mac": hash_mac_hmac_sha256(row.mac, pepper),
+            "seen_count": int(row.seen_count),
+            "first_seen": row.first_seen,
+            "last_seen": row.last_seen,
+        }
+        for row in data
+    ]
+
+    if not rows:
+        logger.info("No mac stats rows to publish in batched mode.")
+        return
+
+    if batch_size <= 0:
+        raise ValueError("batch_size must be > 0")
+
+    with _session() as db:
+        try:
+            processed_count = 0
+            for i in tqdm(
+                range(0, len(rows), batch_size),
+                desc="Publishing mac stats (batches)",
+                unit="batch",
+            ):
+                chunk = rows[i : i + batch_size]
+
+                stmt = insert(MacStats).values(chunk)
+                upsert_stmt = stmt.on_conflict_do_update(
+                    index_elements=[MacStats.mac],
+                    set_={
+                        "seen_count": stmt.excluded.seen_count,
+                        "first_seen": func.least(
+                            MacStats.first_seen, stmt.excluded.first_seen
+                        ),
+                        "last_seen": func.greatest(
+                            MacStats.last_seen, stmt.excluded.last_seen
+                        ),
+                    },
+                )
+                db.execute(upsert_stmt)
+                processed_count += len(chunk)
+
+            db.commit()
+            logger.info(
+                "Published mac stats rows in batches to "
+                f"'{MacStats.__tablename__}' "
+                f"(processed={processed_count}, batch_size={batch_size})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing mac stats rows in batches to "
+                f"'{MacStats.__tablename__}' failed: {str(e)}"
             )
             raise
 
