@@ -8,6 +8,7 @@ import CapturedDataBarChart from './CapturedDataBarChart';
 import SessionsChart from './SessionsChart';
 import StatCard from './StatCard';
 import { useEffect, useState } from 'react';
+import { subscribeToLiveProbeRequestCount } from '../../firebase/firebase';
 import {
   fetchAllDataSeries,
   fetchManufacturersData,
@@ -17,8 +18,7 @@ import {
   fetchTotalPerDeviceStats,
   fetchTotalStats,
   fetchProbeRequestsPerDeviceLastNDays,
-  subscribeToLiveProbeRequestCount,
-} from '../../firebase/firebase';
+} from '../../statsApi/StatsApi';
 import { useLiveCount } from './LiveCountProvider';
 import MultiSeriesRadarChart from './MultiSeriesRadarChart';
 

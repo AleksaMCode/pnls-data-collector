@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { useTheme } from '@mui/material/styles';
-import { fetchMonthlyTotalsAllDevices } from '../../firebase/firebase';
+import { fetchMonthlyTotalsAllDevices } from '../../statsApi/StatsApi';
 import { useEffect, useState } from 'react';
 
 function getLastNMonths(n) {

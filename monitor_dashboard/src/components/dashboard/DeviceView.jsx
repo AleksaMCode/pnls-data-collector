@@ -21,10 +21,8 @@ import {
 } from '@mui/material';
 import { Navigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import {
-  fetchDeviceDataSeries,
-  subscribeToDeviceLiveData,
-} from '../../firebase/firebase';
+import { subscribeToDeviceLiveData } from '../../firebase/firebase';
+import { fetchDeviceDataSeries } from '../../statsApi/StatsApi';
 import { FilterAlt, HighlightOff } from '@mui/icons-material';
 import StatCard from './StatCard';
 
