@@ -8,6 +8,7 @@ import Dashboard from './components/dashboard/Dashboard';
 import { ToastContainer } from 'react-toastify';
 import DeviceView from './components/dashboard/DeviceView';
 import MainGrid from './components/dashboard/MainGrid';
+import SsidView from './components/dashboard/SsidView';
 
 function App() {
   const routesArray = [
@@ -40,6 +41,7 @@ function App() {
           element: <Navigate to="home" replace />,
         },
         { path: 'home', element: <MainGrid /> },
+        { path: 'ssids', element: <SsidView /> },
         { path: 'device/:deviceId', element: <DeviceView /> },
       ],
     },

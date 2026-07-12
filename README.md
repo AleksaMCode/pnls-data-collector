@@ -174,4 +174,4 @@ class="center"
 - `db_backup/docker-compose.yml` runs Conductor + backup worker stack.
 
 
-[^1]: Current capture window is between 7 AM and 6 PM.
+[^1]: Current capture window is 24/7.

@@ -34,6 +34,7 @@ export default function CustomizedDataGrid({
   totalsPerDeviceData,
   probeSeries,
   sankeyData,
+  onSankeyExpand,
 }) {
   const [rows, setRows] = useState(defaultRows);
   const [onlineStatus, setOnlineStatus] = useState({});
@@ -75,7 +76,7 @@ export default function CustomizedDataGrid({
       };
     });
     setRows(rowsMapped);
-  }, [totalsPerDeviceData, probeSeries]);
+  }, [totalsPerDeviceData, probeSeries, onlineStatus]);
 
   useEffect(() => {
     const updateStatus = async () => {
@@ -146,6 +147,9 @@ export default function CustomizedDataGrid({
         onChange={(_, expanded) => {
           setIsSankeyExpanded(expanded);
           setShowExpandTooltip(false);
+          if (expanded && onSankeyExpand) {
+            onSankeyExpand();
+          }
         }}
       >
         <Tooltip

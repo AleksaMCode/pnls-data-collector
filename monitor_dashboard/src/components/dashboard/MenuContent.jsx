@@ -12,6 +12,7 @@ import {
   ExpandMore,
   TapAndPlay,
   CellTower,
+  Wifi,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { Collapse, Divider } from '@mui/material';
@@ -43,6 +44,19 @@ export default function MenuContent() {
               <HomeRoundedIcon />
             </ListItemIcon>
             <ListItemText primary="Home" />
+          </ListItemButton>
+        </ListItem>
+
+        {/* SSIDs */}
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={location.pathname === '/ssids'}
+            onClick={() => navigate('/ssids')}
+          >
+            <ListItemIcon>
+              <Wifi />
+            </ListItemIcon>
+            <ListItemText primary="SSIDs" />
           </ListItemButton>
         </ListItem>
 

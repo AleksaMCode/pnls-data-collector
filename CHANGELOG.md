@@ -8,6 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- New `stats` service for publishing daily and aggregate statistics from the home PostgreSQL source to Supabase, including models, migrations, and initial backfill tooling. PR #337
+- New `stats_api` FastAPI service with Supabase-backed endpoints for totals, device stats, manufacturer data, Sankey data, and paginated SSID statistics. PR #337
+- Firebase Bearer-token authentication middleware (`FIREBASE_CREDENTIALS_JSON`) and Redis response caching support were added to `stats_api`. PR #337
+- New Supabase tables and pipelines for privacy-preserving MAC analytics (`mac_stats` with HMAC hashing) and daily unique snapshots (`unique_total_stats`). This will not be used as MAC table has been removed from Supabase due to memory limits. PR #337
+- New monitor dashboard SSID page with server-side pagination/sorting/search and debounced query input. PR #337
+- New  FastAPI Cloud deploy workflow for `stats_api`. PR #337
+
+### Changed
+
+- `monitor_dashboard` historical/statistical reads were migrated from Firebase Realtime Database to `stats_api`, while live probe updates remain on Firebase. PR #337
+- Frontend API consumption was refactored to a shared authenticated GET client with Firebase ID-token injection and in-flight request de-duplication. PR #337
+- Orchestrator DAG flow now calls the `stats` service after `aggregator`, with configurable base URL and timeout settings. PR #337
+- Manufacturer and Sankey sections in the dashboard were optimized with lazy loading so expensive data loads only after card expansion. PR #337
+
+### Fixed
+
+- Manufacturer world-map coloring now correctly uses ISO alpha-3 country codes from API responses instead of full country names. PR #337
+- Device status rendering in the dashboard grid now refreshes when online-status data updates, preventing stale `Offline` states. PR #337
+- Python test workflow discovery was scoped to the `tests/` directory to avoid importing runtime-only packages during CI collection. PR #337
+
+## [2.0.0] - 2026-07-12
+
+### Added
+
 - Sentry fatal-error logging integrated into the Go notifier services: `cloudflare_limit_notifier`, `collector_status_notifier`, and `firebase_limit_notifier`. PR #296
 - Mattermost bot icon support added for Go services through service-name-based icon mapping, with custom bot icon assets under `resources/bot_icons/`. PR #296
 - Datadog heartbeat status validation added to `collector_status_notifier` as the primary device-health source, with periodic checks and Datadog API integration for configured devices. PR #302
@@ -45,8 +69,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `db_backup` upload pipeline and worker now emit detailed runtime diagnostics (input validation, file size/path, object key, elapsed time, and upload errors) to improve R2 upload troubleshooting. PR #324
 - `db_backup` upload timeout handling was improved for backup artifact transfers to R2. PR #324
 - `monitor_dashboard` live Probe Request card no longer spikes to an incorrect percentage on first live update due to stale-state percentage calculation. PR #327
-- `collector` and `aggregator` now validate channel values before persistence, preventing invalid channel IDs (e.g., `124`) from causing `captured_info_channel_fkey` foreign key failures during import. PR #328
-- `aggregator` service restart policy was updated to `unless-stopped` in Docker Compose.
+- `collector` and `aggregator` now validate channel values before persistence, preventing invalid channel IDs (e.g., `124`) from causing `captured_info_channel_fkey` foreign key failures during import. PR #329
+- `aggregator` service restart policy was updated to `unless-stopped` in Docker Compose. PR #331
 
 ## [1.0.0] - 2026-05-30
 

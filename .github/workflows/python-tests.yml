@@ -6,6 +6,7 @@ on:
     paths:
       - "aggregator/**/*.py"
       - "collector/**/*.py"
+      - "stats/**/*.py"
       - "tests/**/*.py"
       - "util/**/*.py"
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - "aggregator/**/*.py"
       - "collector/**/*.py"
+      - "stats/**/*.py"
       - "tests/**/*.py"
       - "util/**/*.py"
 
@@ -45,4 +47,4 @@ jobs:
           cp collector/settings.py.template collector/settings.py
 
       - name: Run tests (unittest discover)
-        run: python -m unittest discover -v
+        run: python -m unittest discover -v -s tests -t .

@@ -17,6 +17,7 @@ from airflow.sdk import TriggerRule
 logger = logging.getLogger(__name__)
 
 AGGREGATOR_BASE_URL = os.getenv("AGGREGATOR_BASE_URL", "http://aggregator:9091")
+STATS_BASE_URL = os.getenv("STATS_BASE_URL", "http://stats:9097")
 HOUSEKEEPING_BASE_URL = os.getenv(
     "HOUSEKEEPING_BASE_URL", "http://firebase_housekeeping:9090"
 )
@@ -32,6 +33,7 @@ DB_BACKUP_POLL_TIMEOUT_SECONDS = int(
 )
 DB_BACKUP_BASE_URL = f"http://{DB_BACKUP_HOST}:{DB_BACKUP_PORT}"
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "60"))
+STATS_REQUEST_TIMEOUT_SECONDS = int(os.getenv("STATS_REQUEST_TIMEOUT_SECONDS", "300"))
 TIMEZONE = os.getenv("TIMEZONE", "Europe/Paris")
 HOUSEKEEPING_EVERY_N_DAYS = int(os.getenv("HOUSEKEEPING_EVERY_N_DAYS", "5"))
 WORKFLOW_POLL_INTERVAL_SECONDS = int(os.getenv("WORKFLOW_POLL_INTERVAL_SECONDS", "300"))
@@ -41,13 +43,19 @@ HOUSEKEEPING_ANCHOR_DATE = date.fromisoformat(
 )
 
 
-def _request_service(method: str, url: str, json_payload: dict | None = None) -> dict:
+def _request_service(
+    method: str,
+    url: str,
+    json_payload: dict | None = None,
+    timeout_seconds: int | None = None,
+) -> dict:
     transport = httpx.HTTPTransport(retries=0)
+    timeout = (
+        timeout_seconds if timeout_seconds is not None else REQUEST_TIMEOUT_SECONDS
+    )
 
     with httpx.Client(transport=transport) as client:
-        response = client.request(
-            method, url, timeout=REQUEST_TIMEOUT_SECONDS, json=json_payload
-        )
+        response = client.request(method, url, timeout=timeout, json=json_payload)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as err:
@@ -69,6 +77,18 @@ def run_aggregator() -> dict:
         )
     if not response.get("workflow_id"):
         raise AirflowException("Aggregator response missing workflow_id.")
+    return response
+
+
+def run_stats() -> dict:
+    response = _request_service(
+        "POST",
+        f"{STATS_BASE_URL}/stats",
+        timeout_seconds=STATS_REQUEST_TIMEOUT_SECONDS,
+    )
+    status = (response.get("status") if isinstance(response, dict) else "") or ""
+    if status.lower() not in {"completed", "skipped"}:
+        raise AirflowException(f"Stats service returned unexpected status: {status}")
     return response
 
 
@@ -196,6 +216,11 @@ with DAG(
         mode="reschedule",
     )
 
+    run_stats_task = PythonOperator(
+        task_id="run_stats",
+        python_callable=run_stats,
+    )
+
     branching_task = BranchPythonOperator(
         task_id="branch_housekeeping",
         python_callable=choose_housekeeping_branch,
@@ -226,7 +251,12 @@ with DAG(
         mode="reschedule",
     )
 
-    run_aggregator_task >> wait_for_aggregator_workflow_task >> branching_task
+    (
+        run_aggregator_task
+        >> wait_for_aggregator_workflow_task
+        >> run_stats_task
+        >> branching_task
+    )
     branching_task >> run_housekeeping_task >> done_task
     branching_task >> skip_housekeeping_task >> done_task
     done_task >> trigger_db_backup_task >> wait_for_db_backup_task

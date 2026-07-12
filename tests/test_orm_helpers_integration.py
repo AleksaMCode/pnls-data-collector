@@ -39,6 +39,7 @@ class TestOrmHelpersIntegration(unittest.TestCase):
 
         cls.engine = create_engine(connection_url, pool_pre_ping=True)
         cls.models.ImportsWorkflow.__table__.create(cls.engine, checkfirst=True)
+        cls.models.ImportsInfo.__table__.create(cls.engine, checkfirst=True)
         cls.models.DailyCapturedPerDevice.__table__.create(cls.engine, checkfirst=True)
         cls.models.Country.__table__.create(cls.engine, checkfirst=True)
         cls.models.IEEEMacOuiOrg.__table__.create(cls.engine, checkfirst=True)
@@ -62,6 +63,7 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         cls.models.IEEEMacOuiOrg.__table__.drop(cls.engine, checkfirst=True)
         cls.models.Country.__table__.drop(cls.engine, checkfirst=True)
         cls.models.DailyCapturedPerDevice.__table__.drop(cls.engine, checkfirst=True)
+        cls.models.ImportsInfo.__table__.drop(cls.engine, checkfirst=True)
         cls.models.ImportsWorkflow.__table__.drop(cls.engine, checkfirst=True)
         cls.engine.dispose()
         cls._postgres.stop()
@@ -71,6 +73,7 @@ class TestOrmHelpersIntegration(unittest.TestCase):
             db.query(self.models.MAC).delete()
             db.query(self.models.SSID).delete()
             db.query(self.models.DailyCapturedPerDevice).delete()
+            db.query(self.models.ImportsInfo).delete()
             db.query(self.models.ImportsWorkflow).delete()
             db.commit()
 
@@ -120,6 +123,25 @@ class TestOrmHelpersIntegration(unittest.TestCase):
         running_workflow_id = self.helpers.get_running_import_workflow_id()
 
         self.assertIsNone(running_workflow_id)
+
+    def test_get_latest_import_date_returns_most_recent_timestamp(self):
+        base_date = datetime.now(ZoneInfo("UTC")).date()
+        oldest = base_date - timedelta(days=2)
+        middle = base_date - timedelta(days=1)
+        latest = base_date
+
+        with self.session_factory() as db:
+            db.add_all(
+                [
+                    self.models.ImportsInfo(timestamp=oldest, captured=10),
+                    self.models.ImportsInfo(timestamp=middle, captured=20),
+                    self.models.ImportsInfo(timestamp=latest, captured=30),
+                ]
+            )
+            db.commit()
+
+        latest_import_date = self.helpers.get_latest_import_date()
+        self.assertEqual(latest_import_date, latest)
 
     def test_get_today_data_from_daily_captured_stats_per_device_filters_by_import_date(
         self,
@@ -329,6 +351,139 @@ class TestOrmHelpersIntegration(unittest.TestCase):
             )
 
         self.assertEqual(resolved_id, persisted.id)
+
+
+@unittest.skipUnless(
+    PostgresContainer is not None,
+    "testcontainers is required for Postgres integration tests",
+)
+class TestStatsOrmHelpersIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._postgres = PostgresContainer("postgres:15.18")
+        cls._postgres.start()
+
+        connection_url = cls._postgres.get_connection_url()
+        parsed = urlparse(connection_url)
+
+        os.environ["DB_USER"] = parsed.username or ""
+        os.environ["DB_PASS"] = parsed.password or ""
+        os.environ["DB_URL"] = parsed.hostname or ""
+        os.environ["DB_PORT"] = str(parsed.port or "")
+        os.environ["DB_NAME"] = parsed.path.lstrip("/")
+
+        cls.models = importlib.import_module("stats.core.orm.models")
+        cls.helpers = importlib.import_module("stats.core.orm.helpers")
+
+        cls.engine = create_engine(connection_url, pool_pre_ping=True)
+        cls.models.ImportsWorkflow.__table__.create(cls.engine, checkfirst=True)
+        cls.models.ImportsInfo.__table__.create(cls.engine, checkfirst=True)
+        cls.models.DailyCapturedPerDevice.__table__.create(cls.engine, checkfirst=True)
+
+        cls.session_factory = sessionmaker(
+            bind=cls.engine,
+            autoflush=False,
+            autocommit=False,
+            expire_on_commit=False,
+        )
+        cls.helpers._session = cls.session_factory
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.models.DailyCapturedPerDevice.__table__.drop(cls.engine, checkfirst=True)
+        cls.models.ImportsInfo.__table__.drop(cls.engine, checkfirst=True)
+        cls.models.ImportsWorkflow.__table__.drop(cls.engine, checkfirst=True)
+        cls.engine.dispose()
+        cls._postgres.stop()
+
+    def setUp(self):
+        with self.session_factory() as db:
+            db.query(self.models.DailyCapturedPerDevice).delete()
+            db.query(self.models.ImportsInfo).delete()
+            db.query(self.models.ImportsWorkflow).delete()
+            db.commit()
+
+    def test_get_daily_totals_all_devices_aggregates_by_date(self):
+        day_one = datetime.now(ZoneInfo("UTC")).date() - timedelta(days=2)
+        day_two = day_one + timedelta(days=1)
+
+        with self.session_factory() as db:
+            db.add_all(
+                [
+                    self.models.DailyCapturedPerDevice(
+                        date=day_one,
+                        device="RPI-1",
+                        ssid=10,
+                        probe_request=100,
+                        mac=20,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=day_one,
+                        device="RPI-2",
+                        ssid=5,
+                        probe_request=50,
+                        mac=7,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=day_two,
+                        device="RPI-1",
+                        ssid=30,
+                        probe_request=300,
+                        mac=40,
+                    ),
+                ]
+            )
+            db.commit()
+
+        rows = self.helpers.get_daily_totals_all_devices()
+        self.assertEqual(len(rows), 2)
+
+        by_date = {row.date: row for row in rows}
+        self.assertEqual(by_date[day_one].ssid_count, 15)
+        self.assertEqual(by_date[day_one].mac_count, 27)
+        self.assertEqual(by_date[day_one].probes_count, 150)
+        self.assertEqual(by_date[day_two].ssid_count, 30)
+        self.assertEqual(by_date[day_two].mac_count, 40)
+        self.assertEqual(by_date[day_two].probes_count, 300)
+
+    def test_get_daily_totals_all_devices_filters_start_date(self):
+        day_one = datetime.now(ZoneInfo("UTC")).date() - timedelta(days=3)
+        day_two = day_one + timedelta(days=1)
+        day_three = day_two + timedelta(days=1)
+
+        with self.session_factory() as db:
+            db.add_all(
+                [
+                    self.models.DailyCapturedPerDevice(
+                        date=day_one,
+                        device="RPI-1",
+                        ssid=1,
+                        probe_request=10,
+                        mac=2,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=day_two,
+                        device="RPI-1",
+                        ssid=3,
+                        probe_request=30,
+                        mac=4,
+                    ),
+                    self.models.DailyCapturedPerDevice(
+                        date=day_three,
+                        device="RPI-2",
+                        ssid=5,
+                        probe_request=50,
+                        mac=6,
+                    ),
+                ]
+            )
+            db.commit()
+
+        rows = self.helpers.get_daily_totals_all_devices(start_date=day_two)
+
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all(row.date >= day_two for row in rows))
+        self.assertEqual({row.date for row in rows}, {day_two, day_three})
 
 
 if __name__ == "__main__":

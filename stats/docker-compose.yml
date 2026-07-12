@@ -1,0 +1,20 @@
+services:
+  stats:
+    build:
+      context: ..
+      dockerfile: stats/Dockerfile
+    container_name: stats
+    networks:
+      - pnls
+    env_file:
+      - ./.env
+    environment:
+      SERVER_URL: 0.0.0.0
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    restart: unless-stopped
+
+networks:
+  pnls:
+    name: pnls
+    driver: bridge
