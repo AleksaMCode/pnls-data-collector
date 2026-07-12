@@ -258,6 +258,7 @@ firebase_credentials.json
 # Settings file
 settings.py
 !stats_api/settings.py
+!stats/settings.py
 
 # GO
 
