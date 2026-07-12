@@ -9,7 +9,7 @@ import {
   Geographies,
   Geography,
 } from '@vnedyalk0v/react19-simple-maps';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 // Data from https://raw.githubusercontent.com/subyfly/topojson/refs/heads/master/world-countries.json'
 const WORLD_TOPOLOGY_URL = '/world-countries.json';
@@ -55,30 +55,10 @@ const columns = [
   },
 ];
 
-export default function ManufacturerDataGrid({ manufacturers = [] }) {
+// Memoized so the (expensive) SVG world map only re-renders when the geography
+// or the aggregated country counts actually change by reference.
+const WorldMap = memo(function WorldMap({ worldGeography, countryCounts }) {
   const theme = useTheme();
-  const [worldGeography, setWorldGeography] = useState(null);
-
-  const rows = manufacturers.map((manufacturer, index) => ({
-    id: `${manufacturer.company}-${manufacturer.country ?? 'NA'}-${index}`,
-    company: manufacturer.company ?? '-',
-    country: manufacturer.country ?? null,
-    count: Number(manufacturer.count ?? 0),
-    percentage: Number(manufacturer.percentage ?? 0),
-  }));
-
-  const countryCounts = useMemo(() => {
-    const acc = {};
-
-    for (const row of rows) {
-      const code = row.country?.toUpperCase().trim();
-      if (!code) continue;
-
-      acc[code] = (acc[code] ?? 0) + Number(row.count ?? 0);
-    }
-
-    return acc;
-  }, [rows]);
 
   const mapColors = {
     withData:
@@ -98,6 +78,88 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
         ? theme.palette.primary.main
         : theme.palette.primary.dark,
   };
+
+  return (
+    <ComposableMap
+      projection="geoMercator"
+      projectionConfig={{
+        scale: 130,
+        center: [0, 20],
+      }}
+      style={{ width: '100%', height: 'auto' }}
+    >
+      <Geographies geography={worldGeography}>
+        {({ geographies }) =>
+          geographies.map((geo, index) => {
+            const alpha3 =
+              geo.properties?.ISO_A3 ??
+              geo.properties?.iso_a3 ??
+              geo.properties?.ADM0_A3 ??
+              geo.id;
+            const normalizedAlpha3 = String(alpha3 ?? '')
+              .toUpperCase()
+              .trim();
+            const count = countryCounts[normalizedAlpha3] ?? 0;
+            const hasData = count > 0;
+            return (
+              <Geography
+                key={`${geo.rsmKey ?? 'rsm'}-${geo.id ?? 'noid'}-${normalizedAlpha3 || 'geo'}-${index}`}
+                geography={geo}
+                fill={hasData ? mapColors.withData : mapColors.withoutData}
+                stroke={mapColors.stroke}
+                strokeWidth={0.4}
+                style={{
+                  default: { outline: 'none' },
+                  hover: {
+                    fill: mapColors.hover,
+                    outline: 'none',
+                    cursor: 'pointer',
+                  },
+                }}
+              >
+                <title>
+                  {`${geo.properties?.name ?? geo.properties?.NAME ?? geo.properties?.ADMIN ?? 'Unknown'}: ${count.toLocaleString()}`}
+                </title>
+              </Geography>
+            );
+          })
+        }
+      </Geographies>
+    </ComposableMap>
+  );
+});
+
+export default function ManufacturerDataGrid({
+  manufacturers = [],
+  loading = false,
+  mapReady = true,
+}) {
+  const [worldGeography, setWorldGeography] = useState(null);
+
+  const rows = useMemo(
+    () =>
+      manufacturers.map((manufacturer, index) => ({
+        id: `${manufacturer.company}-${manufacturer.country ?? 'NA'}-${index}`,
+        company: manufacturer.company ?? '-',
+        country: manufacturer.country ?? null,
+        count: Number(manufacturer.count ?? 0),
+        percentage: Number(manufacturer.percentage ?? 0),
+      })),
+    [manufacturers],
+  );
+
+  const countryCounts = useMemo(() => {
+    const acc = {};
+
+    for (const row of rows) {
+      const code = row.country?.toUpperCase().trim();
+      if (!code) continue;
+
+      acc[code] = (acc[code] ?? 0) + Number(row.count ?? 0);
+    }
+
+    return acc;
+  }, [rows]);
 
   useEffect(() => {
     let isMounted = true;
@@ -130,6 +192,7 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
         checkboxSelection={false}
         rows={rows}
         columns={columns}
+        loading={loading}
         disableRowSelectionOnClick
         disableColumnResize
         // density="compact"
@@ -141,6 +204,10 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
           params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
         }
         slotProps={{
+          loadingOverlay: {
+            variant: 'skeleton',
+            noRowsVariant: 'skeleton',
+          },
           filterPanel: {
             filterFormProps: {
               logicOperatorInputProps: {
@@ -169,59 +236,14 @@ export default function ManufacturerDataGrid({ manufacturers = [] }) {
       />
 
       <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
-        Manufacturer data by country (world map)
+        Manufacturer data by country (world map):
       </Typography>
       <Paper sx={{ p: 2 }}>
-        {worldGeography && manufacturers.length > 0 ? (
-          <ComposableMap
-            key={Object.keys(countryCounts).length}
-            projection="geoMercator"
-            projectionConfig={{
-              scale: 130,
-              center: [0, 20],
-            }}
-            style={{ width: '100%', height: 'auto' }}
-          >
-            <Geographies geography={worldGeography}>
-              {({ geographies }) =>
-                geographies.map((geo, index) => {
-                  const alpha3 =
-                    geo.properties?.ISO_A3 ??
-                    geo.properties?.iso_a3 ??
-                    geo.properties?.ADM0_A3 ??
-                    geo.id;
-                  const normalizedAlpha3 = String(alpha3 ?? '')
-                    .toUpperCase()
-                    .trim();
-                  const count = countryCounts[normalizedAlpha3] ?? 0;
-                  const hasData = count > 0;
-                  return (
-                    <Geography
-                      key={`${geo.rsmKey ?? 'rsm'}-${geo.id ?? 'noid'}-${normalizedAlpha3 || 'geo'}-${index}`}
-                      geography={geo}
-                      fill={
-                        hasData ? mapColors.withData : mapColors.withoutData
-                      }
-                      stroke={mapColors.stroke}
-                      strokeWidth={0.4}
-                      style={{
-                        default: { outline: 'none' },
-                        hover: {
-                          fill: mapColors.hover,
-                          outline: 'none',
-                          cursor: 'pointer',
-                        },
-                      }}
-                    >
-                      <title>
-                        {`${geo.properties?.name ?? geo.properties?.NAME ?? geo.properties?.ADMIN ?? 'Unknown'}: ${count.toLocaleString()}`}
-                      </title>
-                    </Geography>
-                  );
-                })
-              }
-            </Geographies>
-          </ComposableMap>
+        {mapReady && worldGeography && manufacturers.length > 0 ? (
+          <WorldMap
+            worldGeography={worldGeography}
+            countryCounts={countryCounts}
+          />
         ) : (
           <Typography variant="body2" color="text.secondary">
             Loading map data…

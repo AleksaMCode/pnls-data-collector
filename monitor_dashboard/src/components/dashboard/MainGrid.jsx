@@ -108,7 +108,11 @@ export default function MainGrid() {
   const [sankeyData, setSankeyData] = useState({});
   const [isLoadingTotalStats, setIsLoadingTotalStats] = useState(true);
   const [manufacturers, setManufacturers] = useState([]);
+  const [isLoadingManufacturers, setIsLoadingManufacturers] = useState(false);
   const [isManufacturerExpanded, setIsManufacturerExpanded] = useState(false);
+  // Only render the heavy world map once the accordion has finished expanding,
+  // so the open/close animation stays smooth.
+  const [isManufacturerEntered, setIsManufacturerEntered] = useState(false);
   // Guards so the lazy-loaded sections only fire their API call once, on first expand.
   const hasFetchedManufacturers = useRef(false);
   const hasFetchedSankey = useRef(false);
@@ -220,6 +224,7 @@ export default function MainGrid() {
   // call (feeding both the table and the map) only fires when the user opens it.
   async function loadManufacturers() {
     try {
+      setIsLoadingManufacturers(true);
       const manufacturersData = await fetchManufacturersData();
       const sortedData = [...manufacturersData].sort(
         (a, b) => Number(b.count ?? 0) - Number(a.count ?? 0),
@@ -227,6 +232,8 @@ export default function MainGrid() {
       setManufacturers(sortedData);
     } catch (err) {
       console.error('Failed to fetch manufacturers data:', err);
+    } finally {
+      setIsLoadingManufacturers(false);
     }
   }
 
@@ -311,7 +318,13 @@ export default function MainGrid() {
         sx={{ mb: (theme) => theme.spacing(2) }}
         expanded={isManufacturerExpanded}
         onChange={handleManufacturerAccordionChange}
-        slotProps={{ transition: { unmountOnExit: true } }}
+        slotProps={{
+          transition: {
+            unmountOnExit: true,
+            onEntered: () => setIsManufacturerEntered(true),
+            onExited: () => setIsManufacturerEntered(false),
+          },
+        }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography component="h2" variant="h6">
@@ -324,7 +337,11 @@ export default function MainGrid() {
             following represents the manufacturers most frequently observed
             among the recorded devices.
           </Typography>
-          <ManufacturerDataGrid manufacturers={manufacturers} />
+          <ManufacturerDataGrid
+            manufacturers={manufacturers}
+            loading={isLoadingManufacturers}
+            mapReady={isManufacturerEntered}
+          />
         </AccordionDetails>
       </Accordion>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
