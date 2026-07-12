@@ -19,6 +19,7 @@ from .models import (
     DeviceManufacturerStats,
     ManufacturerStats,
     SsidStats,
+    UniqueTotalStats,
 )
 
 
@@ -277,17 +278,28 @@ def fetch_total_per_device_stats() -> dict:
 
 def fetch_total_stats() -> dict:
     with _session() as db:
-        mac_total = db.query(func.sum(DailyImportsMac.count)).scalar()
         probes_total = db.query(func.sum(DailyImportsProbes.count)).scalar()
         unique_ssid_total = db.query(func.count(SsidStats.id)).scalar()
-        summed_ssid_total = db.query(func.sum(DailyImportsSsid.count)).scalar()
+        latest_unique_totals = (
+            db.query(UniqueTotalStats)
+            .order_by(UniqueTotalStats.date.desc(), UniqueTotalStats.id.desc())
+            .first()
+        )
+
+    snapshot_mac_total = None
+    if latest_unique_totals and isinstance(latest_unique_totals.totals, dict):
+        snapshot_mac_total = latest_unique_totals.totals.get("macCount")
 
     return {
-        "macCount": scalar_to_int(mac_total),
+        "macCount": scalar_to_int(
+            snapshot_mac_total
+            if snapshot_mac_total is not None
+            else db.query(func.sum(DailyImportsMac.count)).scalar()
+        ),
         "ssidCount": scalar_to_int(
             unique_ssid_total
             if unique_ssid_total not in (None, 0)
-            else summed_ssid_total
+            else db.query(func.sum(DailyImportsSsid.count)).scalar()
         ),
         "probeRequestCount": scalar_to_int(probes_total),
     }

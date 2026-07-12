@@ -14,6 +14,7 @@ from stats.core.supabase.helpers import (
     publish_manufacturer_stats_all,
     publish_ssid_all,
     publish_ssid_stats_all_batched,
+    publish_unique_total_stats,
 )
 from stats.settings import SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION, TIMEZONE
 from util.logger import get_logger
@@ -62,6 +63,7 @@ async def publish_stats():
     publish_device_manufacturer_stats_all(target_date=latest_import_date)
     publish_manufacturer_stats_all()
     publish_ssid_stats_all_batched(updated_from=latest_import_date)
+    publish_unique_total_stats(target_date=latest_import_date)
 
     msg = (
         f"Published daily totals to Supabase for {len(daily_totals)} day(s), "

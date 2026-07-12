@@ -115,3 +115,11 @@ class MacStats(Base):
     seen_count = Column(BigInteger, nullable=False)
     first_seen = Column(DateTime, nullable=False, index=True)
     last_seen = Column(DateTime, nullable=False, index=True)
+
+
+class UniqueTotalStats(Base):
+    __tablename__ = "unique_total_stats"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    totals = Column(JSON, nullable=False)
+    date = Column(Date, nullable=False, index=True)

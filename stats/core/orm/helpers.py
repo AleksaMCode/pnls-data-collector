@@ -167,3 +167,21 @@ def get_all_data_from_mac_first_last_seen(
         if updated_from is not None:
             query = query.filter(MacFirstLastSeen.last_seen >= updated_from)
         return query.all()
+
+
+def get_unique_totals_snapshot() -> dict[str, int]:
+    logger.info("Getting unique totals snapshot from ssid/mac first-last-seen views.")
+    with _session() as db:
+        ssid_unique = db.query(func.count(SsidFirstLastSeen.ssid)).scalar()
+        # Either ssid or mac seen_count sum should represent total probe requests.
+        mac_unique, probes_total = db.query(
+            func.count(MacFirstLastSeen.mac),
+            func.sum(MacFirstLastSeen.seen_count),
+        ).one()
+        probes_total = db.query(func.sum(MacFirstLastSeen.seen_count)).scalar()
+
+    return {
+        "probeRequestCount": int(probes_total or 0),
+        "ssidCount": int(ssid_unique or 0),
+        "macCount": int(mac_unique or 0),
+    }

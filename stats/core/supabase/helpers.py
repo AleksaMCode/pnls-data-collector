@@ -18,6 +18,7 @@ from stats.core.orm.helpers import (
     get_all_data_from_ssid_first_last_seen,
     get_daily_totals_all_devices,
     get_today_data_from_daily_captured_stats_per_device,
+    get_unique_totals_snapshot,
 )
 from stats.core.supabase.models import (
     DailyImportsMac,
@@ -31,6 +32,7 @@ from stats.core.supabase.models import (
     MacStats,
     ManufacturerStats,
     SsidStats,
+    UniqueTotalStats,
 )
 from stats.util.util import hash_mac_hmac_sha256
 from util.core.orm.models import Device
@@ -643,6 +645,49 @@ def publish_mac_stats_all_batched(
             logger.error(
                 "Publishing mac stats rows in batches to "
                 f"'{MacStats.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing unique totals snapshot to Supabase...")
+def publish_unique_total_stats(
+    target_date: dt_date | None = None,
+    totals_data: dict[str, int] | None = None,
+):
+    effective_date = target_date or dt_date.today()
+    snapshot = totals_data if totals_data is not None else get_unique_totals_snapshot()
+
+    with _session() as db:
+        try:
+            inserted_count = 0
+            updated_count = 0
+            try:
+                with db.begin_nested():
+                    db.add(UniqueTotalStats(totals=snapshot, date=effective_date))
+                inserted_count += 1
+            except IntegrityError:
+                with db.begin_nested():
+                    existing = (
+                        db.query(UniqueTotalStats)
+                        .filter(UniqueTotalStats.date == effective_date)
+                        .order_by(UniqueTotalStats.id.desc())
+                        .first()
+                    )
+                    if existing:
+                        existing.totals = snapshot
+                        updated_count += 1
+
+            db.commit()
+            logger.info(
+                "Published unique totals snapshot to "
+                f"'{UniqueTotalStats.__tablename__}' "
+                f"(inserted={inserted_count}, updated={updated_count}, date={effective_date})."
+            )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing unique totals snapshot to "
+                f"'{UniqueTotalStats.__tablename__}' failed: {str(e)}"
             )
             raise
 
