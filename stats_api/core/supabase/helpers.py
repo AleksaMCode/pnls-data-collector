@@ -316,7 +316,7 @@ def fetch_manufacturers_data() -> list[dict]:
     return [
         {
             "company": row.company,
-            "country": row.country,
+            "country": row.country_alpha3,
             "count": scalar_to_int(row.total_occurrences),
             "percentage": float(row.percentage or 0),
         }
