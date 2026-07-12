@@ -27,9 +27,12 @@ def _last_n_dates_excluding_today(n_days: int, tz: str) -> list[date]:
 
 def _previous_n_dates_before_last_n(n_days: int, tz: str) -> list[date]:
     today = _today_in_tz(tz)
-    start_days_ago = (2 * n_days)
+    start_days_ago = 2 * n_days
     end_days_ago = n_days + 1
-    return [today - timedelta(days=delta) for delta in range(start_days_ago, end_days_ago - 1, -1)]
+    return [
+        today - timedelta(days=delta)
+        for delta in range(start_days_ago, end_days_ago - 1, -1)
+    ]
 
 
 def _date_sum_map(model, dates: list[date]) -> dict[date, int]:
@@ -63,7 +66,9 @@ def fetch_last_n_days_totals(n_days: int = 30, tz: str = "Europe/Paris") -> dict
     }
 
 
-def fetch_last_n_days_totals_with_series(n_days: int = 30, tz: str = "Europe/Paris") -> dict:
+def fetch_last_n_days_totals_with_series(
+    n_days: int = 30, tz: str = "Europe/Paris"
+) -> dict:
     dates = _last_n_dates_excluding_today(n_days=n_days, tz=tz)
     mac_map = _date_sum_map(DailyImportsMac, dates)
     probes_map = _date_sum_map(DailyImportsProbes, dates)
@@ -175,7 +180,12 @@ def fetch_all_data_series(tz: str = "Europe/Paris") -> dict:
         dates = [row[0] for row in date_rows]
 
     if not dates:
-        return {"macCount": [], "probeRequestCount": [], "ssidCount": [], "dayCounts": 0}
+        return {
+            "macCount": [],
+            "probeRequestCount": [],
+            "ssidCount": [],
+            "dayCounts": 0,
+        }
 
     mac_map = _date_sum_map(DailyImportsMac, dates)
     probes_map = _date_sum_map(DailyImportsProbes, dates)
@@ -292,7 +302,9 @@ def fetch_total_stats() -> dict:
     return {
         "macCount": _scalar_to_int(mac_total),
         "ssidCount": _scalar_to_int(
-            unique_ssid_total if unique_ssid_total not in (None, 0) else summed_ssid_total
+            unique_ssid_total
+            if unique_ssid_total not in (None, 0)
+            else summed_ssid_total
         ),
         "probeRequestCount": _scalar_to_int(probes_total),
     }
@@ -321,7 +333,9 @@ def fetch_sankey_data() -> dict:
     with _session() as db:
         rows = (
             db.query(DeviceManufacturerStats)
-            .order_by(DeviceManufacturerStats.date.desc(), DeviceManufacturerStats.id.desc())
+            .order_by(
+                DeviceManufacturerStats.date.desc(), DeviceManufacturerStats.id.desc()
+            )
             .all()
         )
 

@@ -26,6 +26,7 @@ def sentry_init():
         traces_sample_rate=1.0,
         enable_logs=True,
         attach_stacktrace=True,
+        server_name=os.getenv("SENTRY_SERVER_NAME", "default-server-name"),
     )
 
 

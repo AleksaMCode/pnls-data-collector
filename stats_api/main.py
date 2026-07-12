@@ -1,19 +1,19 @@
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
-
 from core.redis.helpers import init_redis_cache
+from dotenv import load_dotenv
+from fastapi import FastAPI
 from middleware import FirebaseAuthMiddleware, setup_firebase_auth
 from routers import stats_router
 from settings import SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION
-from dotenv import load_dotenv
+from starlette.middleware.cors import CORSMiddleware
 
 from util.logger import get_logger
 
 load_dotenv()
 logger = get_logger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI):
     yield
     await redis_client.aclose()
     logger.info("Server shutting down.")
+
 
 ENV = os.getenv("SERVER_ENV", "dev")
 IS_PROD = ENV == "production"

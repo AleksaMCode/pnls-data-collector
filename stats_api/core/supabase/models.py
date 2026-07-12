@@ -8,10 +8,11 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    UniqueConstraint
+    UniqueConstraint,
 )
 
 from . import Base
+
 
 class DailyImportsMac(Base):
     __tablename__ = "daily_imports_mac"
