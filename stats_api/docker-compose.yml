@@ -1,0 +1,18 @@
+services:
+  stats_api:
+    build:
+      context: ..
+      dockerfile: stats_api/Dockerfile
+    container_name: stats_api
+    env_file:
+      - ./.env
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    restart: unless-stopped
+    networks:
+      - pnls
+
+networks:
+  pnls:
+    name: pnls
+    driver: bridge
