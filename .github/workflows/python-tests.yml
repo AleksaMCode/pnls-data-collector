@@ -6,6 +6,7 @@ on:
     paths:
       - "aggregator/**/*.py"
       - "collector/**/*.py"
+      - "stats_api/**/*.py"
       - "stats/**/*.py"
       - "tests/**/*.py"
       - "util/**/*.py"
@@ -14,6 +15,7 @@ on:
     paths:
       - "aggregator/**/*.py"
       - "collector/**/*.py"
+      - "stats_api/**/*.py"
       - "stats/**/*.py"
       - "tests/**/*.py"
       - "util/**/*.py"
