@@ -1,6 +1,6 @@
 # Preferred Network List Sniffer Data Collector - PNLS-DC
 
-![Monitor Dashboard deploy](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/firebase-hosting-merge.yml/badge.svg?branch=master)
+![Deploy](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/deploy.yml/badge.svg?branch=master)
 [![License: GPL-2.0](https://img.shields.io/badge/license-GPLv2.0-red.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Python 3.13.7](https://img.shields.io/badge/python-3.13.7-blue.svg)](https://www.python.org/downloads/release/python-3137/)
 [![Code style (Python): black](https://img.shields.io/badge/code%20style%20(python)-black-000000.svg)](https://github.com/psf/black)
