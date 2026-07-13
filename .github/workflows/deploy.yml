@@ -10,7 +10,30 @@ on:
   workflow_dispatch:
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      stats_api: ${{ steps.filter.outputs.stats_api }}
+      monitor_dashboard: ${{ steps.filter.outputs.monitor_dashboard }}
+    steps:
+      - name: Checkout repository
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            stats_api:
+              - "stats_api/**"
+            monitor_dashboard:
+              - "monitor_dashboard/**"
+
   deploy_stats_api:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.stats_api == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,7 +59,11 @@ jobs:
           FASTAPI_CLOUD_APP_ID: ${{ secrets.FASTAPI_CLOUD_APP_ID }}
 
   build_and_deploy_monitor_dashboard:
-    needs: deploy_stats_api
+    needs: [changes, deploy_stats_api]
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.monitor_dashboard == 'true') &&
+      (needs.deploy_stats_api.result == 'success' || needs.deploy_stats_api.result == 'skipped')
     runs-on: ubuntu-latest
     defaults:
       run:
