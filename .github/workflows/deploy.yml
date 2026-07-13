@@ -1,0 +1,96 @@
+name: Deploy services
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "monitor_dashboard/**"
+      - "stats_api/**"
+  workflow_dispatch:
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      stats_api: ${{ steps.filter.outputs.stats_api }}
+      monitor_dashboard: ${{ steps.filter.outputs.monitor_dashboard }}
+    steps:
+      - name: Checkout repository
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            stats_api:
+              - "stats_api/**"
+            monitor_dashboard:
+              - "monitor_dashboard/**"
+
+  deploy_stats_api:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.stats_api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stats_api
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install FastAPI CLI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "fastapi[standard]"
+
+      - name: Deploy to FastAPI Cloud
+        run: fastapi deploy
+        env:
+          FASTAPI_CLOUD_TOKEN: ${{ secrets.FASTAPI_CLOUD_TOKEN }}
+          FASTAPI_CLOUD_APP_ID: ${{ secrets.FASTAPI_CLOUD_APP_ID }}
+
+  build_and_deploy_monitor_dashboard:
+    needs: [changes, deploy_stats_api]
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' || needs.changes.outputs.monitor_dashboard == 'true') &&
+      (needs.deploy_stats_api.result == 'success' || needs.deploy_stats_api.result == 'skipped')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: monitor_dashboard
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build monitor-dashboard
+        run: |
+          npm ci
+          npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_DATABASE_URL: ${{ secrets.VITE_FIREBASE_DATABASE_URL }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_STATS_API_URL: ${{ secrets.VITE_STATS_API_URL }}
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PNLS_WEB }}
+          channelId: live
+          projectId: pnls-web
+          entryPoint: monitor_dashboard

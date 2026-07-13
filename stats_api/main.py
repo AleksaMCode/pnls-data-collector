@@ -1,6 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 
+import logfire
 from core.redis.helpers import init_redis_cache
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -37,6 +38,7 @@ app = FastAPI(
     redoc_url=None if IS_PROD else "/redoc",
     openapi_url=None if IS_PROD else "/openapi.json",
 )
+logfire.instrument_fastapi(app)
 
 if IS_PROD:
     origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
