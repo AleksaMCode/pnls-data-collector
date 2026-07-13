@@ -1,5 +1,6 @@
 import os
 
+import logfire
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -26,3 +27,4 @@ SessionFactory = sessionmaker(
 )
 
 _session = SessionFactory
+logfire.instrument_sqlalchemy(db)

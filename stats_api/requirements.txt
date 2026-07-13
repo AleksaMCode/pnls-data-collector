@@ -8,3 +8,4 @@ firebase-admin==7.1.0
 redis==8.0.1
 fastapi-cache2==0.2.2
 tenacity==9.1.2
+logfire[fastapi,sqlalchemy,redis]==4.37.0

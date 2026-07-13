@@ -1,6 +1,7 @@
 import logging
 import os
 
+import logfire
 import sentry_sdk
 from dotenv import load_dotenv
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -31,6 +32,7 @@ def sentry_init():
 
 
 sentry_init()
+logfire.configure()
 
 
 def get_logger(name: str):

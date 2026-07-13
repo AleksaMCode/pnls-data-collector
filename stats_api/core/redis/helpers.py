@@ -1,5 +1,6 @@
 import os
 
+import logfire
 from dotenv import load_dotenv
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -21,6 +22,6 @@ async def init_redis_cache(prefix: str = "stats-api-cache") -> Redis:
             password=os.getenv("REDIS_PASSWORD"),
             decode_responses=False,
         )
-
+    logfire.instrument_redis()
     FastAPICache.init(RedisBackend(client), prefix=prefix)
     return client
