@@ -139,10 +139,13 @@ export default function MainGrid() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch last 30 days totals & series
-        const last30 = await fetchLast30DaysTotalsWithSeries();
-        // Fetch previous 30 days totals & series
-        const prev30 = await fetchPrevious30DaysTotals();
+        // Fetch both periods in parallel to avoid a request waterfall.
+        const [last30, prev30] = await Promise.all([
+          // Fetch last 30 days totals & series
+          fetchLast30DaysTotalsWithSeries(),
+          // Fetch previous 30 days totals & series
+          fetchPrevious30DaysTotals(),
+        ]);
 
         // Update the data array
         setDataLast30Days((prev) =>
@@ -200,8 +203,10 @@ export default function MainGrid() {
       try {
         // Totals are needed here as it contains unique totals.
         // Cannot use reduce on serises data as totals will not be unique across all time.
-        const total = await fetchTotalStats();
-        const dataSeriesTotal = await fetchAllDataSeries();
+        const [total, dataSeriesTotal] = await Promise.all([
+          fetchTotalStats(),
+          fetchAllDataSeries(),
+        ]);
         setTotalDataSeriesDates(dataSeriesTotal.dayCounts);
         // Update the data array
         setDataTotal((prev) =>
