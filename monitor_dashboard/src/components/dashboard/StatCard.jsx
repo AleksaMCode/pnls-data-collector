@@ -148,19 +148,18 @@ function StatCard({
     }
   }, [value, prevValue]);
 
-  // -3 on live value is a quickfix for live values.
-  // When the button is toggled the values get reseted.
+  // Live cards show growth relative to the baseline value when enabled.
   useEffect(() => {
     if (!liveFeed) {
+      setDisplayValue(value);
+      setLivePercentage(0);
       return;
     }
 
-    if (liveFeed && value > 0 && liveValue - 3 > value) {
-      const nextValue = liveValue - 3;
+    if (value > 0 && liveValue > value) {
+      const nextValue = liveValue;
       setDisplayValue(nextValue);
       setLivePercentage(((nextValue - value) / value) * 100);
-    } else if (!liveFeed) {
-      setDisplayValue(0);
     }
   }, [liveValue, liveFeed, value]);
 
@@ -193,7 +192,7 @@ function StatCard({
               ) : (
                 <Fade direction="down" in timeout={300} key={displayValue}>
                   <Typography variant="h4" component="p">
-                    {(liveValue - 3 > value && liveFeed
+                    {(liveValue > value && liveFeed
                       ? displayValue
                       : value
                     )?.toLocaleString()}
@@ -203,7 +202,7 @@ function StatCard({
               {!hideTrendValues && !isLoading && (
                 <Chip size="small" color={color} label={deltaPercent} />
               )}
-              {liveValue - 3 > value && liveFeed && !isLoading && (
+              {liveValue > value && liveFeed && !isLoading && (
                 <Chip
                   size="small"
                   color={color}
