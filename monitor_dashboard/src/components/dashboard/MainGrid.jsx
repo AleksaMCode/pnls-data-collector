@@ -97,6 +97,7 @@ export default function MainGrid() {
   const [initialCount, setInitialCount] = useState(0);
   // Live count of Probe Requests
   const [liveCount, setLiveCount] = useState(0);
+  const [isLoadingLiveCount, setIsLoadingLiveCount] = useState(false);
   // TODO Store devices somewhere else or better yet fetch from Firebase device names
   const devices = ['RPI-1', 'RPI-2', 'RPI-3'];
   const { enabled } = useLiveCount();
@@ -139,10 +140,13 @@ export default function MainGrid() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch last 30 days totals & series
-        const last30 = await fetchLast30DaysTotalsWithSeries();
-        // Fetch previous 30 days totals & series
-        const prev30 = await fetchPrevious30DaysTotals();
+        // Fetch both periods in parallel to avoid a request waterfall.
+        const [last30, prev30] = await Promise.all([
+          // Fetch last 30 days totals & series
+          fetchLast30DaysTotalsWithSeries(),
+          // Fetch previous 30 days totals & series
+          fetchPrevious30DaysTotals(),
+        ]);
 
         // Update the data array
         setDataLast30Days((prev) =>
@@ -163,21 +167,39 @@ export default function MainGrid() {
 
   useEffect(() => {
     if (!enabled) {
+      setIsLoadingLiveCount(false);
       return;
     }
     let unsubscribe;
+    let cancelled = false;
+
+    setIsLoadingLiveCount(true);
 
     (async () => {
-      const result = await subscribeToLiveProbeRequestCount(
-        devices,
-        setLiveCount,
-      );
+      try {
+        const result = await subscribeToLiveProbeRequestCount(
+          devices,
+          setLiveCount,
+        );
 
-      setInitialCount(result.initialCount);
-      unsubscribe = result.unsubscribe;
+        if (cancelled) {
+          result.unsubscribe();
+          return;
+        }
+
+        setInitialCount(result.initialCount);
+        unsubscribe = result.unsubscribe;
+      } catch (err) {
+        console.error('Failed to subscribe to live probe count:', err);
+      } finally {
+        if (!cancelled) {
+          setIsLoadingLiveCount(false);
+        }
+      }
     })();
 
     return () => {
+      cancelled = true;
       if (unsubscribe) unsubscribe();
     };
   }, [enabled]);
@@ -200,8 +222,10 @@ export default function MainGrid() {
       try {
         // Totals are needed here as it contains unique totals.
         // Cannot use reduce on serises data as totals will not be unique across all time.
-        const total = await fetchTotalStats();
-        const dataSeriesTotal = await fetchAllDataSeries();
+        const [total, dataSeriesTotal] = await Promise.all([
+          fetchTotalStats(),
+          fetchAllDataSeries(),
+        ]);
         setTotalDataSeriesDates(dataSeriesTotal.dayCounts);
         // Update the data array
         setDataTotal((prev) =>
@@ -289,6 +313,7 @@ export default function MainGrid() {
             hideTrendValues={true}
             liveValue={liveCount}
             liveFeed={enabled}
+            isLoading={enabled && isLoadingLiveCount}
           />
         </Grid>
         {dataTotal.map((card, index) => (

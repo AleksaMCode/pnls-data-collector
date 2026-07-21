@@ -549,35 +549,42 @@ export async function subscribeToLiveProbeRequestCount(devices, callback) {
     .split('-');
   const [yyyy, mm, dd] = dateParts;
   const dateStr = `${yyyy}-${mm}-${dd}`;
-  let totalCount = 0;
   const listeners = [];
 
-  const initialCounts = await Promise.all(
+  const initialCountsByDevice = await Promise.all(
     devices.map(async (device) => {
       const path = `${device}-${dateStr}/data`;
       const dataRef = ref(db, path);
       const snapshot = await get(dataRef);
-      return snapshot.size;
+      return { device, count: snapshot.size };
     }),
   );
 
-  const initialCount = initialCounts.reduce((a, b) => a + b, 0);
+  const initialCount = initialCountsByDevice.reduce(
+    (sum, entry) => sum + entry.count,
+    0,
+  );
+  let totalCount = initialCount;
+
+  // Emit the initial aggregated total once; avoid duplicate startup reads.
+  callback(totalCount);
+  const initialCountMap = new Map(
+    initialCountsByDevice.map(({ device, count }) => [device, count]),
+  );
 
   devices.forEach((device) => {
     const path = `${device}-${dateStr}/data`;
     const dataRef = ref(db, path);
 
-    get(dataRef)
-      .then((snapshot) => {
-        totalCount += snapshot.size;
-        callback(totalCount);
-      })
-      .catch((err) => {
-        console.error(`Failed to fetch initial count for ${device}`, err);
-      });
-
     const futureRef = query(dataRef, limitToLast(1)); // only new children
+    const hadExistingData = (initialCountMap.get(device) ?? 0) > 0;
+    let ignoredInitialChild = false;
     const listener = () => {
+      // Realtime DB emits one immediate child for limitToLast(1) when data exists.
+      if (hadExistingData && !ignoredInitialChild) {
+        ignoredInitialChild = true;
+        return;
+      }
       totalCount += 1;
       callback(totalCount);
     };

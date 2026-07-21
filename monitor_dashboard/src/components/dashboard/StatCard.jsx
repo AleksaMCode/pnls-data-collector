@@ -137,6 +137,7 @@ function StatCard({
 
   const color = labelColors[computedTrend];
   const chartColor = trendColors[computedTrend];
+  const showLiveBadge = liveFeed && interval === 'Live';
 
   useEffect(() => {
     if (trend) {
@@ -148,19 +149,18 @@ function StatCard({
     }
   }, [value, prevValue]);
 
-  // -3 on live value is a quickfix for live values.
-  // When the button is toggled the values get reseted.
+  // Live cards show growth relative to the baseline value when enabled.
   useEffect(() => {
     if (!liveFeed) {
+      setDisplayValue(value);
+      setLivePercentage(0);
       return;
     }
 
-    if (liveFeed && value > 0 && liveValue - 3 > value) {
-      const nextValue = liveValue - 3;
+    if (value > 0 && liveValue > value) {
+      const nextValue = liveValue;
       setDisplayValue(nextValue);
       setLivePercentage(((nextValue - value) / value) * 100);
-    } else if (!liveFeed) {
-      setDisplayValue(0);
     }
   }, [liveValue, liveFeed, value]);
 
@@ -193,7 +193,7 @@ function StatCard({
               ) : (
                 <Fade direction="down" in timeout={300} key={displayValue}>
                   <Typography variant="h4" component="p">
-                    {(liveValue - 3 > value && liveFeed
+                    {(liveValue > value && liveFeed
                       ? displayValue
                       : value
                     )?.toLocaleString()}
@@ -203,7 +203,7 @@ function StatCard({
               {!hideTrendValues && !isLoading && (
                 <Chip size="small" color={color} label={deltaPercent} />
               )}
-              {liveValue - 3 > value && liveFeed && !isLoading && (
+              {liveValue > value && liveFeed && !isLoading && (
                 <Chip
                   size="small"
                   color={color}
@@ -211,9 +211,86 @@ function StatCard({
                 />
               )}
             </Stack>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {interval}
-            </Typography>
+            {showLiveBadge ? (
+              <Stack
+                direction="row"
+                spacing={0.75}
+                sx={{ alignItems: 'center' }}
+              >
+                <Box
+                  component="span"
+                  sx={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    flexShrink: 0,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: isLoading ? 'grey.500' : 'error.main',
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      border: '1px solid',
+                      borderColor: isLoading
+                        ? 'rgba(158, 158, 158, 0.7)'
+                        : 'rgba(244, 67, 54, 0.75)',
+                      transform: 'translate(-50%, -50%) scale(1)',
+                      transformOrigin: 'center center',
+                      animation: isLoading
+                        ? 'liveRingPulseLoading 3s ease-in-out infinite'
+                        : 'liveRingPulseActive 2s ease-out infinite',
+                    },
+                    '@keyframes liveRingPulseLoading': {
+                      '0%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0.75,
+                      },
+                      '70%': {
+                        transform: 'translate(-50%, -50%) scale(2.2)',
+                        opacity: 0,
+                      },
+                      '100%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0,
+                      },
+                    },
+                    '@keyframes liveRingPulseActive': {
+                      '0%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0.85,
+                      },
+                      '70%': {
+                        transform: 'translate(-50%, -50%) scale(2.5)',
+                        opacity: 0,
+                      },
+                      '100%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0,
+                      },
+                    },
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    position: 'relative',
+                    top: '1px',
+                  }}
+                >
+                  {isLoading ? 'Connecting...' : interval}
+                </Typography>
+              </Stack>
+            ) : (
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {interval}
+              </Typography>
+            )}
           </Stack>
           {!hideSparkLineChart && data && !isLoading && (
             <Box sx={{ width: '100%', height: 50 }}>
