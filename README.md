@@ -90,7 +90,7 @@ width="90%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 4</b>: Example <code>stats-api</code> (<code>3.0.0</code>) Swaggger Docs</label>
+    <label><b>Fig. 4</b>: Example <code>stats-api</code> (<code>3.0.0</code>) Swagger Docs</label>
     </p>
 </p>
 
