@@ -97,6 +97,7 @@ export default function MainGrid() {
   const [initialCount, setInitialCount] = useState(0);
   // Live count of Probe Requests
   const [liveCount, setLiveCount] = useState(0);
+  const [isLoadingLiveCount, setIsLoadingLiveCount] = useState(false);
   // TODO Store devices somewhere else or better yet fetch from Firebase device names
   const devices = ['RPI-1', 'RPI-2', 'RPI-3'];
   const { enabled } = useLiveCount();
@@ -166,21 +167,39 @@ export default function MainGrid() {
 
   useEffect(() => {
     if (!enabled) {
+      setIsLoadingLiveCount(false);
       return;
     }
     let unsubscribe;
+    let cancelled = false;
+
+    setIsLoadingLiveCount(true);
 
     (async () => {
-      const result = await subscribeToLiveProbeRequestCount(
-        devices,
-        setLiveCount,
-      );
+      try {
+        const result = await subscribeToLiveProbeRequestCount(
+          devices,
+          setLiveCount,
+        );
 
-      setInitialCount(result.initialCount);
-      unsubscribe = result.unsubscribe;
+        if (cancelled) {
+          result.unsubscribe();
+          return;
+        }
+
+        setInitialCount(result.initialCount);
+        unsubscribe = result.unsubscribe;
+      } catch (err) {
+        console.error('Failed to subscribe to live probe count:', err);
+      } finally {
+        if (!cancelled) {
+          setIsLoadingLiveCount(false);
+        }
+      }
     })();
 
     return () => {
+      cancelled = true;
       if (unsubscribe) unsubscribe();
     };
   }, [enabled]);
@@ -294,6 +313,7 @@ export default function MainGrid() {
             hideTrendValues={true}
             liveValue={liveCount}
             liveFeed={enabled}
+            isLoading={enabled && isLoadingLiveCount}
           />
         </Grid>
         {dataTotal.map((card, index) => (
