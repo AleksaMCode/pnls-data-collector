@@ -137,6 +137,7 @@ function StatCard({
 
   const color = labelColors[computedTrend];
   const chartColor = trendColors[computedTrend];
+  const showLiveBadge = liveFeed && interval === 'Live';
 
   useEffect(() => {
     if (trend) {
@@ -210,9 +211,86 @@ function StatCard({
                 />
               )}
             </Stack>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {interval}
-            </Typography>
+            {showLiveBadge ? (
+              <Stack
+                direction="row"
+                spacing={0.75}
+                sx={{ alignItems: 'center' }}
+              >
+                <Box
+                  component="span"
+                  sx={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    flexShrink: 0,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: isLoading ? 'grey.500' : 'error.main',
+                    '&::after': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '50%',
+                      border: '1px solid',
+                      borderColor: isLoading
+                        ? 'rgba(158, 158, 158, 0.7)'
+                        : 'rgba(244, 67, 54, 0.75)',
+                      transform: 'translate(-50%, -50%) scale(1)',
+                      transformOrigin: 'center center',
+                      animation: isLoading
+                        ? 'liveRingPulseLoading 3s ease-in-out infinite'
+                        : 'liveRingPulseActive 2s ease-out infinite',
+                    },
+                    '@keyframes liveRingPulseLoading': {
+                      '0%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0.75,
+                      },
+                      '70%': {
+                        transform: 'translate(-50%, -50%) scale(2.2)',
+                        opacity: 0,
+                      },
+                      '100%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0,
+                      },
+                    },
+                    '@keyframes liveRingPulseActive': {
+                      '0%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0.85,
+                      },
+                      '70%': {
+                        transform: 'translate(-50%, -50%) scale(2.5)',
+                        opacity: 0,
+                      },
+                      '100%': {
+                        transform: 'translate(-50%, -50%) scale(1)',
+                        opacity: 0,
+                      },
+                    },
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    position: 'relative',
+                    top: '1px',
+                  }}
+                >
+                  {isLoading ? 'Connecting...' : interval}
+                </Typography>
+              </Stack>
+            ) : (
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {interval}
+              </Typography>
+            )}
           </Stack>
           {!hideSparkLineChart && data && !isLoading && (
             <Box sx={{ width: '100%', height: 50 }}>
