@@ -97,7 +97,7 @@ class="center"
    - Firebase cleanup every $5$ days (`firebase_housekeeping`).
      - Starting at after `aggreagator`, it migrates data to MongoDB as backup, and deletes old Firebase nodes in order to stay within the [free 1 GB limit](https://firebase.google.com/pricing).
    - Device online status monitoring.
-     - `collector_status_notifier` checks device status every $30$ seconds during the capture window[^1] and sends Mattermost alerts if a device is offline.
+     - `collector_status_notifier` checks device status every $5$ minutes during the capture window[^1] and sends Mattermost alerts if a device is offline.
    - Continuous edge device monitoring.
      - `collector_metrics_agent` collects and sends edge device metrics data to the [Datadog](https://en.wikipedia.org/wiki/Datadog) storage where it is displayed in a monitoring dashboard.
      - Same agent code is also deployed on the home server.
