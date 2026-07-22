@@ -37,6 +37,14 @@ def _date_sum_map(model, dates: list[date]) -> dict[date, int]:
     return {row[0]: int(row[1] or 0) for row in rows}
 
 
+def _avg_count_before_date(model, end_date: date) -> int:
+    with _session() as db:
+        avg_value = (
+            db.query(func.avg(model.count)).filter(model.date < end_date).scalar()
+        )
+    return int(round(float(avg_value or 0)))
+
+
 def fetch_last_n_days_totals(n_days: int = 30, tz: str = "Europe/Paris") -> dict:
     dates = last_n_dates_excluding_today(n_days=n_days, tz=tz)
     mac_map = _date_sum_map(DailyImportsMac, dates)
@@ -47,6 +55,15 @@ def fetch_last_n_days_totals(n_days: int = 30, tz: str = "Europe/Paris") -> dict
         "macCount": sum(mac_map.get(d, 0) for d in dates),
         "probeRequestCount": sum(probes_map.get(d, 0) for d in dates),
         "ssidCount": sum(ssid_map.get(d, 0) for d in dates),
+    }
+
+
+def fetch_average_daily_counts(tz: str = "Europe/Paris") -> dict:
+    today = today_in_tz(tz)
+    return {
+        "macCount": _avg_count_before_date(DailyImportsMac, today),
+        "probeRequestCount": _avg_count_before_date(DailyImportsProbes, today),
+        "ssidCount": _avg_count_before_date(DailyImportsSsid, today),
     }
 
 
