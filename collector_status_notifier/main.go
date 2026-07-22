@@ -15,6 +15,15 @@ func main() {
 	logging.InitObservability(LOG_FILE, SENTRY_DSN, SERVICE_NAME)
 
 	ctx := context.Background()
+	if err := initRedisClient(ctx); err != nil {
+		logging.Fatal(err.Error())
+	}
+	defer func() {
+		if err := closeRedisClient(); err != nil {
+			log.Printf("Error closing Redis client: %v", err)
+		}
+	}()
+
 	client := firebase.GetFirebaseClient(ctx, FIREBASE_CREDENTIALS_FILE, FIREBASE_DATABASE_URL)
 
 	// Check before sleep

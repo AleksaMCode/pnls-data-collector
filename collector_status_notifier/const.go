@@ -31,6 +31,10 @@ var (
 	DATADOG_APP_KEY          string
 	DATADOG_HEARTBEAT_METRIC string
 	DATADOG_HOST             string
+	REDIS_URL                string
+	REDIS_PORT               string
+	REDIS_PASSWORD           string
+	REDIS_DB                 string
 )
 
 var Devices = []string{DEVICE_RPI_1, DEVICE_RPI_2, DEVICE_RPI_3}

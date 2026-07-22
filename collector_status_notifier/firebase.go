@@ -55,24 +55,30 @@ func validateFirebaseDeviceData(client *db.Client, ctx context.Context) {
 		// Handle the edge case when data is missing.
 		if deviceData == nil {
 			message := fmt.Sprintf("Device `%s` has no status for today (%s)", device, today)
-			sendMattermostMsg(message)
+			processDeviceStatus(ctx, device, true, message)
 			continue
 		}
 
 		timestamp, _ := deviceData["timestamp"].(string)
-		timestampTime, _ := time.Parse(TIMESTAMP_FORMAT, timestamp)
+		timestampTime, err := time.Parse(TIMESTAMP_FORMAT, timestamp)
+		if err != nil {
+			message := fmt.Sprintf("Device `%s` has invalid timestamp in Firebase status: %q", device, timestamp)
+			processDeviceStatus(ctx, device, true, message)
+			continue
+		}
 
 		// Firebase is a backup source when Datadog query fails.
 		if time.Since(timestampTime) > FIREABASE_TIMEOUT {
 			message := fmt.Sprintf(
 				"Device `%s` hasn't been updated in the last %s! Last update: %s",
 				device,
-				DATADOG_TIMEOUT.String(),
+				FIREABASE_TIMEOUT.String(),
 				timestamp,
 			)
-			sendMattermostMsg(message)
+			processDeviceStatus(ctx, device, true, message)
 		} else {
 			log.Printf("Device `%s` was recently updated at %s", device, timestamp)
+			processDeviceStatus(ctx, device, false, "")
 		}
 	}
 }

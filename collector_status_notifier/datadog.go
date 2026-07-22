@@ -45,7 +45,7 @@ func validateDatadogDeviceData(ctx context.Context) error {
 				DATADOG_HEARTBEAT_METRIC,
 				datadogQueryWindow.String(),
 			)
-			sendMattermostMsg(message)
+			processDeviceStatus(ctx, device, true, message)
 			continue
 		}
 
@@ -56,10 +56,11 @@ func validateDatadogDeviceData(ctx context.Context) error {
 				lastSeen.Format(time.RFC3339),
 				DATADOG_TIMEOUT.String(),
 			)
-			sendMattermostMsg(message)
+			processDeviceStatus(ctx, device, true, message)
 			continue
 		} else {
 			log.Printf("Device `%s` was recently updated at %s", device, lastSeen.Format(time.RFC3339))
+			processDeviceStatus(ctx, device, false, "")
 		}
 	}
 
