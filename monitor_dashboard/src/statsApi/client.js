@@ -75,3 +75,41 @@ export async function apiGet(path, params) {
     inFlightRequests.delete(url);
   }
 }
+
+/**
+ * Performs an authenticated GET request and returns a binary payload.
+ *
+ * @param {string} path - Endpoint path.
+ * @param {Object} [params] - Optional query parameters.
+ * @returns {Promise<{ blob: Blob, filename: string | null }>}
+ */
+export async function apiDownload(path, params) {
+  const url = buildUrl(path, params);
+  const token = await getAuthToken();
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(
+      `Stats API download ${path} failed with ${response.status}: ${body}`,
+    );
+  }
+
+  const contentDisposition = response.headers.get('content-disposition') ?? '';
+  const filenameMatch = contentDisposition.match(
+    /filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i,
+  );
+  const rawFilename = filenameMatch?.[1] ?? filenameMatch?.[2] ?? null;
+  const filename = rawFilename ? decodeURIComponent(rawFilename) : null;
+
+  return {
+    blob: await response.blob(),
+    filename,
+  };
+}
