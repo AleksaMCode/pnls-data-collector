@@ -5,6 +5,11 @@ export function fetchTotalStats() {
   return apiGet('/stats/total');
 }
 
+// Average daily counts across historical daily-import rows (excluding today).
+export function fetchAverageDailyCounts() {
+  return apiGet('/stats/average/daily-counts');
+}
+
 // Aggregated totals for the last 30 days (excluding today).
 export function fetchLast30DaysTotals() {
   return apiGet('/stats/last-30-days');

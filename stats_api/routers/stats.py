@@ -3,6 +3,7 @@ from typing import Literal
 
 from core.supabase.helpers import (
     fetch_all_data_series,
+    fetch_average_daily_counts,
     fetch_device_data_series,
     fetch_last_n_days_totals,
     fetch_last_n_days_totals_with_series,
@@ -30,6 +31,12 @@ CACHE_TTL = int(os.getenv("REDIS_TTL", "3600"))
 @cache(expire=CACHE_TTL)
 async def get_total_stats():
     return fetch_total_stats()
+
+
+@router.get("/average/daily-counts")
+@cache(expire=CACHE_TTL)
+async def get_average_daily_counts():
+    return fetch_average_daily_counts(tz=TIMEZONE)
 
 
 @router.get("/last-30-days")
