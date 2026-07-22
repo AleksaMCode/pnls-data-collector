@@ -14,6 +14,7 @@ import StatCard from './StatCard';
 import { useEffect, useRef, useState } from 'react';
 import { subscribeToLiveProbeRequestCount } from '../../firebase/firebase';
 import {
+  fetchAverageDailyCounts,
   fetchAllDataSeries,
   fetchManufacturersData,
   fetchLast30DaysTotalsWithSeries,
@@ -90,6 +91,33 @@ const dataTotalTemplate = [
   },
 ];
 
+const averageDailyTemplate = [
+  {
+    id: 'probeRequestCount',
+    title: 'Probe Requests',
+    value: 0,
+    interval: 'Average / day',
+    trend: 'up',
+    data: [],
+  },
+  {
+    id: 'ssidCount',
+    title: 'SSIDs',
+    value: 0,
+    interval: 'Average / day',
+    trend: 'up',
+    data: [],
+  },
+  {
+    id: 'macCount',
+    title: 'MAC addresses',
+    value: 0,
+    interval: 'Average / day',
+    trend: 'up',
+    data: [],
+  },
+];
+
 export default function MainGrid() {
   // Total amount of captured data
   const [dataTotal, setDataTotal] = useState(dataTotalTemplate);
@@ -108,6 +136,9 @@ export default function MainGrid() {
   const [probeSeriesPerDevice, setProbeSeriesPerDevice] = useState(null);
   const [sankeyData, setSankeyData] = useState({});
   const [isLoadingTotalStats, setIsLoadingTotalStats] = useState(true);
+  const [averageDailyData, setAverageDailyData] =
+    useState(averageDailyTemplate);
+  const [isLoadingAverageDaily, setIsLoadingAverageDaily] = useState(true);
   const [manufacturers, setManufacturers] = useState([]);
   const [isLoadingManufacturers, setIsLoadingManufacturers] = useState(false);
   const [isManufacturerExpanded, setIsManufacturerExpanded] = useState(false);
@@ -222,9 +253,10 @@ export default function MainGrid() {
       try {
         // Totals are needed here as it contains unique totals.
         // Cannot use reduce on serises data as totals will not be unique across all time.
-        const [total, dataSeriesTotal] = await Promise.all([
+        const [total, dataSeriesTotal, averageDaily] = await Promise.all([
           fetchTotalStats(),
           fetchAllDataSeries(),
+          fetchAverageDailyCounts(),
         ]);
         setTotalDataSeriesDates(dataSeriesTotal.dayCounts);
         // Update the data array
@@ -235,12 +267,21 @@ export default function MainGrid() {
             data: dataSeriesTotal[card.id] ?? [],
           })),
         );
-        setIsLoadingTotalStats(false);
+        setAverageDailyData((prev) =>
+          prev.map((card) => ({
+            ...card,
+            value: averageDaily[card.id] ?? 0,
+          })),
+        );
       } catch (err) {
         console.error('Failed to fetch data for all days:', err);
+      } finally {
+        setIsLoadingTotalStats(false);
+        setIsLoadingAverageDaily(false);
       }
     }
     setIsLoadingTotalStats(true);
+    setIsLoadingAverageDaily(true);
     fetchData();
   }, []);
 
@@ -317,12 +358,22 @@ export default function MainGrid() {
           />
         </Grid>
         {dataTotal.map((card, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
+          <Grid key={index} size={{ xs: 12, sm: 6, lg: 4 }}>
             <StatCard
               {...card}
               hideTrendValues={true}
               dayCount={totalDataSeriesDates}
               isLoading={isLoadingTotalStats}
+            />
+          </Grid>
+        ))}
+        {averageDailyData.map((card, index) => (
+          <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <StatCard
+              {...card}
+              hideSparkLineChart={true}
+              hideTrendValues={true}
+              isLoading={isLoadingAverageDaily}
             />
           </Grid>
         ))}
