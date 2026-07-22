@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- New `stats-api` endpoint `GET /stats/average/daily-counts` was added to return average daily counts for probes, MAC addresses, and SSIDs from historical daily import tables (excluding today). PR #335
+
+### Changed
+
+- `monitor-dashboard` now consumes the average-daily stats endpoint and renders three new `Average / day` cards for Probe Requests, SSIDs, and MAC addresses immediately after the `Total (unique)` cards. PR #335
+
 ## [3.0.0] - 2026-07-22
 
 ### Added
