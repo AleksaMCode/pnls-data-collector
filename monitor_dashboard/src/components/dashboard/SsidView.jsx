@@ -236,25 +236,26 @@ export default function SsidView() {
             {isDownloadingCsv ? 'Downloading...' : 'Download CSV'}
           </Button>
         </Stack>
-
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={isLoading}
-          rowCount={rowCount}
-          paginationMode="server"
-          sortingMode="server"
-          pageSizeOptions={[PAGE_SIZE]}
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          sortModel={sortModel}
-          onSortModelChange={setSortModel}
-          disableRowSelectionOnClick
-          disableColumnResize
-          getRowClassName={(params) =>
-            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-          }
-        />
+        <Box sx={{ height: 'calc(100vh - 100px)', width: '100%' }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={isLoading}
+            rowCount={rowCount}
+            paginationMode="server"
+            sortingMode="server"
+            pageSizeOptions={[PAGE_SIZE]}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            sortModel={sortModel}
+            onSortModelChange={setSortModel}
+            disableRowSelectionOnClick
+            disableColumnResize
+            getRowClassName={(params) =>
+              params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+            }
+          />
+        </Box>
       </Stack>
     </Box>
   );
