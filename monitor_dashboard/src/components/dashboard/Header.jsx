@@ -3,6 +3,7 @@ import NavbarBreadcrumbs from './NavbarBreadcrumbs';
 import ColorModeIconDropdown from '../../theme/ColorModeIconDropdown';
 import { FormControlLabel, Switch, Tooltip, useTheme } from '@mui/material';
 import { useLiveCount } from './LiveCountProvider';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 /**
@@ -25,6 +26,8 @@ function isWorkingHours() {
 export default function Header() {
   const { enabled, setEnabled } = useLiveCount();
   const theme = useTheme();
+  const { pathname } = useLocation();
+  const hideLiveToggle = pathname === '/ssids';
 
   const handleLiveToggle = (checked) => {
     setEnabled(checked);
@@ -54,18 +57,20 @@ export default function Header() {
     >
       <NavbarBreadcrumbs />
       <Stack direction="row" sx={{ gap: 1 }}>
-        <Tooltip title="Toggle to view live Probe Request data">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={enabled}
-                // disabled={!isWorkingHours()}
-                onChange={(e, checked) => handleLiveToggle(checked)}
-              />
-            }
-            label="Live View"
-          />
-        </Tooltip>
+        {!hideLiveToggle && (
+          <Tooltip title="Toggle to view live Probe Request data">
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={enabled}
+                  // disabled={!isWorkingHours()}
+                  onChange={(e, checked) => handleLiveToggle(checked)}
+                />
+              }
+              label="Live View"
+            />
+          </Tooltip>
+        )}
         <ColorModeIconDropdown />
       </Stack>
     </Stack>
