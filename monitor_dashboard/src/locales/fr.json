@@ -1,0 +1,141 @@
+{
+  "language": {
+    "english": "Anglais",
+    "french": "Francais",
+    "german": "Allemand"
+  },
+  "theme": {
+    "system": "Systeme",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "common": {
+    "dashboard": "Tableau de bord",
+    "home": "Accueil",
+    "ssids": "SSID",
+    "devices": "Appareils",
+    "device": "Appareil",
+    "settings": "Parametres",
+    "about": "A propos",
+    "liveView": "Vue en direct",
+    "probeRequests": "Requetes Probe",
+    "macAddresses": "Adresses MAC",
+    "searchSsid": "Rechercher SSID...",
+    "filterSsid": "Filtrer SSID...",
+    "clearAll": "Tout effacer",
+    "downloadCsv": "Telecharger CSV",
+    "downloading": "Telechargement...",
+    "connecting": "Connexion...",
+    "loadingMap": "Chargement de la carte..."
+  },
+  "header": {
+    "toggleLiveTooltip": "Basculer pour voir les donnees Probe Request en direct"
+  },
+  "menu": {
+    "monitoringDashboard": "Tableau de supervision"
+  },
+  "breadcrumbs": {
+    "home": "Accueil",
+    "device": "Appareil"
+  },
+  "mainGrid": {
+    "overview": "Vue d'ensemble",
+    "manufacturerData": "Donnees fabricant",
+    "manufacturerDescription": "Base sur les adresses MAC des appareils captures au CERN, ceci represente les fabricants les plus frequemment observes parmi les appareils enregistres.",
+    "live": "Direct",
+    "last30Days": "30 derniers jours",
+    "total": "Total",
+    "totalUnique": "Total (unique)",
+    "averagePerDay": "Moyenne / jour"
+  },
+  "deviceView": {
+    "title": "Appareil : {{deviceId}}",
+    "clearAllFilters": "Effacer tous les filtres",
+    "ssid": "SSID",
+    "timestamp": "Horodatage"
+  },
+  "ssidView": {
+    "description": "Tous les SSID captures avec leur frequence et leur date d'apparition. Utilisez la barre de recherche pour filtrer par nom de SSID.",
+    "seenCount": "Nombre de vues",
+    "firstSeen": "Premiere vue",
+    "lastSeen": "Derniere vue",
+    "downloadSuccess": "CSV SSID telecharge avec succes.",
+    "downloadError": "Echec du telechargement du CSV SSID."
+  },
+  "status": {
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "working": "Actif",
+    "off": "Arret"
+  },
+  "deviceGrid": {
+    "headers": {
+      "device": "Appareil",
+      "status": "Statut",
+      "capturing": "Capture",
+      "probeRequest": "Requete Probe",
+      "ssid": "SSID",
+      "mac": "MAC",
+      "location": "Emplacement",
+      "dailyCapture": "Capture quotidienne"
+    },
+    "tooltips": {
+      "device": "Nom de l'appareil",
+      "status": "Un appareil est en ligne s'il a ete vu dans les 10 dernieres minutes.",
+      "capturing": "L'appareil capture entre 7h et 18h (statut Actif).",
+      "probeRequest": "Nombre total de requetes Probe capturees pour l'appareil.",
+      "ssid": "Nombre total de SSID captures pour l'appareil.",
+      "mac": "Nombre total d'adresses MAC capturees pour l'appareil.",
+      "location": "Emplacement de l'appareil a l'interieur du CERN.",
+      "dailyCapture": "Capture quotidienne sur les 30 derniers jours."
+    }
+  },
+  "sections": {
+    "capturedInformation": "Informations capturees",
+    "capturedLastMonths": "Informations capturees sur les {{count}} derniers mois",
+    "probePerDeviceCumulative": "Requetes Probe par appareil (cumul)",
+    "probePerDayLast30": "Requetes Probe capturees par jour sur les 30 derniers jours",
+    "deviceComparison": "Comparaison des donnees entre appareils de capture"
+  },
+  "manufacturer": {
+    "company": "Entreprise",
+    "country": "Pays (alpha3)",
+    "count": "Compte",
+    "percentage": "Pourcentage",
+    "countTooltip": "Nombre total de requetes Probe capturees generees par les appareils de l'entreprise.",
+    "mapTitle": "Donnees fabricant par pays (carte du monde) :"
+  },
+  "customizedGrid": {
+    "expandSankey": "Cliquer pour developper et voir le diagramme Sankey",
+    "sankeyTitle": "Appareil vers Fabricant vers Pays (Sankey)",
+    "sankeyDescription": "Cette vue Sankey montre uniquement les 20 principaux fabricants de chaque appareil.",
+    "heatmapTitle": "Carte thermique des appareils (CERN Meyrin)",
+    "heatmapDescription": "L'intensite de la carte reflete le total des requetes Probe capturees par appareil."
+  },
+  "sankey": {
+    "empty": "Aucune donnee Sankey disponible.",
+    "ariaLabel": "Diagramme Sankey des appareils, entreprises et pays"
+  },
+  "highlighted": {
+    "title": "Code source PNLS-DC",
+    "description": "Voir le code qui rend ce projet possible.",
+    "button": "Depot Github"
+  },
+  "options": {
+    "openMenu": "Ouvrir le menu",
+    "logout": "Se deconnecter"
+  },
+  "login": {
+    "title": "Connexion",
+    "subtitle": "Connectez-vous pour continuer vers le tableau de supervision PNLS-DC",
+    "email": "Email",
+    "password": "Mot de passe",
+    "emailPlaceholder": "nom@email.com",
+    "passwordPlaceholder": "********",
+    "signIn": "Connexion",
+    "signingIn": "Connexion en cours...",
+    "invalidEmail": "Veuillez saisir une adresse email valide.",
+    "invalidPassword": "Le mot de passe doit contenir au moins 6 caracteres.",
+    "signInFailed": "Echec de connexion. Veuillez reessayer."
+  }
+}
