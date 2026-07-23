@@ -6,7 +6,6 @@ import {
   Chip,
   FormControl,
   Grid,
-  Grow,
   InputAdornment,
   OutlinedInput,
   Paper,
@@ -23,7 +22,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { subscribeToDeviceLiveData } from '../../firebase/firebase';
 import { fetchDeviceDataSeries } from '../../statsApi/StatsApi';
-import { FilterAlt, HighlightOff } from '@mui/icons-material';
+import { FilterAlt } from '@mui/icons-material';
 import StatCard from './StatCard';
 
 const DEFAULT_FILTERS = ['CERN', 'CERN-Visitors', '*'];
@@ -116,13 +115,6 @@ export default function DeviceView() {
 
     return () => unsubscribe();
   }, [deviceId, enabled]);
-
-  useEffect(() => {
-    if (rows.length > 0 && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [rows]);
-
   const handleFilterKeyDown = (e) => {
     if (e.key === 'Enter' && filterInput.trim()) {
       const value = filterInput.trim();
@@ -138,12 +130,18 @@ export default function DeviceView() {
 
   const filteredRows = rows.filter((row) => !filters.includes(row.ssid));
 
+  useEffect(() => {
+    if (filteredRows.length > 0 && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [filteredRows.length]);
+
   const handleClearFilters = () => {
     setFilters([]);
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
+    <Box sx={{ width: '100%' }}>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Device: {deviceId}
       </Typography>
@@ -220,32 +218,62 @@ export default function DeviceView() {
 
         {/* Table Section */}
         <Grid size={{ xs: 12 }}>
-          <TableContainer component={Paper} sx={{ width: '100%' }}>
-            <Table>
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{
+              borderColor: 'divider',
+              maxHeight: 540,
+              overflowY: 'auto',
+            }}
+          >
+            <Table stickyHeader>
               <TableHead>
-                <TableRow sx={{ backgroundColor: 'primary.main' }}>
-                  <TableCell sx={{ width: '50%' }}>SSID</TableCell>
-                  <TableCell sx={{ width: '50%' }}>Timestamp</TableCell>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      width: '55%',
+                      backgroundColor: 'background.paper',
+                      fontWeight: 600,
+                    }}
+                  >
+                    SSID
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '45%',
+                      backgroundColor: 'background.paper',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Timestamp
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row, idx) => (
-                  <Grow in timeout={300} key={idx}>
-                    <TableRow
-                      key={idx}
-                      sx={{
-                        backgroundColor:
-                          idx % 2 === 0 ? 'background.paper' : 'action.hover',
-                      }}
-                    >
-                      <TableCell sx={{ width: '50%' }}>{row.ssid}</TableCell>
-                      <TableCell sx={{ width: '50%' }}>
-                        {row.timestamp}
-                      </TableCell>
-                    </TableRow>
-                  </Grow>
+                {filteredRows.map((row, index) => (
+                  <TableRow
+                    key={`${row.ssid ?? 'ssid'}-${row.timestamp ?? 'timestamp'}-${index}`}
+                    hover
+                    sx={(theme) => ({
+                      backgroundColor:
+                        index % 2 === 0
+                          ? theme.palette.background.default
+                          : theme.palette.action.hover,
+                      '& td': {
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                      },
+                    })}
+                  >
+                    <TableCell>{row.ssid || '-'}</TableCell>
+                    <TableCell>{row.timestamp || '-'}</TableCell>
+                  </TableRow>
                 ))}
-                <TableRow ref={bottomRef} />
+                <TableRow>
+                  <TableCell colSpan={2} sx={{ borderBottom: 'none', p: 0 }}>
+                    <Box ref={bottomRef} />
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </TableContainer>

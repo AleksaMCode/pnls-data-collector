@@ -1,4 +1,4 @@
-import { apiGet } from './client';
+import { apiDownload, apiGet } from './client';
 
 // Total unique/all-time counts.
 export function fetchTotalStats() {
@@ -74,5 +74,18 @@ export function fetchSsidStats({
     sort_order: sortOrder,
     offset,
     limit,
+  });
+}
+
+// CSV export with the same search/sort filters as the SSID list.
+export function downloadSsidStatsCsv({
+  search,
+  sortBy = 'last_seen',
+  sortOrder = 'desc',
+} = {}) {
+  return apiDownload('/stats/ssids/export', {
+    search,
+    sort_by: sortBy,
+    sort_order: sortOrder,
   });
 }

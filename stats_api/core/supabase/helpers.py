@@ -426,3 +426,34 @@ def fetch_ssid_stats(
             "sort_order": sort_order,
         },
     }
+
+
+def fetch_ssid_export_rows(
+    sort_by: str = "last_seen",
+    sort_order: str = "desc",
+    search: str | None = None,
+) -> list[dict]:
+    sort_columns = {
+        "ssid": SsidStats.ssid,
+        "seen_count": SsidStats.seen_count,
+        "first_seen": SsidStats.first_seen,
+        "last_seen": SsidStats.last_seen,
+    }
+    sort_column = sort_columns.get(sort_by, SsidStats.last_seen)
+    sort_direction = asc if sort_order == "asc" else desc
+
+    with _session() as db:
+        query = db.query(SsidStats)
+        if search:
+            query = query.filter(SsidStats.ssid.ilike(f"%{search}%"))
+        rows = query.order_by(sort_direction(sort_column)).all()
+
+    return [
+        {
+            "ssid": row.ssid,
+            "seen_count": scalar_to_int(row.seen_count),
+            "first_seen": row.first_seen,
+            "last_seen": row.last_seen,
+        }
+        for row in rows
+    ]

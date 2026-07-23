@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const LiveCountContext = createContext({
   enabled: false,
@@ -7,6 +8,12 @@ const LiveCountContext = createContext({
 
 export function LiveCountProvider({ children }) {
   const [enabled, setEnabled] = useState(false);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    setEnabled(false);
+  }, [pathname]);
+
   return (
     <LiveCountContext.Provider value={{ enabled, setEnabled }}>
       {children}

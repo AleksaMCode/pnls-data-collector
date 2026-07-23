@@ -1,4 +1,6 @@
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
@@ -6,8 +8,10 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
 import { DataGrid } from '@mui/x-data-grid';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import { useEffect, useMemo, useState } from 'react';
-import { fetchSsidStats } from '../../statsApi/StatsApi';
+import { toast } from 'react-toastify';
+import { downloadSsidStatsCsv, fetchSsidStats } from '../../statsApi/StatsApi';
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -82,6 +86,7 @@ export default function SsidView() {
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
 
   // Debounce the search input: only fire once the user stops typing.
   useEffect(() => {
@@ -157,8 +162,36 @@ export default function SsidView() {
     };
   }, [debouncedSearch, sortBy, sortOrder, paginationModel]);
 
+  async function handleDownloadCsv() {
+    setIsDownloadingCsv(true);
+    try {
+      const { blob, filename } = await downloadSsidStatsCsv({
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortOrder,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download =
+        filename ?? `ssid_stats_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      toast.success('SSID CSV downloaded successfully.');
+    } catch (err) {
+      console.error('Failed to download SSID CSV:', err);
+      toast.error('Failed to download SSID CSV.');
+    } finally {
+      setIsDownloadingCsv(false);
+    }
+  }
+
   return (
-    <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
+    <Box sx={{ width: '100%' }}>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         SSIDs
       </Typography>
@@ -168,38 +201,61 @@ export default function SsidView() {
       </Typography>
 
       <Stack spacing={2}>
-        <FormControl sx={{ width: '100%' }}>
-          <OutlinedInput
-            size="small"
-            placeholder="Search SSID…"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            startAdornment={
-              <InputAdornment position="start">
-                <SearchRoundedIcon fontSize="small" />
-              </InputAdornment>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}
+        >
+          <FormControl sx={{ width: '100%' }}>
+            <OutlinedInput
+              size="small"
+              placeholder="Search SSID…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              startAdornment={
+                <InputAdornment position="start">
+                  <SearchRoundedIcon fontSize="small" />
+                </InputAdornment>
+              }
+            />
+          </FormControl>
+
+          <Button
+            variant="outlined"
+            onClick={handleDownloadCsv}
+            disabled={isDownloadingCsv}
+            startIcon={
+              isDownloadingCsv ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <DownloadRoundedIcon fontSize="small" />
+              )
+            }
+            sx={{ minWidth: 170, alignSelf: { xs: 'flex-start', sm: 'auto' } }}
+          >
+            {isDownloadingCsv ? 'Downloading...' : 'Download CSV'}
+          </Button>
+        </Stack>
+        <Box sx={{ height: 'calc(100vh - 100px)', width: '100%' }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={isLoading}
+            rowCount={rowCount}
+            paginationMode="server"
+            sortingMode="server"
+            pageSizeOptions={[PAGE_SIZE]}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            sortModel={sortModel}
+            onSortModelChange={setSortModel}
+            disableRowSelectionOnClick
+            disableColumnResize
+            getRowClassName={(params) =>
+              params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
             }
           />
-        </FormControl>
-
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={isLoading}
-          rowCount={rowCount}
-          paginationMode="server"
-          sortingMode="server"
-          pageSizeOptions={[PAGE_SIZE]}
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          sortModel={sortModel}
-          onSortModelChange={setSortModel}
-          disableRowSelectionOnClick
-          disableColumnResize
-          getRowClassName={(params) =>
-            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-          }
-        />
+        </Box>
       </Stack>
     </Box>
   );

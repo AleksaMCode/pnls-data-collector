@@ -4,15 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.1.0] - 2026-07-23
 
 ### Added
 
 - New `stats-api` endpoint `GET /stats/average/daily-counts` was added to return average daily counts for probes, MAC addresses, and SSIDs from historical daily import tables (excluding today). PR #335
+- New `stats-api` endpoint `GET /stats/ssids/export` was added to return filtered/sorted SSID statistics as a CSV download (without pagination limits), matching the SSID view filters. PR #358
+- New SSID CSV export action was added to `monitor-dashboard` with authenticated download support, including loading state, disabled button, and success/error toast feedback. PR #358
 
 ### Changed
 
 - `monitor-dashboard` now consumes the average-daily stats endpoint and renders three new `Average / day` cards for Probe Requests, SSIDs, and MAC addresses immediately after the `Total (unique)` cards. PR #335
+- `monitor-dashboard` Live View toggle is now hidden on the SSID page and automatically resets to off when navigating between routes. PR #358
+
+### Fixed
+
+- Dashboard width/zoom responsiveness issues were fixed by relaxing page-width constraints across key dashboard views and header layout so content can use the full available viewport width more consistently. PR #358
 
 ## [3.0.0] - 2026-07-22
 

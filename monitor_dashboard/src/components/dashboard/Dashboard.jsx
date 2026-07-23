@@ -1,7 +1,6 @@
 import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Header from './Header';
 import {
   chartsCustomizations,
@@ -46,19 +45,35 @@ export default function Dashboard(props) {
               backgroundColor: theme.vars
                 ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
                 : alpha(theme.palette.background.default, 1),
-              overflow: 'auto',
             })}
           >
-            <Stack
-              spacing={2}
+            <Box
+              sx={(theme) => ({
+                position: 'sticky',
+                top: 0,
+                zIndex: theme.zIndex.drawer + 2,
+                isolation: 'isolate',
+                flexShrink: 0,
+                width: '100%',
+                py: 1,
+                backgroundColor: theme.vars
+                  ? `rgba(${theme.vars.palette.background.defaultChannel} / 0.92)`
+                  : alpha(theme.palette.background.default, 0.92),
+                backdropFilter: 'blur(6px)',
+                borderBottom: `1px solid ${theme.palette.divider}`,
+              })}
+            >
+              <Box sx={{ mx: 3 }}>
+                <Header />
+              </Box>
+            </Box>
+            <Box
               sx={{
-                alignItems: 'center',
                 mx: 3,
                 pb: 5,
                 mt: { xs: 8, md: 0 },
               }}
             >
-              <Header />
               {loading ? (
                 <Fade in>
                   <Box
@@ -80,7 +95,7 @@ export default function Dashboard(props) {
                   </Box>
                 </Fade>
               )}
-            </Stack>
+            </Box>
           </Box>
         </Box>
       </AppTheme>

@@ -1,4 +1,7 @@
 import os
+from csv import DictWriter
+from datetime import datetime
+from io import StringIO
 from typing import Literal
 
 from core.supabase.helpers import (
@@ -12,12 +15,14 @@ from core.supabase.helpers import (
     fetch_previous_n_days_totals,
     fetch_probe_requests_per_device_last_n_days,
     fetch_sankey_data,
+    fetch_ssid_export_rows,
     fetch_ssid_stats,
     fetch_total_per_device_stats,
     fetch_total_stats,
 )
 from dotenv import load_dotenv
 from fastapi import APIRouter, Query
+from fastapi.responses import Response
 from fastapi_cache.decorator import cache
 from routers.models import DeviceEnum
 from settings import TIMEZONE
@@ -117,4 +122,39 @@ async def get_ssid_stats(
         sort_by=sort_by,
         sort_order=sort_order,
         search=search,
+    )
+
+
+@router.get("/ssids/export")
+async def export_ssid_stats_csv(
+    search: str | None = Query(default=None),
+    sort_by: Literal["ssid", "seen_count", "first_seen", "last_seen"] = Query(
+        default="last_seen"
+    ),
+    sort_order: Literal["asc", "desc"] = Query(default="desc"),
+):
+    rows = fetch_ssid_export_rows(sort_by=sort_by, sort_order=sort_order, search=search)
+
+    buffer = StringIO()
+    writer = DictWriter(
+        buffer,
+        fieldnames=["ssid", "seen_count", "first_seen", "last_seen"],
+    )
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(
+            {
+                "ssid": row.get("ssid") or "",
+                "seen_count": row.get("seen_count", 0),
+                "first_seen": row.get("first_seen") or "",
+                "last_seen": row.get("last_seen") or "",
+            }
+        )
+
+    date_stamp = datetime.now().strftime("%Y-%m-%d")
+    filename = f"ssid_stats_{date_stamp}.csv"
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
