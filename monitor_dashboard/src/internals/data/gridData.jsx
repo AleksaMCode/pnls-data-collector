@@ -5,6 +5,7 @@ import Chip from '@mui/material/Chip';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { getLastNDays } from '../../components/dashboard/StatCard';
 import i18n from '../../i18n';
+import { getLocale } from '../../i18nLocale';
 
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
@@ -23,7 +24,7 @@ function getDaysInMonth(month, year) {
 
 function renderSparklineCell(params) {
   // const data = getDaysInMonth(4, 2024);
-  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-US';
+  const locale = getLocale(i18n.resolvedLanguage);
   const data = getLastNDays(30, locale);
   const { value, colDef } = params;
 

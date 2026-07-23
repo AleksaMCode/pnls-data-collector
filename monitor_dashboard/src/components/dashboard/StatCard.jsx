@@ -11,6 +11,7 @@ import { areaElementClasses } from '@mui/x-charts/LineChart';
 import { useEffect, useState } from 'react';
 import { CircularProgress, Fade } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../i18nLocale';
 
 /**
  *
@@ -110,7 +111,7 @@ function StatCard({
 }) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-US';
+  const locale = getLocale(i18n.resolvedLanguage);
   const daysInWeek = getLastNDays(dayCount, locale);
   const [displayValue, setDisplayValue] = useState(value);
   const [livePercentage, setLivePercentage] = useState(0);

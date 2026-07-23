@@ -7,6 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import { fetchMonthlyTotalsAllDevices } from '../../statsApi/StatsApi';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../i18nLocale';
 
 function getLastNMonths(n, locale) {
   const result = [];
@@ -27,7 +28,7 @@ function getLastNMonths(n, locale) {
 
 export default function CapturedDataBarChart() {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-US';
+  const locale = getLocale(i18n.resolvedLanguage);
   const theme = useTheme();
 
   const [months, setMonths] = useState([]);

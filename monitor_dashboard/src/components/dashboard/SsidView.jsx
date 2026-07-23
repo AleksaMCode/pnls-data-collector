@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { downloadSsidStatsCsv, fetchSsidStats } from '../../statsApi/StatsApi';
 import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../i18nLocale';
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -40,7 +41,7 @@ function formatDateTime(value, locale) {
 
 export default function SsidView() {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-GB';
+  const locale = getLocale(i18n.resolvedLanguage);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 

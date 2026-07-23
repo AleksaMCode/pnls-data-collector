@@ -8,6 +8,7 @@ import { LineChart } from '@mui/x-charts/LineChart';
 import { useEffect, useState } from 'react';
 import { getLastNDays } from './StatCard';
 import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../i18nLocale';
 
 function AreaGradient({ color, id }) {
   return (
@@ -35,7 +36,7 @@ function toCumulativeArray(arr) {
 
 export default function SessionsChart({ probeSeries }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-US';
+  const locale = getLocale(i18n.resolvedLanguage);
   const theme = useTheme();
   const data = getLastNDays(30, locale);
   const [series, setSeries] = useState([]);
