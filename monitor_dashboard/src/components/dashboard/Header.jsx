@@ -1,10 +1,11 @@
 import Stack from '@mui/material/Stack';
 import NavbarBreadcrumbs from './NavbarBreadcrumbs';
 import ColorModeIconDropdown from '../../theme/ColorModeIconDropdown';
-import { FormControlLabel, Switch, Tooltip, useTheme } from '@mui/material';
+import LanguageIconDropdown from '../../theme/LanguageIconDropdown';
+import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import { useLiveCount } from './LiveCountProvider';
 import { useLocation } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 /**
  * @deprecated At the moment there is no need to use this helper function as devices are always live.
@@ -25,7 +26,7 @@ function isWorkingHours() {
 
 export default function Header() {
   const { enabled, setEnabled } = useLiveCount();
-  const theme = useTheme();
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const hideLiveToggle = pathname === '/ssids';
 
@@ -57,7 +58,7 @@ export default function Header() {
       <NavbarBreadcrumbs />
       <Stack direction="row" sx={{ gap: 1 }}>
         {!hideLiveToggle && (
-          <Tooltip title="Toggle to view live Probe Request data">
+          <Tooltip title={t('header.toggleLiveTooltip')}>
             <FormControlLabel
               control={
                 <Switch
@@ -66,10 +67,11 @@ export default function Header() {
                   onChange={(e, checked) => handleLiveToggle(checked)}
                 />
               }
-              label="Live View"
+              label={t('common.liveView')}
             />
           </Tooltip>
         )}
+        <LanguageIconDropdown />
         <ColorModeIconDropdown />
       </Stack>
     </Stack>

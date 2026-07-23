@@ -10,6 +10,7 @@ import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { areaElementClasses } from '@mui/x-charts/LineChart';
 import { useEffect, useState } from 'react';
 import { CircularProgress, Fade } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 /**
  *
@@ -107,8 +108,10 @@ function StatCard({
   dayCount = 30,
   isLoading = false,
 }) {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const daysInWeek = getLastNDays(dayCount);
+  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-US';
+  const daysInWeek = getLastNDays(dayCount, locale);
   const [displayValue, setDisplayValue] = useState(value);
   const [livePercentage, setLivePercentage] = useState(0);
   const [computedTrend, setComputedTrend] = useState(trend);
@@ -137,7 +140,7 @@ function StatCard({
 
   const color = labelColors[computedTrend];
   const chartColor = trendColors[computedTrend];
-  const showLiveBadge = liveFeed && interval === 'Live';
+  const showLiveBadge = liveFeed && interval === t('mainGrid.live');
 
   useEffect(() => {
     if (trend) {
@@ -283,7 +286,7 @@ function StatCard({
                     top: '1px',
                   }}
                 >
-                  {isLoading ? 'Connecting...' : interval}
+                  {isLoading ? t('common.connecting') : interval}
                 </Typography>
               </Stack>
             ) : (

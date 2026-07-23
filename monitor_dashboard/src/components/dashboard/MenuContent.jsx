@@ -17,19 +17,21 @@ import {
 import { useState } from 'react';
 import { Collapse, Divider } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // TODO this should be built dynamically based on data in Firebase
 const devices = ['RPI-1', 'RPI-2', 'RPI-3'];
 
 const secondaryListItems = [
-  { text: 'Settings', icon: <SettingsRoundedIcon /> },
-  { text: 'About', icon: <InfoRoundedIcon /> },
+  { key: 'common.settings', icon: <SettingsRoundedIcon /> },
+  { key: 'common.about', icon: <InfoRoundedIcon /> },
 ];
 
 export default function MenuContent() {
   const [openDevices, setOpenDevices] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: 'space-between' }}>
@@ -43,7 +45,7 @@ export default function MenuContent() {
             <ListItemIcon>
               <HomeRoundedIcon />
             </ListItemIcon>
-            <ListItemText primary="Home" />
+            <ListItemText primary={t('common.home')} />
           </ListItemButton>
         </ListItem>
 
@@ -56,7 +58,7 @@ export default function MenuContent() {
             <ListItemIcon>
               <Wifi />
             </ListItemIcon>
-            <ListItemText primary="SSIDs" />
+            <ListItemText primary={t('common.ssids')} />
           </ListItemButton>
         </ListItem>
 
@@ -66,7 +68,7 @@ export default function MenuContent() {
             <ListItemIcon>
               <CellTower />
             </ListItemIcon>
-            <ListItemText primary="Devices" />
+            <ListItemText primary={t('common.devices')} />
             {openDevices ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
         </ListItem>
@@ -96,7 +98,7 @@ export default function MenuContent() {
           <ListItem key={index} disablePadding sx={{ display: 'block' }}>
             <ListItemButton>
               <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
+              <ListItemText primary={t(item.key)} />
             </ListItemButton>
           </ListItem>
         ))}

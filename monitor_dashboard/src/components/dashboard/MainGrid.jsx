@@ -26,14 +26,15 @@ import {
 } from '../../statsApi/StatsApi';
 import { useLiveCount } from './LiveCountProvider';
 import MultiSeriesRadarChart from './MultiSeriesRadarChart';
+import { useTranslation } from 'react-i18next';
 
 const data = [
   {
     id: 'probeRequestCount',
-    title: 'Probe Requests',
+    titleKey: 'common.probeRequests',
     value: 0,
     prevValue: 0,
-    interval: 'Last 30 days',
+    intervalKey: 'mainGrid.last30Days',
     data: [
       200, 24, 220, 260, 240, 380, 100, 240, 280, 240, 300, 340, 320, 360, 340,
       380, 360, 400, 380, 420, 400, 640, 340, 460, 440, 480, 460, 600, 880, 920,
@@ -41,10 +42,10 @@ const data = [
   },
   {
     id: 'ssidCount',
-    title: 'SSIDs',
+    titleKey: 'common.ssids',
     value: 0,
     prevValue: 0,
-    interval: 'Last 30 days',
+    intervalKey: 'mainGrid.last30Days',
     data: [
       1640, 1250, 970, 1130, 1050, 900, 720, 1080, 900, 450, 920, 820, 840, 600,
       820, 780, 800, 760, 380, 740, 660, 620, 840, 500, 520, 480, 400, 360, 300,
@@ -53,10 +54,10 @@ const data = [
   },
   {
     id: 'macCount',
-    title: 'MAC addresses',
+    titleKey: 'common.macAddresses',
     value: 0,
     prevValue: 0,
-    interval: 'Last 30 days',
+    intervalKey: 'mainGrid.last30Days',
     data: [
       500, 400, 510, 530, 520, 600, 530, 520, 510, 730, 520, 510, 530, 620, 510,
       530, 520, 410, 530, 520, 610, 530, 520, 610, 530, 420, 510, 430, 520, 510,
@@ -67,25 +68,25 @@ const data = [
 const dataTotalTemplate = [
   {
     id: 'probeRequestCount',
-    title: 'Probe Requests',
+    titleKey: 'common.probeRequests',
     value: 0,
-    interval: 'Total',
+    intervalKey: 'mainGrid.total',
     trend: 'up',
     data: [],
   },
   {
     id: 'ssidCount',
-    title: 'SSIDs',
+    titleKey: 'common.ssids',
     value: 0,
-    interval: 'Total (unique)',
+    intervalKey: 'mainGrid.totalUnique',
     trend: 'up',
     data: [],
   },
   {
     id: 'macCount',
-    title: 'MAC addresses',
+    titleKey: 'common.macAddresses',
     value: 0,
-    interval: 'Total (unique)',
+    intervalKey: 'mainGrid.totalUnique',
     trend: 'up',
     data: [],
   },
@@ -94,31 +95,32 @@ const dataTotalTemplate = [
 const averageDailyTemplate = [
   {
     id: 'probeRequestCount',
-    title: 'Probe Requests',
+    titleKey: 'common.probeRequests',
     value: 0,
-    interval: 'Average / day',
+    intervalKey: 'mainGrid.averagePerDay',
     trend: 'up',
     data: [],
   },
   {
     id: 'ssidCount',
-    title: 'SSIDs',
+    titleKey: 'common.ssids',
     value: 0,
-    interval: 'Average / day',
+    intervalKey: 'mainGrid.averagePerDay',
     trend: 'up',
     data: [],
   },
   {
     id: 'macCount',
-    title: 'MAC addresses',
+    titleKey: 'common.macAddresses',
     value: 0,
-    interval: 'Average / day',
+    intervalKey: 'mainGrid.averagePerDay',
     trend: 'up',
     data: [],
   },
 ];
 
 export default function MainGrid() {
+  const { t } = useTranslation();
   // Total amount of captured data
   const [dataTotal, setDataTotal] = useState(dataTotalTemplate);
   // Initial count for Probe Requsts
@@ -331,7 +333,7 @@ export default function MainGrid() {
     <Box sx={{ width: '100%' }}>
       {/* cards */}
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Overview
+        {t('mainGrid.overview')}
       </Typography>
       <Grid
         container
@@ -341,15 +343,19 @@ export default function MainGrid() {
       >
         {dataLast30Days.map((card, index) => (
           <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <StatCard {...card} />
+            <StatCard
+              {...card}
+              title={t(card.titleKey)}
+              interval={t(card.intervalKey)}
+            />
           </Grid>
         ))}
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            title="Probe Requests"
+            title={t('common.probeRequests')}
             value={initialCount}
             trend="up"
-            interval={'Live'}
+            interval={t('mainGrid.live')}
             hideSparkLineChart={true}
             hideTrendValues={true}
             liveValue={liveCount}
@@ -361,6 +367,8 @@ export default function MainGrid() {
           <Grid key={index} size={{ xs: 12, sm: 6, lg: 4 }}>
             <StatCard
               {...card}
+              title={t(card.titleKey)}
+              interval={t(card.intervalKey)}
               hideTrendValues={true}
               dayCount={totalDataSeriesDates}
               isLoading={isLoadingTotalStats}
@@ -371,6 +379,8 @@ export default function MainGrid() {
           <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
             <StatCard
               {...card}
+              title={t(card.titleKey)}
+              interval={t(card.intervalKey)}
               hideSparkLineChart={true}
               hideTrendValues={true}
               isLoading={isLoadingAverageDaily}
@@ -404,14 +414,12 @@ export default function MainGrid() {
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography component="h2" variant="h6">
-            Manufacturer data
+            {t('mainGrid.manufacturerData')}
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Based on the MAC addresses of devices captured at CERN, the
-            following represents the manufacturers most frequently observed
-            among the recorded devices.
+            {t('mainGrid.manufacturerDescription')}
           </Typography>
           <ManufacturerDataGrid
             manufacturers={manufacturers}
@@ -421,7 +429,7 @@ export default function MainGrid() {
         </AccordionDetails>
       </Accordion>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Devices
+        {t('common.devices')}
       </Typography>
 
       <Grid container spacing={2} columns={3}>

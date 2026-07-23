@@ -17,11 +17,13 @@ import Alert from '@mui/material/Alert';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { IconButton, InputAdornment } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 // Created using template: https://github.com/mui/material-ui/tree/v7.3.7/docs/data/material/getting-started/templates/sign-in
 
 export default function Login() {
   const { userLoggedIn } = useAuth();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +42,7 @@ export default function Login() {
 
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+      setEmailErrorMessage(t('login.invalidEmail'));
       isValid = false;
     } else {
       setEmailError(false);
@@ -49,7 +51,7 @@ export default function Login() {
 
     if (!password || password.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage(t('login.invalidPassword'));
       isValid = false;
     } else {
       setPasswordError(false);
@@ -70,7 +72,7 @@ export default function Login() {
       try {
         await firebaseSignInWithEmailAndPassword(email, password);
       } catch (err) {
-        setErrorMessage('Failed to sign in. Please try again.');
+        setErrorMessage(t('login.signInFailed'));
         setIsSigningIn(false);
       }
     }
@@ -123,14 +125,14 @@ export default function Login() {
               fontWeight: 600,
             }}
           >
-            Sign in
+            {t('login.title')}
           </Typography>
 
           <Typography
             variant="body2"
             sx={{ textAlign: 'center', color: '#666', mb: 2 }}
           >
-            Sign in to continue to the PNLS-DC Monitoring Dashboard
+            {t('login.subtitle')}
           </Typography>
 
           <Box
@@ -146,12 +148,12 @@ export default function Login() {
             {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
 
             <FormControl>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t('login.email')}</FormLabel>
               <TextField
                 error={emailError}
                 helperText={emailErrorMessage}
                 type="email"
-                placeholder="name@email.com"
+                placeholder={t('login.emailPlaceholder')}
                 required
                 fullWidth
                 value={email}
@@ -160,12 +162,12 @@ export default function Login() {
             </FormControl>
 
             <FormControl>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t('login.password')}</FormLabel>
               <TextField
                 error={passwordError}
                 helperText={passwordErrorMessage}
                 type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                placeholder={t('login.passwordPlaceholder')}
                 required
                 fullWidth
                 value={password}
@@ -194,7 +196,7 @@ export default function Login() {
               disabled={isSigningIn}
               sx={{ mt: 1 }}
             >
-              {isSigningIn ? 'Signing in...' : 'Sign in'}
+              {isSigningIn ? t('login.signingIn') : t('login.signIn')}
             </Button>
           </Box>
         </Card>

@@ -9,6 +9,7 @@ import MenuContent from './MenuContent';
 import OptionsMenu from './OptionsMenu';
 import { useAuth } from '../../context/authContext';
 import PnlsCard from './PnlsCard';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 250;
 
@@ -46,6 +47,7 @@ const Drawer = styled(MuiDrawer)({
 
 export default function SideMenu() {
   const { currentUser } = useAuth();
+  const { t } = useTranslation();
   const displayName = getDisplayNameFromEmail(currentUser?.email);
 
   return (
@@ -67,7 +69,7 @@ export default function SideMenu() {
       >
         <PnlsCard
           primary="PNLS-DC"
-          secondary="Monitoring Dashboard"
+          secondary={t('menu.monitoringDashboard')}
           color="primary.main"
         />
       </Box>

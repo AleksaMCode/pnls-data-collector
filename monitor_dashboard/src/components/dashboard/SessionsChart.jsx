@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useEffect, useState } from 'react';
 import { getLastNDays } from './StatCard';
+import { useTranslation } from 'react-i18next';
 
 function AreaGradient({ color, id }) {
   return (
@@ -33,8 +34,10 @@ function toCumulativeArray(arr) {
 }
 
 export default function SessionsChart({ probeSeries }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-US';
   const theme = useTheme();
-  const data = getLastNDays(30);
+  const data = getLastNDays(30, locale);
   const [series, setSeries] = useState([]);
   const [totalProbeRequestCount, setTotalProbeRequestCount] = useState(0);
 
@@ -77,7 +80,7 @@ export default function SessionsChart({ probeSeries }) {
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
         <Typography component="h2" variant="subtitle2" gutterBottom>
-          Probe Requests per device (cumulative total)
+          {t('sections.probePerDeviceCumulative')}
         </Typography>
         <Stack sx={{ justifyContent: 'space-between' }}>
           <Stack
@@ -93,7 +96,7 @@ export default function SessionsChart({ probeSeries }) {
             </Typography>
           </Stack>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Probe requests captured per day for the last 30 days
+            {t('sections.probePerDayLast30')}
           </Typography>
         </Stack>
         <LineChart

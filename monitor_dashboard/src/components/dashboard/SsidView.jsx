@@ -12,6 +12,7 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { downloadSsidStatsCsv, fetchSsidStats } from '../../statsApi/StatsApi';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -24,7 +25,7 @@ const SERVER_SORTABLE_FIELDS = new Set([
   'last_seen',
 ]);
 
-function formatDateTime(value) {
+function formatDateTime(value, locale) {
   if (!value) {
     return '-';
   }
@@ -34,44 +35,12 @@ function formatDateTime(value) {
     return value;
   }
 
-  return parsed.toLocaleString('en-GB', { timeZone: 'Europe/Paris' });
+  return parsed.toLocaleString(locale, { timeZone: 'Europe/Paris' });
 }
 
-const columns = [
-  {
-    field: 'ssid',
-    headerName: 'SSID',
-    flex: 1.5,
-    minWidth: 240,
-    renderCell: (params) => params.row.ssid || '-',
-  },
-  {
-    field: 'seen_count',
-    headerName: 'Seen count',
-    type: 'number',
-    flex: 0.8,
-    minWidth: 130,
-    align: 'right',
-    headerAlign: 'right',
-    renderCell: (params) => Number(params.row.seen_count ?? 0).toLocaleString(),
-  },
-  {
-    field: 'first_seen',
-    headerName: 'First seen',
-    flex: 1,
-    minWidth: 190,
-    renderCell: (params) => formatDateTime(params.row.first_seen),
-  },
-  {
-    field: 'last_seen',
-    headerName: 'Last seen',
-    flex: 1,
-    minWidth: 190,
-    renderCell: (params) => formatDateTime(params.row.last_seen),
-  },
-];
-
 export default function SsidView() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-GB';
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -87,6 +56,44 @@ export default function SsidView() {
   const [rowCount, setRowCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
+
+  const columns = useMemo(
+    () => [
+      {
+        field: 'ssid',
+        headerName: t('common.ssids'),
+        flex: 1.5,
+        minWidth: 240,
+        renderCell: (params) => params.row.ssid || '-',
+      },
+      {
+        field: 'seen_count',
+        headerName: t('ssidView.seenCount'),
+        type: 'number',
+        flex: 0.8,
+        minWidth: 130,
+        align: 'right',
+        headerAlign: 'right',
+        renderCell: (params) =>
+          Number(params.row.seen_count ?? 0).toLocaleString(),
+      },
+      {
+        field: 'first_seen',
+        headerName: t('ssidView.firstSeen'),
+        flex: 1,
+        minWidth: 190,
+        renderCell: (params) => formatDateTime(params.row.first_seen, locale),
+      },
+      {
+        field: 'last_seen',
+        headerName: t('ssidView.lastSeen'),
+        flex: 1,
+        minWidth: 190,
+        renderCell: (params) => formatDateTime(params.row.last_seen, locale),
+      },
+    ],
+    [locale, t],
+  );
 
   // Debounce the search input: only fire once the user stops typing.
   useEffect(() => {
@@ -181,10 +188,10 @@ export default function SsidView() {
       link.remove();
       URL.revokeObjectURL(url);
 
-      toast.success('SSID CSV downloaded successfully.');
+      toast.success(t('ssidView.downloadSuccess'));
     } catch (err) {
       console.error('Failed to download SSID CSV:', err);
-      toast.error('Failed to download SSID CSV.');
+      toast.error(t('ssidView.downloadError'));
     } finally {
       setIsDownloadingCsv(false);
     }
@@ -193,11 +200,10 @@ export default function SsidView() {
   return (
     <Box sx={{ width: '100%' }}>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        SSIDs
+        {t('common.ssids')}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        All captured SSIDs with how often and when they were seen. Use the
-        search bar to filter by SSID name.
+        {t('ssidView.description')}
       </Typography>
 
       <Stack spacing={2}>
@@ -209,7 +215,7 @@ export default function SsidView() {
           <FormControl sx={{ width: '100%' }}>
             <OutlinedInput
               size="small"
-              placeholder="Search SSID…"
+              placeholder={t('common.searchSsid')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               startAdornment={
@@ -233,7 +239,9 @@ export default function SsidView() {
             }
             sx={{ minWidth: 170, alignSelf: { xs: 'flex-start', sm: 'auto' } }}
           >
-            {isDownloadingCsv ? 'Downloading...' : 'Download CSV'}
+            {isDownloadingCsv
+              ? t('common.downloading')
+              : t('common.downloadCsv')}
           </Button>
         </Stack>
         <Box sx={{ height: 'calc(100vh - 100px)', width: '100%' }}>

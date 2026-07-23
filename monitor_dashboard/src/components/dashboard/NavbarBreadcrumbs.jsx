@@ -3,6 +3,7 @@ import Typography from '@mui/material/Typography';
 import Breadcrumbs, { breadcrumbsClasses } from '@mui/material/Breadcrumbs';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const StyledBreadcrumbs = styled(Breadcrumbs)(({ theme }) => ({
   margin: theme.spacing(1, 0),
@@ -17,6 +18,7 @@ const StyledBreadcrumbs = styled(Breadcrumbs)(({ theme }) => ({
 
 export default function NavbarBreadcrumbs() {
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Split path into parts
   const pathnames = location.pathname.split('/').filter(Boolean);
@@ -32,7 +34,7 @@ export default function NavbarBreadcrumbs() {
         variant="body1"
         sx={{ textDecoration: 'none', color: 'text.secondary' }}
       >
-        Dashboard
+        {t('common.dashboard')}
       </Typography>
 
       {pathnames.map((value, index) => {
@@ -40,7 +42,11 @@ export default function NavbarBreadcrumbs() {
         const isLast = index === pathnames.length - 1;
 
         const label =
-          value === 'home' ? 'Home' : value === 'device' ? 'Device' : value; // e.g. RPI-1
+          value === 'home'
+            ? t('breadcrumbs.home')
+            : value === 'device'
+              ? t('breadcrumbs.device')
+              : value;
 
         return isLast ? (
           <Typography

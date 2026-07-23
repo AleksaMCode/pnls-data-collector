@@ -8,13 +8,14 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
 import {
-  columns as defaultColumns,
+  getDeviceGridColumns,
   rows as defaultRows,
 } from '../../internals/data/gridData';
 import { useEffect, useState } from 'react';
 import { fetchDeviceOnlineStatus } from '../../firebase/firebase';
 import CustomSankeyDiagram from './CustomSankeyDiagram';
 import DeviceHeatMap from './DeviceHeatMap';
+import { useTranslation } from 'react-i18next';
 
 function getWorkingStatus(status) {
   const now = new Date();
@@ -36,11 +37,13 @@ export default function CustomizedDataGrid({
   sankeyData,
   onSankeyExpand,
 }) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState(defaultRows);
   const [onlineStatus, setOnlineStatus] = useState({});
   const [isSankeyExpanded, setIsSankeyExpanded] = useState(false);
   const [isHeatMapExpanded, setIsHeatMapExpanded] = useState(true);
   const [showExpandTooltip, setShowExpandTooltip] = useState(false);
+  const columns = getDeviceGridColumns(t);
 
   useEffect(() => {
     if (!totalsPerDeviceData || !probeSeries) return;
@@ -103,7 +106,7 @@ export default function CustomizedDataGrid({
       <DataGrid
         checkboxSelection={false}
         rows={rows}
-        columns={defaultColumns}
+        columns={columns}
         getRowClassName={(params) =>
           params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
         }
@@ -153,7 +156,7 @@ export default function CustomizedDataGrid({
         }}
       >
         <Tooltip
-          title="Click to expand and see the Sankey diagram"
+          title={t('customizedGrid.expandSankey')}
           arrow
           open={!isSankeyExpanded && showExpandTooltip}
           onOpen={() => setShowExpandTooltip(true)}
@@ -165,14 +168,13 @@ export default function CustomizedDataGrid({
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="subtitle2">
-              Device to Manufacturer to Country (Sankey)
+              {t('customizedGrid.sankeyTitle')}
             </Typography>
           </AccordionSummary>
         </Tooltip>
         <AccordionDetails>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            This Sankey view shows only the top 20 manufacturers from each
-            device.
+            {t('customizedGrid.sankeyDescription')}
           </Typography>
           <Paper sx={{ p: 2 }}>
             <CustomSankeyDiagram sankeyData={sankeyData} />
@@ -189,13 +191,12 @@ export default function CustomizedDataGrid({
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle2">
-            Device Heatmap (CERN Meyrin)
+            {t('customizedGrid.heatmapTitle')}
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Heat intensity reflects the total captured probe requests per
-            device.
+            {t('customizedGrid.heatmapDescription')}
           </Typography>
           <Paper sx={{ p: 2 }}>
             <DeviceHeatMap totalsPerDeviceData={totalsPerDeviceData} />

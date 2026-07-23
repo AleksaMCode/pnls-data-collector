@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip';
 
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { getLastNDays } from '../../components/dashboard/StatCard';
+import i18n from '../../i18n';
 
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
@@ -22,7 +23,8 @@ function getDaysInMonth(month, year) {
 
 function renderSparklineCell(params) {
   // const data = getDaysInMonth(4, 2024);
-  const data = getLastNDays(30);
+  const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-US';
+  const data = getLastNDays(30, locale);
   const { value, colDef } = params;
 
   if (!value || value.length === 0) {
@@ -48,7 +50,17 @@ function renderSparklineCell(params) {
   );
 }
 
-function renderStatus(status) {
+function getStatusLabel(status, t) {
+  const map = {
+    Online: 'status.online',
+    Offline: 'status.offline',
+    Working: 'status.working',
+    Off: 'status.off',
+  };
+  return t(map[status] ?? status);
+}
+
+function renderStatus(status, t) {
   const colors = {
     Online: 'success',
     Offline: 'default',
@@ -56,7 +68,13 @@ function renderStatus(status) {
     Off: 'secondary',
   };
 
-  return <Chip label={status} color={colors[status]} size="small" />;
+  return (
+    <Chip
+      label={getStatusLabel(status, t)}
+      color={colors[status]}
+      size="small"
+    />
+  );
 }
 
 export function renderAvatar(params) {
@@ -78,108 +96,110 @@ export function renderAvatar(params) {
   );
 }
 
-export const columns = [
-  {
-    field: 'device',
-    headerName: 'Device',
-    flex: 0.8,
-    minWidth: 80,
-    renderHeader: () => (
-      <Tooltip title="Device's name">
-        <span>Device</span>
-      </Tooltip>
-    ),
-  },
-  {
-    field: 'status',
-    headerName: 'Status',
-    flex: 0.8,
-    minWidth: 80,
-    renderHeader: () => (
-      <Tooltip title='Device is online if it was "seen" in the last 10 minutes.'>
-        <span>Status</span>
-      </Tooltip>
-    ),
-    renderCell: (params) => renderStatus(params.value),
-  },
-  // Device is capturing between 7 AM and 6 PM (Working status), otherwise Off
-  {
-    field: 'capturing',
-    headerName: 'Capturing',
-    flex: 0.8,
-    minWidth: 80,
-    renderHeader: () => (
-      <Tooltip title="Device is capturing between 7 AM and 6 PM (has status `Working`).">
-        <span>Capturing</span>
-      </Tooltip>
-    ),
-    renderCell: (params) => renderStatus(params.value),
-  },
-  {
-    field: 'probeRequestCount',
-    headerName: 'Probe Request',
-    headerAlign: 'right',
-    align: 'right',
-    flex: 1,
-    minWidth: 80,
-    renderHeader: () => (
-      <Tooltip title="Total amount of captured Probe Requests for the device.">
-        <span>Probe Request</span>
-      </Tooltip>
-    ),
-  },
-  {
-    field: 'ssidCount',
-    headerName: 'SSID',
-    headerAlign: 'right',
-    align: 'right',
-    flex: 0.8,
-    minWidth: 100,
-    renderHeader: () => (
-      <Tooltip title="Total amount of captured SSIDs for the device.">
-        <span>SSID</span>
-      </Tooltip>
-    ),
-  },
-  {
-    field: 'macCount',
-    headerName: 'MAC',
-    headerAlign: 'right',
-    align: 'right',
-    flex: 0.8,
-    minWidth: 120,
-    renderHeader: () => (
-      <Tooltip title="Total amount of captured MAC addresses for the device.">
-        <span>MAC</span>
-      </Tooltip>
-    ),
-  },
-  {
-    field: 'location',
-    headerName: 'Location',
-    headerAlign: 'right',
-    align: 'right',
-    flex: 1,
-    minWidth: 300,
-    renderHeader: () => (
-      <Tooltip title="Location of the devie inside of CERN.">
-        <span>Location</span>
-      </Tooltip>
-    ),
-  },
-  {
-    field: 'trend',
-    headerName: 'Daily capture',
-    flex: 1,
-    minWidth: 150,
-    renderHeader: () => (
-      <Tooltip title="Daily capture for the last 30 days.">
-        <span>Daily capture</span>
-      </Tooltip>
-    ),
-    renderCell: renderSparklineCell,
-  },
-];
+export function getDeviceGridColumns(t) {
+  return [
+    {
+      field: 'device',
+      headerName: t('deviceGrid.headers.device'),
+      flex: 0.8,
+      minWidth: 80,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.device')}>
+          <span>{t('deviceGrid.headers.device')}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'status',
+      headerName: t('deviceGrid.headers.status'),
+      flex: 0.8,
+      minWidth: 80,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.status')}>
+          <span>{t('deviceGrid.headers.status')}</span>
+        </Tooltip>
+      ),
+      renderCell: (params) => renderStatus(params.value, t),
+    },
+    // Device is capturing between 7 AM and 6 PM (Working status), otherwise Off
+    {
+      field: 'capturing',
+      headerName: t('deviceGrid.headers.capturing'),
+      flex: 0.8,
+      minWidth: 80,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.capturing')}>
+          <span>{t('deviceGrid.headers.capturing')}</span>
+        </Tooltip>
+      ),
+      renderCell: (params) => renderStatus(params.value, t),
+    },
+    {
+      field: 'probeRequestCount',
+      headerName: t('deviceGrid.headers.probeRequest'),
+      headerAlign: 'right',
+      align: 'right',
+      flex: 1,
+      minWidth: 80,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.probeRequest')}>
+          <span>{t('deviceGrid.headers.probeRequest')}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'ssidCount',
+      headerName: t('deviceGrid.headers.ssid'),
+      headerAlign: 'right',
+      align: 'right',
+      flex: 0.8,
+      minWidth: 100,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.ssid')}>
+          <span>{t('deviceGrid.headers.ssid')}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'macCount',
+      headerName: t('deviceGrid.headers.mac'),
+      headerAlign: 'right',
+      align: 'right',
+      flex: 0.8,
+      minWidth: 120,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.mac')}>
+          <span>{t('deviceGrid.headers.mac')}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'location',
+      headerName: t('deviceGrid.headers.location'),
+      headerAlign: 'right',
+      align: 'right',
+      flex: 1,
+      minWidth: 300,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.location')}>
+          <span>{t('deviceGrid.headers.location')}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'trend',
+      headerName: t('deviceGrid.headers.dailyCapture'),
+      flex: 1,
+      minWidth: 150,
+      renderHeader: () => (
+        <Tooltip title={t('deviceGrid.tooltips.dailyCapture')}>
+          <span>{t('deviceGrid.headers.dailyCapture')}</span>
+        </Tooltip>
+      ),
+      renderCell: renderSparklineCell,
+    },
+  ];
+}
 
 export const rows = [
   {
