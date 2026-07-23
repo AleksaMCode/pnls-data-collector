@@ -66,7 +66,7 @@ export default function MenuContent() {
             <ListItemIcon>
               <CellTower />
             </ListItemIcon>
-            <ListItemText primary="Devices (live view)" />
+            <ListItemText primary="Devices" />
             {openDevices ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
         </ListItem>
