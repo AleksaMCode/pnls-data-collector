@@ -1,0 +1,141 @@
+{
+  "language": {
+    "english": "Englisch",
+    "french": "Franzoesisch",
+    "german": "Deutsch"
+  },
+  "theme": {
+    "system": "System",
+    "light": "Hell",
+    "dark": "Dunkel"
+  },
+  "common": {
+    "dashboard": "Dashboard",
+    "home": "Startseite",
+    "ssids": "SSIDs",
+    "devices": "Geraete",
+    "device": "Geraet",
+    "settings": "Einstellungen",
+    "about": "Ueber",
+    "liveView": "Live-Ansicht",
+    "probeRequests": "Probe Requests",
+    "macAddresses": "MAC-Adressen",
+    "searchSsid": "SSID suchen...",
+    "filterSsid": "SSID filtern...",
+    "clearAll": "Alle loeschen",
+    "downloadCsv": "CSV herunterladen",
+    "downloading": "Wird heruntergeladen...",
+    "connecting": "Verbinde...",
+    "loadingMap": "Kartendaten werden geladen..."
+  },
+  "header": {
+    "toggleLiveTooltip": "Umschalten, um Live-Probe-Request-Daten zu sehen"
+  },
+  "menu": {
+    "monitoringDashboard": "Monitoring-Dashboard"
+  },
+  "breadcrumbs": {
+    "home": "Startseite",
+    "device": "Geraet"
+  },
+  "mainGrid": {
+    "overview": "Uebersicht",
+    "manufacturerData": "Herstellerdaten",
+    "manufacturerDescription": "Basierend auf den am CERN erfassten MAC-Adressen zeigt dies die am haeufigsten beobachteten Hersteller unter den aufgezeichneten Geraeten.",
+    "live": "Live",
+    "last30Days": "Letzte 30 Tage",
+    "total": "Gesamt",
+    "totalUnique": "Gesamt (eindeutig)",
+    "averagePerDay": "Durchschnitt / Tag"
+  },
+  "deviceView": {
+    "title": "Geraet: {{deviceId}}",
+    "clearAllFilters": "Alle Filter loeschen",
+    "ssid": "SSID",
+    "timestamp": "Zeitstempel"
+  },
+  "ssidView": {
+    "description": "Alle erfassten SSIDs mit ihrer Haeufigkeit und dem Zeitpunkt ihres Auftretens. Verwenden Sie die Suchleiste, um nach SSID-Namen zu filtern.",
+    "seenCount": "Anzahl Sichtungen",
+    "firstSeen": "Erstmals gesehen",
+    "lastSeen": "Zuletzt gesehen",
+    "downloadSuccess": "SSID-CSV erfolgreich heruntergeladen.",
+    "downloadError": "Herunterladen der SSID-CSV fehlgeschlagen."
+  },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "working": "Aktiv",
+    "off": "Aus"
+  },
+  "deviceGrid": {
+    "headers": {
+      "device": "Geraet",
+      "status": "Status",
+      "capturing": "Erfassung",
+      "probeRequest": "Probe Request",
+      "ssid": "SSID",
+      "mac": "MAC",
+      "location": "Standort",
+      "dailyCapture": "Taegliche Erfassung"
+    },
+    "tooltips": {
+      "device": "Geraetename",
+      "status": "Ein Geraet ist online, wenn es in den letzten 10 Minuten gesehen wurde.",
+      "capturing": "Das Geraet erfasst zwischen 7 und 18 Uhr (Status Aktiv).",
+      "probeRequest": "Gesamtzahl der erfassten Probe Requests pro Geraet.",
+      "ssid": "Gesamtzahl der erfassten SSIDs pro Geraet.",
+      "mac": "Gesamtzahl der erfassten MAC-Adressen pro Geraet.",
+      "location": "Standort des Geraets innerhalb des CERN.",
+      "dailyCapture": "Taegliche Erfassung fuer die letzten 30 Tage."
+    }
+  },
+  "sections": {
+    "capturedInformation": "Erfasste Informationen",
+    "capturedLastMonths": "Erfasste Informationen der letzten {{count}} Monate",
+    "probePerDeviceCumulative": "Probe Requests pro Geraet (kumulierte Summe)",
+    "probePerDayLast30": "Pro Tag erfasste Probe Requests in den letzten 30 Tagen",
+    "deviceComparison": "Datenvergleich zwischen den Erfassungsgeraeten"
+  },
+  "manufacturer": {
+    "company": "Unternehmen",
+    "country": "Land (alpha3)",
+    "count": "Anzahl",
+    "percentage": "Prozentsatz",
+    "countTooltip": "Gesamtzahl der von Unternehmensgeraeten erzeugten erfassten Probe Requests.",
+    "mapTitle": "Herstellerdaten nach Land (Weltkarte):"
+  },
+  "customizedGrid": {
+    "expandSankey": "Klicken, um zu erweitern und das Sankey-Diagramm zu sehen",
+    "sankeyTitle": "Geraet zu Hersteller zu Land (Sankey)",
+    "sankeyDescription": "Diese Sankey-Ansicht zeigt nur die Top-20-Hersteller pro Geraet.",
+    "heatmapTitle": "Geraete-Heatmap (CERN Meyrin)",
+    "heatmapDescription": "Die Heatmap-Intensitaet spiegelt die gesamte Anzahl erfasster Probe Requests pro Geraet wider."
+  },
+  "sankey": {
+    "empty": "Keine Sankey-Daten verfuegbar.",
+    "ariaLabel": "Sankey-Diagramm von Geraeten, Unternehmen und Laendern"
+  },
+  "highlighted": {
+    "title": "PNLS-DC Quellcode",
+    "description": "Sehen Sie den Code, der dieses Projekt ermoeglicht.",
+    "button": "Github-Repository"
+  },
+  "options": {
+    "openMenu": "Menue oeffnen",
+    "logout": "Abmelden"
+  },
+  "login": {
+    "title": "Anmelden",
+    "subtitle": "Melden Sie sich an, um zum PNLS-DC Monitoring-Dashboard fortzufahren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "emailPlaceholder": "name@email.com",
+    "passwordPlaceholder": "********",
+    "signIn": "Anmelden",
+    "signingIn": "Anmeldung laeuft...",
+    "invalidEmail": "Bitte geben Sie eine gueltige E-Mail-Adresse ein.",
+    "invalidPassword": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+    "signInFailed": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut."
+  }
+}

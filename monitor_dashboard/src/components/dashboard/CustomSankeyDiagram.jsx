@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function buildSankeyGraph(data) {
   const deviceNodes = [];
@@ -162,6 +163,7 @@ function layoutSankey(graph) {
 }
 
 export default function CustomSankeyDiagram({ sankeyData }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const labelColor = theme.vars
     ? theme.vars.palette.text.primary
@@ -179,7 +181,7 @@ export default function CustomSankeyDiagram({ sankeyData }) {
   if (!hasSankeyData) {
     return (
       <Typography variant="body2" color="text.secondary">
-        No Sankey data available.
+        {t('sankey.empty')}
       </Typography>
     );
   }
@@ -190,7 +192,7 @@ export default function CustomSankeyDiagram({ sankeyData }) {
         width={sankeyLayout.chartWidth}
         height={sankeyLayout.chartHeight}
         role="img"
-        aria-label="Sankey diagram of device, company, and country"
+        aria-label={t('sankey.ariaLabel')}
       >
         {sankeyLayout.links.map((link, index) => (
           <path

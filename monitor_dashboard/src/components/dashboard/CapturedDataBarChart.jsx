@@ -6,15 +6,17 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import { useTheme } from '@mui/material/styles';
 import { fetchMonthlyTotalsAllDevices } from '../../statsApi/StatsApi';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../i18nLocale';
 
-function getLastNMonths(n) {
+function getLastNMonths(n, locale) {
   const result = [];
   const now = new Date();
 
   for (let i = n - 1; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
 
-    const monthName = date.toLocaleString('en-US', {
+    const monthName = date.toLocaleString(locale, {
       month: 'short',
     });
 
@@ -25,6 +27,8 @@ function getLastNMonths(n) {
 }
 
 export default function CapturedDataBarChart() {
+  const { t, i18n } = useTranslation();
+  const locale = getLocale(i18n.resolvedLanguage);
   const theme = useTheme();
 
   const [months, setMonths] = useState([]);
@@ -95,7 +99,7 @@ export default function CapturedDataBarChart() {
       .then((data) => {
         const monthKeys = Object.keys(data); // e.g. ['2025-01', '2025-02', ...]
         setMonthCount(monthKeys.length);
-        setMonths(getLastNMonths(monthKeys.length));
+        setMonths(getLastNMonths(monthKeys.length, locale));
 
         // Prepare separate series for each metric
         const probeData = [];
@@ -110,8 +114,12 @@ export default function CapturedDataBarChart() {
         });
 
         const computedSeries = [
-          { id: 'probe-requests', label: 'Probe requests', data: probeData },
-          { id: 'ssid', label: 'SSID', data: ssidData },
+          {
+            id: 'probe-requests',
+            label: t('common.probeRequests'),
+            data: probeData,
+          },
+          { id: 'ssid', label: t('common.ssids'), data: ssidData },
           { id: 'mac', label: 'MAC', data: macData },
         ];
 
@@ -121,12 +129,12 @@ export default function CapturedDataBarChart() {
         setSeries(computedSeries);
       })
       .catch(console.error);
-  }, []);
+  }, [locale, t]);
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
       <CardContent>
         <Typography component="h2" variant="subtitle2" gutterBottom>
-          Captured information
+          {t('sections.capturedInformation')}
         </Typography>
         <Stack sx={{ justifyContent: 'space-between' }}>
           <Stack
@@ -142,7 +150,7 @@ export default function CapturedDataBarChart() {
             </Typography>
           </Stack>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Captured information for the last {monthCount} months
+            {t('sections.capturedLastMonths', { count: monthCount })}
           </Typography>
         </Stack>
         <BarChart

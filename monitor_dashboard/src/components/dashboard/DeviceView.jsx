@@ -24,36 +24,38 @@ import { subscribeToDeviceLiveData } from '../../firebase/firebase';
 import { fetchDeviceDataSeries } from '../../statsApi/StatsApi';
 import { FilterAlt } from '@mui/icons-material';
 import StatCard from './StatCard';
+import { useTranslation } from 'react-i18next';
 
 const DEFAULT_FILTERS = ['CERN', 'CERN-Visitors', '*'];
 const dataTotalTemplate = [
   {
     id: 'probeRequestCount',
-    title: 'Probe Requests',
+    titleKey: 'common.probeRequests',
     value: 0,
-    interval: 'Total',
+    intervalKey: 'mainGrid.total',
     trend: 'up',
     data: [],
   },
   {
     id: 'ssidCount',
-    title: 'SSIDs',
+    titleKey: 'common.ssids',
     value: 0,
-    interval: 'Total',
+    intervalKey: 'mainGrid.total',
     trend: 'up',
     data: [],
   },
   {
     id: 'macCount',
-    title: 'MAC addresses',
+    titleKey: 'common.macAddresses',
     value: 0,
-    interval: 'Total',
+    intervalKey: 'mainGrid.total',
     trend: 'up',
     data: [],
   },
 ];
 
 export default function DeviceView() {
+  const { t } = useTranslation();
   const { deviceId } = useParams();
   const [rows, setRows] = useState([]);
   const [filterInput, setFilterInput] = useState('');
@@ -143,7 +145,7 @@ export default function DeviceView() {
   return (
     <Box sx={{ width: '100%' }}>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        Device: {deviceId}
+        {t('deviceView.title', { deviceId })}
       </Typography>
       <Grid
         container
@@ -155,6 +157,8 @@ export default function DeviceView() {
           <Grid key={index} size={{ xs: 12, sm: 12, lg: 12 }}>
             <StatCard
               {...card}
+              title={t(card.titleKey)}
+              interval={t(card.intervalKey)}
               hideTrendValues={true}
               dayCount={totalDataSeriesDates}
               isLoading={isLoadingStats}
@@ -169,7 +173,7 @@ export default function DeviceView() {
               <Stack spacing={1}>
                 <OutlinedInput
                   size="small"
-                  placeholder="Filter SSID…"
+                  placeholder={t('common.filterSsid')}
                   value={filterInput}
                   onChange={(e) => setFilterInput(e.target.value)}
                   onKeyDown={handleFilterKeyDown}
@@ -184,9 +188,9 @@ export default function DeviceView() {
 
             {filters.length > 0 && (
               <>
-                <Tooltip title="Clear all filters">
+                <Tooltip title={t('deviceView.clearAllFilters')}>
                   <Chip
-                    label="Clear all"
+                    label={t('common.clearAll')}
                     color="error"
                     variant="outlined"
                     onClick={handleClearFilters}
@@ -237,7 +241,7 @@ export default function DeviceView() {
                       fontWeight: 600,
                     }}
                   >
-                    SSID
+                    {t('deviceView.ssid')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -246,7 +250,7 @@ export default function DeviceView() {
                       fontWeight: 600,
                     }}
                   >
-                    Timestamp
+                    {t('deviceView.timestamp')}
                   </TableCell>
                 </TableRow>
               </TableHead>

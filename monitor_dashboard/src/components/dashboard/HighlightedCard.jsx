@@ -6,8 +6,10 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 export default function HighlightedCard() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -29,10 +31,10 @@ export default function HighlightedCard() {
           gutterBottom
           sx={{ fontWeight: '600' }}
         >
-          PNLS-DC Source Code
+          {t('highlighted.title')}
         </Typography>
         <Typography sx={{ color: 'text.secondary', mb: '8px' }}>
-          View code that makes this project possible.
+          {t('highlighted.description')}
         </Typography>
         <Button
           variant="contained"
@@ -42,7 +44,7 @@ export default function HighlightedCard() {
           fullWidth={isSmallScreen}
           onClick={handleButtonClick}
         >
-          Github Repo
+          {t('highlighted.button')}
         </Button>
       </CardContent>
     </Card>

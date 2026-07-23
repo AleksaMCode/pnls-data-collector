@@ -11,12 +11,14 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import MenuButton from './MenuButton';
 import { firebaseSignOut } from '../../firebase/auth';
+import { useTranslation } from 'react-i18next';
 
 const MenuItem = styled(MuiMenuItem)({
   margin: '2px 0',
 });
 
 export default function OptionsMenu() {
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
 
@@ -38,7 +40,7 @@ export default function OptionsMenu() {
   return (
     <React.Fragment>
       <MenuButton
-        aria-label="Open menu"
+        aria-label={t('options.openMenu')}
         onClick={handleClick}
         sx={{ borderColor: 'transparent' }}
       >
@@ -75,7 +77,7 @@ export default function OptionsMenu() {
             },
           }}
         >
-          <ListItemText>Logout</ListItemText>
+          <ListItemText>{t('options.logout')}</ListItemText>
           <ListItemIcon>
             <LogoutRoundedIcon fontSize="small" />
           </ListItemIcon>
