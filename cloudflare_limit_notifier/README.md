@@ -22,6 +22,9 @@ Current implementation includes:
 2. Optional:
    - `CLOUDFLARE_R2_BUCKET_FILTER` to report only one bucket.
    - `CLOUDFLARE_GRAPHQL_ENDPOINT` (defaults to `https://api.cloudflare.com/client/v4/graphql`).
+   - `CLOUDFLARE_GRAPHQL_RETRY_ATTEMPTS` (defaults to `5`).
+   - `CLOUDFLARE_GRAPHQL_RETRY_DELAY_SECONDS` (defaults to `1`).
+   - `CLOUDFLARE_GRAPHQL_RETRY_MAX_DELAY_SECONDS` (defaults to `30`).
 
 ## Run
 
