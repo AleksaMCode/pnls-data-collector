@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { firebaseSignInWithEmailAndPassword } from '../../../firebase/auth';
 import { useAuth } from '../../../context/authContext';
+import { fetchStatsApiHealth } from '../../../statsApi/StatsApi';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -77,6 +78,14 @@ export default function Login() {
       }
     }
   };
+
+  useEffect(() => {
+    fetchStatsApiHealth({
+      cache: 'no-store',
+    }).catch(() => {
+      // Warm-up is best-effort and should never impact login UX.
+    });
+  }, []);
 
   return (
     <>

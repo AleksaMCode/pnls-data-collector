@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-07-25
+
+### Added
+
+- New public `stats-api` endpoint `GET /health` was added for lightweight service health checks and cold-start warm-up pings.
+
+### Changed
+
+- `monitor-dashboard` stats API client `apiGet` now supports optional request options (`auth`, `signal`, `cache`), with authenticated Bearer-token usage still enabled by default.
+- New `fetchStatsApiHealth` helper was added to `monitor-dashboard` stats API wrappers to perform unauthenticated health calls through the shared client layer.
+- Login page warm-up behavior now uses a fire-and-forget `GET /health` call through the shared stats API helper to proactively wake `stats-api` during sign-in.
+
 ## [3.1.0] - 2026-07-23
 
 ### Added

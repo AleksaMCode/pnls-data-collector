@@ -53,6 +53,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health", tags=["health"])
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 app.include_router(stats_router)
 
 

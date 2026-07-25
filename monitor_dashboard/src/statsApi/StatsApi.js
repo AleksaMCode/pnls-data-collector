@@ -1,5 +1,10 @@
 import { apiDownload, apiGet } from './client';
 
+// Lightweight unauthenticated health check used to warm up the API.
+export function fetchStatsApiHealth(options = {}) {
+  return apiGet('/health', undefined, { ...options, auth: false });
+}
+
 // Total unique/all-time counts.
 export function fetchTotalStats() {
   return apiGet('/stats/total');
