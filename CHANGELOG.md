@@ -8,13 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- New public `stats-api` endpoint `GET /health` was added for lightweight service health checks and cold-start warm-up pings.
+- New public `stats-api` endpoint `GET /health` was added for lightweight service health checks and cold-start warm-up pings. PR #369
 
 ### Changed
 
-- `monitor-dashboard` stats API client `apiGet` now supports optional request options (`auth`, `signal`, `cache`), with authenticated Bearer-token usage still enabled by default.
-- New `fetchStatsApiHealth` helper was added to `monitor-dashboard` stats API wrappers to perform unauthenticated health calls through the shared client layer.
-- Login page warm-up behavior now uses a fire-and-forget `GET /health` call through the shared stats API helper to proactively wake `stats-api` during sign-in.
+- `monitor-dashboard` stats API client `apiGet` now supports optional request options (`auth`, `signal`, `cache`), with authenticated Bearer-token usage still enabled by default. PR #369
+- New `fetchStatsApiHealth` helper was added to `monitor-dashboard` stats API wrappers to perform unauthenticated health calls through the shared client layer. PR #369
+- Login page warm-up behavior now uses a fire-and-forget `GET /health` call through the shared stats API helper to proactively wake `stats-api` during sign-in. PR #369
 
 ## [3.1.0] - 2026-07-23
 
