@@ -1,0 +1,13 @@
+services:
+  cloudflare_limit_notifier:
+    build:
+      context: ..
+      dockerfile: cloudflare_limit_notifier/Dockerfile
+    container_name: cloudflare_limit_notifier
+    env_file:
+      - ./.env
+    environment:
+      TZ: Europe/Paris
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    restart: unless-stopped
