@@ -43,6 +43,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `fetchStatsApiHealth` helper was added to `monitor-dashboard` stats API wrappers to perform unauthenticated health calls through the shared client layer. PR #369
 - Login page warm-up behavior now uses a fire-and-forget `GET /health` call through the shared stats API helper to proactively wake `stats-api` during sign-in. PR #369
 
+## [3.2.0] - 2026-08-01
+
+### Added
+
+- `cloudflare-limit-notifier` now exposes an HTTP trigger endpoint (`POST /check`) for on-demand Cloudflare R2 usage checks and Mattermost reporting. PR #367
+- Docker packaging was added for `cloudflare-limit-notifier`, including a dedicated `Dockerfile` and `docker-compose.yml`. PR #367
+
+### Changed
+
+- `cloudflare-limit-notifier` Cloudflare GraphQL client now uses `retry-go` with retry behavior for `429` and `5xx` responses, respects `Retry-After` when present, and logs retry attempts. PR #367
+- Cloudflare GraphQL retry configuration in `cloudflare-limit-notifier` is now environment-driven via `CLOUDFLARE_GRAPHQL_RETRY_ATTEMPTS`, `CLOUDFLARE_GRAPHQL_RETRY_DELAY_SECONDS`, and `CLOUDFLARE_GRAPHQL_RETRY_MAX_DELAY_SECONDS`. PR #367
+- Home server cron trigger for Cloudflare usage checks now sends a direct HTTP `POST` request to the notifier endpoint instead of invoking a shell wrapper script. PR #367
+
 ## [3.1.0] - 2026-07-23
 
 ### Added
