@@ -1,12 +1,13 @@
 # Cloudflare Limit Notifier (`cloudflare_limit_notifier`)
 
-`cloudflare_limit_notifier` is a microservice that fetches Cloudflare R2 monthly usage using the Cloudflare GraphQL API and compares usage against free-tier limits.
+`cloudflare_limit_notifier` is a microservice that exposes an HTTP endpoint for on-demand Cloudflare R2 usage checks.
 
 Current implementation includes:
 
 - `r2OperationsAdaptiveGroups` for operation counts (Class A / Class B).
 - `r2StorageAdaptiveGroups` for storage usage (`payloadSize + metadataSize`), using the latest point per bucket.
 - Monthly window from first day of current month until now.
+- HTTP trigger endpoint for running the check and sending a Mattermost report.
 
 ## Free-tier limits
 
@@ -17,6 +18,8 @@ Current implementation includes:
 ## Setup
 
 1. Copy/fill `.env` (already scaffolded) with:
+   - `HTTP_PORT` (required)
+   - `CHECK_ENDPOINT_PATH` (required, e.g. `/check`)
    - `CLOUDFLARE_API_TOKEN` (required)
    - `CLOUDFLARE_ACCOUNT_ID` (required)
 2. Optional:
@@ -30,4 +33,16 @@ Current implementation includes:
 
 ```bash
 go run .
+```
+
+## Trigger check
+
+```bash
+curl -X POST http://localhost:<HTTP_PORT><CHECK_ENDPOINT_PATH>
+```
+
+## Docker
+
+```bash
+docker compose up --build
 ```

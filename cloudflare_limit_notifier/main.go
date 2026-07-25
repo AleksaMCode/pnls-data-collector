@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/AleksaMCode/pnls-data-collector/util-go/common"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
@@ -20,16 +21,35 @@ func main() {
 		return
 	}
 
+	http.HandleFunc(CHECK_ENDPOINT_PATH, checkCloudflareUsageAndNotifyHandler)
+	log.Printf("%s listening on :%s%s", SERVICE_NAME, HTTP_PORT, CHECK_ENDPOINT_PATH)
+
+	if err := http.ListenAndServe(":"+HTTP_PORT, nil); err != nil {
+		logging.Fatal(fmt.Sprintf("HTTP server failed: %v", err))
+	}
+}
+
+func checkCloudflareUsageAndNotifyHandler(responseWriter http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(responseWriter, "Only POST method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	now := common.GetTimeNow(TIMEZONE)
 	client := newCloudflareClient()
 
 	usage, err := client.getCurrentMonthUsage(now)
 	if err != nil {
-		logging.Fatal(fmt.Sprintf("Failed to fetch Cloudflare R2 metrics: %v", err))
+		log.Printf("Failed to fetch Cloudflare R2 metrics: %v", err)
+		http.Error(responseWriter, "Failed to fetch Cloudflare R2 metrics", http.StatusInternalServerError)
 		return
 	}
 
 	sendUsageReport(usage)
+	responseWriter.WriteHeader(http.StatusOK)
+	if _, err := responseWriter.Write([]byte("Cloudflare usage check sent to Mattermost info channel.")); err != nil {
+		log.Printf("Failed to write response body: %v", err)
+	}
 }
 
 func sendUsageReport(usage usageMetrics) {

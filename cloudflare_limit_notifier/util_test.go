@@ -145,6 +145,29 @@ func TestGetPositiveUintEnv(t *testing.T) {
 	}
 }
 
+func TestNormalizePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "keeps leading slash", input: "/check", expected: "/check"},
+		{name: "adds leading slash", input: "check", expected: "/check"},
+		{name: "trims whitespace and keeps leading slash", input: "  /check  ", expected: "/check"},
+		{name: "trims whitespace and adds slash", input: "  check  ", expected: "/check"},
+		{name: "empty becomes empty", input: "", expected: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := normalizePath(tt.input)
+			if got != tt.expected {
+				t.Fatalf("normalizePath(%q) = %q, expected %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
 func strPtr(value string) *string {
 	return &value
 }
