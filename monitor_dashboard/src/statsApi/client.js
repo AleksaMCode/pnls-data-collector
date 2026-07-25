@@ -32,29 +32,40 @@ function buildUrl(path, params) {
 }
 
 /**
- * Performs an authenticated GET request against the stats API.
- * The Firebase ID token is attached as a Bearer token on every call.
+ * Performs a GET request against the stats API.
+ * By default, the Firebase ID token is attached as a Bearer token.
  *
  * @param {string} path - Endpoint path, e.g. "/stats/total".
  * @param {Object} [params] - Optional query parameters.
+ * @param {Object} [options] - Optional request options.
+ * @param {boolean} [options.auth=true] - Attach Firebase Bearer token.
+ * @param {AbortSignal} [options.signal] - Optional abort signal.
+ * @param {RequestCache} [options.cache] - Optional fetch cache mode.
  * @returns {Promise<any>} Parsed JSON response.
  */
-export async function apiGet(path, params) {
+export async function apiGet(path, params, options = {}) {
   const url = buildUrl(path, params);
+  const { auth: withAuth = true, signal, cache } = options;
+  const requestKey = `${withAuth ? 'auth' : 'public'}:${url}`;
 
-  if (inFlightRequests.has(url)) {
-    return inFlightRequests.get(url);
+  if (inFlightRequests.has(requestKey)) {
+    return inFlightRequests.get(requestKey);
   }
 
   const request = (async () => {
-    const token = await getAuthToken();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (withAuth) {
+      const token = await getAuthToken();
+      headers.Authorization = `Bearer ${token}`;
+    }
 
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
+      signal,
+      cache,
     });
 
     if (!response.ok) {
@@ -67,12 +78,12 @@ export async function apiGet(path, params) {
     return response.json();
   })();
 
-  inFlightRequests.set(url, request);
+  inFlightRequests.set(requestKey, request);
 
   try {
     return await request;
   } finally {
-    inFlightRequests.delete(url);
+    inFlightRequests.delete(requestKey);
   }
 }
 
