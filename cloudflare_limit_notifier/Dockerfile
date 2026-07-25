@@ -17,5 +17,6 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 COPY --from=builder /bin/cloudflare-limit-notifier /usr/local/bin/cloudflare-limit-notifier
+COPY cloudflare_limit_notifier/.env /app/.env
 
 ENTRYPOINT ["cloudflare-limit-notifier"]
