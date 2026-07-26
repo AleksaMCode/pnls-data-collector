@@ -74,7 +74,9 @@ async def ssid_mapping():
             logger.error(f"Mapping SSID '{ssid}' failed. Exception: {str(e)}")
             logger.info(f"Total mapped: {count}/{WIGLE_API_LIMIT}")
 
-    logger.info(f"SSID mapping workflow completed. Total mapped: {count}/{WIGLE_API_LIMIT}")
+    logger.info(
+        f"SSID mapping workflow completed. Total mapped: {count}/{WIGLE_API_LIMIT}"
+    )
 
 
 if __name__ == "__main__":

@@ -5,7 +5,9 @@ from ssid_geo_mapper.geo.reducer import haversine, reduce_locations
 
 class TestHaversine(unittest.TestCase):
     def test_returns_zero_for_identical_coordinates(self):
-        self.assertAlmostEqual(haversine(46.2044, 6.1432, 46.2044, 6.1432), 0.0, places=9)
+        self.assertAlmostEqual(
+            haversine(46.2044, 6.1432, 46.2044, 6.1432), 0.0, places=9
+        )
 
     def test_is_symmetric(self):
         a_to_b = haversine(46.2044, 6.1432, 47.3769, 8.5417)

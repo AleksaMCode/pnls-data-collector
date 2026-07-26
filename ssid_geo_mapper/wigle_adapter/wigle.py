@@ -1,8 +1,8 @@
 import os
 from http import HTTPStatus
 from typing import Tuple
-import httpx
 
+import httpx
 from dotenv import load_dotenv
 from tenacity import retry, retry_if_exception_type, stop_after_attempt
 

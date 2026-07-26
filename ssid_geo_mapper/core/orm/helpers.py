@@ -4,7 +4,7 @@ from typing import List
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_exponential
 
 from ssid_geo_mapper.core.orm._init_runtime import _session
-from ssid_geo_mapper.core.orm.models import SSIDGeo, SSIDGeoReduced, Country, SSID
+from ssid_geo_mapper.core.orm.models import SSID, Country, SSIDGeo, SSIDGeoReduced
 from util.logger import get_logger
 
 logger = get_logger(__name__)
@@ -78,10 +78,7 @@ def get_unmapped_ssids(limit: int) -> List[SSID]:
         with _session() as db:
             return (
                 db.query(SSID)
-                .filter(
-                    SSID.mapped.is_(False),
-                    SSID.has_geo.is_(False)
-                )
+                .filter(SSID.mapped.is_(False), SSID.has_geo.is_(False))
                 .order_by(SSID.id.asc())
                 .limit(limit)
                 .all()

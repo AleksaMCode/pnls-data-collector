@@ -23,9 +23,7 @@ class SSIDGeo(Base):
     country = Column(
         Integer, ForeignKey("country.id", ondelete="SET NULL"), nullable=True
     )
-    created_date = Column(
-        Date, nullable=False, server_default=text("CURRENT_DATE")
-    )
+    created_date = Column(Date, nullable=False, server_default=text("CURRENT_DATE"))
 
 
 class SSIDGeoReduced(Base):
@@ -38,9 +36,8 @@ class SSIDGeoReduced(Base):
     country = Column(
         Integer, ForeignKey("country.id", ondelete="SET NULL"), nullable=True
     )
-    created_date = Column(
-        Date, nullable=False, server_default=text("CURRENT_DATE")
-    )
+    created_date = Column(Date, nullable=False, server_default=text("CURRENT_DATE"))
+
 
 class SSID(Base):
     __tablename__ = "ssid"
@@ -50,6 +47,7 @@ class SSID(Base):
 
     mapped = Column(Boolean, nullable=False, default=False)
     has_geo = Column(Boolean, nullable=False, default=False)
+
 
 class Country(Base):
     __tablename__ = "country"
