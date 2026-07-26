@@ -78,7 +78,11 @@ def get_unmapped_ssids(limit: int) -> List[SSID]:
         with _session() as db:
             return (
                 db.query(SSID)
-                .filter(SSID.mapped.is_(False), SSID.has_geo.is_(False))
+                .filter(
+                    SSID.mapped.is_(False),
+                    SSID.has_geo.is_(False),
+                    SSID.ssid != "*",
+                )
                 .order_by(SSID.id.asc())
                 .limit(limit)
                 .all()
