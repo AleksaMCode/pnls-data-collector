@@ -1,0 +1,9 @@
+requests
+python-dotenv
+fastapi
+psycopg2-binary
+uvicorn
+SQLAlchemy
+tenacity
+httpx
+tqdm
