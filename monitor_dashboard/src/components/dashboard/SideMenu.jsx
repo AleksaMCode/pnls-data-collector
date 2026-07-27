@@ -5,6 +5,8 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import MenuContent from './MenuContent';
 import OptionsMenu from './OptionsMenu';
 import { useAuth } from '../../context/authContext';
@@ -12,6 +14,7 @@ import PnlsCard from './PnlsCard';
 import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 250;
+const collapsedDrawerWidth = 65;
 
 function getDisplayNameFromEmail(email) {
   if (!email) {
@@ -34,18 +37,22 @@ function getDisplayNameFromEmail(email) {
   return `${capitalized[0]} ${capitalized[1]}`;
 }
 
-const Drawer = styled(MuiDrawer)({
-  width: drawerWidth,
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})(({ open }) => ({
+  width: open ? drawerWidth : collapsedDrawerWidth,
   flexShrink: 0,
   boxSizing: 'border-box',
   mt: 10,
   [`& .${drawerClasses.paper}`]: {
-    width: drawerWidth,
+    width: open ? drawerWidth : collapsedDrawerWidth,
     boxSizing: 'border-box',
+    overflowX: 'hidden',
+    transition: 'width 200ms ease',
   },
-});
+}));
 
-export default function SideMenu() {
+export default function SideMenu({ open, onToggle }) {
   const { currentUser } = useAuth();
   const { t } = useTranslation();
   const displayName = getDisplayNameFromEmail(currentUser?.email);
@@ -53,6 +60,7 @@ export default function SideMenu() {
   return (
     <Drawer
       variant="permanent"
+      open={open}
       sx={{
         display: { xs: 'none', md: 'block' },
         [`& .${drawerClasses.paper}`]: {
@@ -63,15 +71,43 @@ export default function SideMenu() {
       <Box
         sx={{
           display: 'flex',
+          alignItems: 'center',
+          justifyContent: open ? 'space-between' : 'center',
           mt: 'calc(var(--template-frame-height, 0px) + 4px)',
           p: 1.5,
+          gap: 1,
         }}
       >
-        <PnlsCard
-          primary="PNLS-DC"
-          secondary={t('menu.monitoringDashboard')}
-          color="primary.main"
-        />
+        {open && (
+          <PnlsCard
+            primary="PNLS-DC"
+            secondary={t('menu.monitoringDashboard')}
+            color="primary.main"
+            icon={
+              <Box
+                component="img"
+                src="https://raw.githubusercontent.com/AleksaMCode/Preferred-Network-List-Sniffer/refs/heads/main/resources/rpis_logo.png"
+                alt="PNLS logo"
+                sx={{ width: 24, height: 24, objectFit: 'contain' }}
+              />
+            }
+          />
+        )}
+        <IconButton
+          size="small"
+          onClick={onToggle}
+          aria-label="toggle sidebar"
+          sx={{
+            height: 76,
+            width: 48,
+            borderRadius: 3,
+            border: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          {open ? <ChevronLeft /> : <ChevronRight />}
+        </IconButton>
       </Box>
       <Divider />
       <Box
@@ -82,7 +118,7 @@ export default function SideMenu() {
           flexDirection: 'column',
         }}
       >
-        <MenuContent />
+        <MenuContent collapsed={!open} />
       </Box>
       <Stack
         direction="row"
@@ -92,6 +128,7 @@ export default function SideMenu() {
           alignItems: 'center',
           borderTop: '1px solid',
           borderColor: 'divider',
+          justifyContent: open ? 'flex-start' : 'center',
         }}
       >
         <Avatar
@@ -100,18 +137,22 @@ export default function SideMenu() {
           src="/static/images/avatar/7.jpg"
           sx={{ width: 36, height: 36 }}
         />
-        <Box sx={{ mr: 'auto' }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 500, lineHeight: '16px' }}
-          >
-            {displayName}
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {currentUser?.email}
-          </Typography>
-        </Box>
-        <OptionsMenu />
+        {open && (
+          <>
+            <Box sx={{ mr: 'auto' }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, lineHeight: '16px' }}
+              >
+                {displayName}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {currentUser?.email}
+              </Typography>
+            </Box>
+            <OptionsMenu />
+          </>
+        )}
       </Stack>
     </Drawer>
   );

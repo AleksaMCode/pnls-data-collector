@@ -25,6 +25,7 @@ const xThemeComponents = {
 export default function Dashboard(props) {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const [sideMenuOpen, setSideMenuOpen] = useState(true);
 
   useEffect(() => {
     setLoading(true);
@@ -36,7 +37,10 @@ export default function Dashboard(props) {
       <AppTheme {...props} themeComponents={xThemeComponents}>
         <CssBaseline enableColorScheme />
         <Box sx={{ display: 'flex' }}>
-          <SideMenu />
+          <SideMenu
+            open={sideMenuOpen}
+            onToggle={() => setSideMenuOpen((prev) => !prev)}
+          />
           {/* Main content */}
           <Box
             component="main"
@@ -51,7 +55,7 @@ export default function Dashboard(props) {
               sx={(theme) => ({
                 position: 'sticky',
                 top: 0,
-                zIndex: theme.zIndex.drawer + 2,
+                zIndex: theme.zIndex.drawer - 1,
                 isolation: 'isolate',
                 flexShrink: 0,
                 width: '100%',
@@ -71,6 +75,7 @@ export default function Dashboard(props) {
               sx={{
                 mx: 3,
                 pb: 5,
+                pt: { xs: 0, md: 1.5 },
                 mt: { xs: 8, md: 0 },
               }}
             >

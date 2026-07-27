@@ -28,7 +28,8 @@ function getWorkingStatus(status) {
     }).format(now),
   );
 
-  return status === 'Online' && hour >= 7 && hour < 18 ? 'Working' : 'Off';
+  // return status === 'Online' && hour >= 7 && hour < 18 ? 'Working' : 'Off';
+  return status === 'Online' ? 'Working' : 'Off';
 }
 
 export default function CustomizedDataGrid({
