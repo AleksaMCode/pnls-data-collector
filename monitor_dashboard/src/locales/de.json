@@ -82,7 +82,7 @@
     "tooltips": {
       "device": "Geraetename",
       "status": "Ein Geraet ist online, wenn es in den letzten 10 Minuten gesehen wurde.",
-      "capturing": "Das Geraet erfasst zwischen 7 und 18 Uhr (Status Aktiv).",
+      "capturing": "Das Geraet erfasst rund um die Uhr (Status Aktiv).",
       "probeRequest": "Gesamtzahl der erfassten Probe Requests pro Geraet.",
       "ssid": "Gesamtzahl der erfassten SSIDs pro Geraet.",
       "mac": "Gesamtzahl der erfassten MAC-Adressen pro Geraet.",

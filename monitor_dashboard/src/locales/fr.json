@@ -82,7 +82,7 @@
     "tooltips": {
       "device": "Nom de l'appareil",
       "status": "Un appareil est en ligne s'il a ete vu dans les 10 dernieres minutes.",
-      "capturing": "L'appareil capture entre 7h et 18h (statut Actif).",
+      "capturing": "L'appareil capture 24h/24 et 7j/7 (statut Actif).",
       "probeRequest": "Nombre total de requetes Probe capturees pour l'appareil.",
       "ssid": "Nombre total de SSID captures pour l'appareil.",
       "mac": "Nombre total d'adresses MAC capturees pour l'appareil.",

@@ -122,7 +122,7 @@ export function getDeviceGridColumns(t) {
       ),
       renderCell: (params) => renderStatus(params.value, t),
     },
-    // Device is capturing between 7 AM and 6 PM (Working status), otherwise Off
+    // Device is capturing 24/7 (Working status), otherwise Off
     {
       field: 'capturing',
       headerName: t('deviceGrid.headers.capturing'),

@@ -82,7 +82,7 @@
     "tooltips": {
       "device": "Device name",
       "status": "Device is online if it was seen in the last 10 minutes.",
-      "capturing": "Device is capturing between 7 AM and 6 PM (status Working).",
+      "capturing": "Device is capturing 24/7 (status Working).",
       "probeRequest": "Total amount of captured Probe Requests for the device.",
       "ssid": "Total amount of captured SSIDs for the device.",
       "mac": "Total amount of captured MAC addresses for the device.",
