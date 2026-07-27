@@ -57,21 +57,7 @@ export default function MenuContent({ collapsed = false }) {
             <ListItemIcon sx={iconSx}>
               <HomeRoundedIcon />
             </ListItemIcon>
-            {!collapsed && (
-              <ListItemText
-                primary={t('common.home')}
-                sx={{
-                  opacity: collapsed ? 0 : 1,
-                  maxWidth: collapsed ? 0 : 160,
-                  transform: collapsed ? 'translateX(-4px)' : 'translateX(0)',
-                  transition:
-                    'opacity 200ms ease, max-width 200ms ease, transform 160ms ease',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  ml: collapsed ? 0 : 0.5,
-                }}
-              />
-            )}
+            {!collapsed && <ListItemText primary={t('common.home')} />}
           </ListItemButton>
         </ListItem>
 
