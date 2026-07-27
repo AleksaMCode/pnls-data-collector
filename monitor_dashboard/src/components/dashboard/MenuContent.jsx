@@ -27,11 +27,22 @@ const secondaryListItems = [
   { key: 'common.about', icon: <InfoRoundedIcon /> },
 ];
 
-export default function MenuContent() {
+export default function MenuContent({ collapsed = false }) {
   const [openDevices, setOpenDevices] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const iconSx = collapsed
+    ? {
+        minWidth: 'auto',
+        mr: 0,
+        display: 'flex',
+        justifyContent: 'center',
+        '& .MuiSvgIcon-root': {
+          fontSize: '1.5rem',
+        },
+      }
+    : undefined;
 
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: 'space-between' }}>
@@ -41,11 +52,26 @@ export default function MenuContent() {
           <ListItemButton
             selected={location.pathname === '/home'}
             onClick={() => navigate('/home')}
+            sx={collapsed ? { justifyContent: 'center' } : undefined}
           >
-            <ListItemIcon>
+            <ListItemIcon sx={iconSx}>
               <HomeRoundedIcon />
             </ListItemIcon>
-            <ListItemText primary={t('common.home')} />
+            {!collapsed && (
+              <ListItemText
+                primary={t('common.home')}
+                sx={{
+                  opacity: collapsed ? 0 : 1,
+                  maxWidth: collapsed ? 0 : 160,
+                  transform: collapsed ? 'translateX(-4px)' : 'translateX(0)',
+                  transition:
+                    'opacity 200ms ease, max-width 200ms ease, transform 160ms ease',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  ml: collapsed ? 0 : 0.5,
+                }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
 
@@ -54,27 +80,31 @@ export default function MenuContent() {
           <ListItemButton
             selected={location.pathname === '/ssids'}
             onClick={() => navigate('/ssids')}
+            sx={collapsed ? { justifyContent: 'center' } : undefined}
           >
-            <ListItemIcon>
+            <ListItemIcon sx={iconSx}>
               <Wifi />
             </ListItemIcon>
-            <ListItemText primary={t('common.ssids')} />
+            {!collapsed && <ListItemText primary={t('common.ssids')} />}
           </ListItemButton>
         </ListItem>
 
         {/* Devices (parent) */}
         <ListItem disablePadding>
-          <ListItemButton onClick={() => setOpenDevices(!openDevices)}>
-            <ListItemIcon>
+          <ListItemButton
+            onClick={() => setOpenDevices(!openDevices)}
+            sx={collapsed ? { justifyContent: 'center' } : undefined}
+          >
+            <ListItemIcon sx={iconSx}>
               <CellTower />
             </ListItemIcon>
-            <ListItemText primary={t('common.devices')} />
-            {openDevices ? <ExpandLess /> : <ExpandMore />}
+            {!collapsed && <ListItemText primary={t('common.devices')} />}
+            {!collapsed && (openDevices ? <ExpandLess /> : <ExpandMore />)}
           </ListItemButton>
         </ListItem>
 
         {/* Devices (children) */}
-        <Collapse in={openDevices} timeout="auto" unmountOnExit>
+        <Collapse in={!collapsed && openDevices} timeout="auto" unmountOnExit>
           <List component="div" dense disablePadding>
             {devices.map((device) => (
               <ListItem key={device} disablePadding sx={{ pl: 4 }}>
@@ -82,7 +112,7 @@ export default function MenuContent() {
                   selected={location.pathname === `/device/${device}`}
                   onClick={() => navigate(`/device/${device}`)}
                 >
-                  <ListItemIcon>
+                  <ListItemIcon sx={iconSx}>
                     <TapAndPlay />
                   </ListItemIcon>
                   <ListItemText primary={device} />
@@ -96,9 +126,11 @@ export default function MenuContent() {
         <Divider />
         {secondaryListItems.map((item, index) => (
           <ListItem key={index} disablePadding sx={{ display: 'block' }}>
-            <ListItemButton>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={t(item.key)} />
+            <ListItemButton
+              sx={collapsed ? { justifyContent: 'center' } : undefined}
+            >
+              <ListItemIcon sx={iconSx}>{item.icon}</ListItemIcon>
+              {!collapsed && <ListItemText primary={t(item.key)} />}
             </ListItemButton>
           </ListItem>
         ))}
