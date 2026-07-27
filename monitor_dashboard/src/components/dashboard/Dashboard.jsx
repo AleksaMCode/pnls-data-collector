@@ -51,7 +51,7 @@ export default function Dashboard(props) {
               sx={(theme) => ({
                 position: 'sticky',
                 top: 0,
-                zIndex: theme.zIndex.drawer + 2,
+                zIndex: theme.zIndex.drawer - 1,
                 isolation: 'isolate',
                 flexShrink: 0,
                 width: '100%',
