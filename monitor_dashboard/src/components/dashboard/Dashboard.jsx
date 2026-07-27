@@ -71,6 +71,7 @@ export default function Dashboard(props) {
               sx={{
                 mx: 3,
                 pb: 5,
+                pt: { xs: 0, md: 1.5 },
                 mt: { xs: 8, md: 0 },
               }}
             >
