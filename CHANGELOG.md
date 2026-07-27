@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2026-07-27
+
+### Changed
+
+- `monitor-dashboard` side navigation now supports a foldable desktop mini-rail layout with an inline chevron toggle in the menu header, preserving quick icon-based navigation while collapsed. PR #375
+
+### Fixed
+
+- Dashboard header stacking order was adjusted so the sticky header no longer overlays the side menu during horizontal scroll interactions. PR #375
+- Device-grid capturing tooltip was updated to reflect continuous 24/7 capture operation. PR #375
+
 ## [3.1.1] - 2026-07-25
 
 ### Added
