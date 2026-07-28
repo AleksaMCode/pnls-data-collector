@@ -12,6 +12,7 @@ from . import logger
 class MattermostBot(str, Enum):
     AGGREGATOR = "Aggregator"
     HOUSEKEEPING = "Housekeeping"
+    SSID_GEO_MAPPER = "SSID GEO Mapper"
 
 
 BOT_ICON_FILENAME_MAP = {
@@ -19,6 +20,8 @@ BOT_ICON_FILENAME_MAP = {
     MattermostBot.AGGREGATOR: "aggregator.png",
     # From https://www.flaticon.com/free-icon/cleaning_14261556
     MattermostBot.HOUSEKEEPING: "housekeeping.png",
+    # From https://www.flaticon.com/free-icon/cluster_6601240
+    MattermostBot.SSID_GEO_MAPPER: "ssid_geo_mapper.png",
 }
 
 BOT_ICON_BASE_URL = (

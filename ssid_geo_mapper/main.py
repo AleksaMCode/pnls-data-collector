@@ -14,10 +14,12 @@ from ssid_geo_mapper.settings import (
     SERVICE_DESCRIPTION,
     SERVICE_NAME,
     SERVICE_VERSION,
+    SLACK_WEBHOOK_URL,
     WIGLE_API_LIMIT,
 )
 from ssid_geo_mapper.wigle_adapter.wigle import Wigle
 from util.logger import get_logger
+from util.mattermost.helpers import MattermostBot, send_webhook_message
 
 logger = get_logger(__name__)
 
@@ -50,7 +52,13 @@ app.add_middleware(
     summary="Maps SSIDs from DB",
 )
 async def ssid_mapping():
-    logger.info("SSID mapping workflow started.")
+    msg = "SSID GEO mapping workflow started."
+    logger.info(msg)
+    send_webhook_message(
+        msg,
+        webhook=SLACK_WEBHOOK_URL,
+        bot_name=MattermostBot.SSID_GEO_MAPPER,
+    )
     wigle = Wigle()
     count = 0
     ssids = get_unmapped_ssids(WIGLE_API_LIMIT)
@@ -74,8 +82,14 @@ async def ssid_mapping():
             logger.error(f"Mapping SSID '{ssid}' failed. Exception: {str(e)}")
             logger.info(f"Total mapped: {count}/{WIGLE_API_LIMIT}")
 
-    logger.info(
-        f"SSID mapping workflow completed. Total mapped: {count}/{WIGLE_API_LIMIT}"
+    msg = (
+        f"SSID GEO mapping workflow completed. Total mapped: {count}/{WIGLE_API_LIMIT}"
+    )
+    logger.info(msg)
+    send_webhook_message(
+        msg,
+        webhook=SLACK_WEBHOOK_URL,
+        bot_name=MattermostBot.SSID_GEO_MAPPER,
     )
 
 
