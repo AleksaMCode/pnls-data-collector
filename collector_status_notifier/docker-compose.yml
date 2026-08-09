@@ -1,0 +1,19 @@
+services:
+  collector_status_notifier:
+    build:
+      context: ..
+      dockerfile: ./collector_status_notifier/Dockerfile
+    container_name: collector_status_notifier
+    env_file:
+      - ./.env
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./firebase_credentials.json:/app/firebase_credentials.json:ro
+    networks:
+      - pnls
+    restart: unless-stopped
+
+networks:
+  pnls:
+    name: pnls
+    driver: bridge

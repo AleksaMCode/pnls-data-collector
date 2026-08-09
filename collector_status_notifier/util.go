@@ -22,6 +22,10 @@ func loadEnvVariables() {
 	DATADOG_APP_KEY = os.Getenv("DATADOG_APP_KEY")
 	DATADOG_HEARTBEAT_METRIC = os.Getenv("DATADOG_HEARTBEAT_METRIC")
 	DATADOG_HOST = os.Getenv("DATADOG_HOST")
+	REDIS_URL = os.Getenv("REDIS_URL")
+	REDIS_PORT = os.Getenv("REDIS_PORT")
+	REDIS_PASSWORD = os.Getenv("REDIS_PASSWORD")
+	REDIS_DB = os.Getenv("REDIS_DB")
 }
 
 // Deprecated: Shouldn't be used anymore as this service now works all the time. See #296

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Redis-backed offline state caching was added to `collector-status-notifier` to persist per-device outage state (`first_discovered_at`, `updated_at`) until recovery. PR #356
+- Docker support was added for `collector-status-notifier`. PR #356
+
+### Changed
+
+- `collector-status-notifier` now sends Mattermost alerts only on device status transitions (first offline and first online recovery) instead of repeated offline checks. PR #356
+
 ### Fixed
 
 - `monitor-dashboard` side-menu `Home` item spacing was aligned with `SSIDs` and `Devices` by removing custom text-offset styling, fixing inconsistent icon-to-label distance. PR #377
@@ -155,4 +164,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Multiple bug fixes across collector, aggregator, dashboard, and metrics-agent workflows to improve production stability.
 - Import/runtime issues, CI formatting checks, and service-level regressions identified during pre-release stabilization.
-
