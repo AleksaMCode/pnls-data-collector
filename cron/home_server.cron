@@ -6,4 +6,4 @@
 #0 23 * * * curl -sS -X POST "http://localhost:8080/api/workflow/db_backup_workflow?version=1" -H "Content-Type: application/json" -d "{}" >> /home/rpi5/Desktop/services/pnls-data-collector/db_backup/db_backup_trigger.log 2>&1
 0 20 */5 * * /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_cloud_notifier.sh
 # @reboot /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_home_limit.sh
-0 20 * * * curl -sS -X POST "http://localhost:9091/check" >> /home/rpi5/Desktop/services/pnls-data-collector/home_server_limit_notifier.log 2>&1
+0 20 * * * curl -sS -X POST "http://localhost:9092/check" >> /home/rpi5/Desktop/services/pnls-data-collector/home_server_limit_notifier.log 2>&1
