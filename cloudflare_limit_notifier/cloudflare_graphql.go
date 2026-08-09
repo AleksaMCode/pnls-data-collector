@@ -3,11 +3,17 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
+	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
+
+	retry "github.com/avast/retry-go/v4"
 )
 
 type usageMetrics struct {
@@ -67,6 +73,16 @@ type cloudflareClient struct {
 	endpoint   string
 	token      string
 	accountTag string
+}
+
+type retryableHTTPError struct {
+	statusCode int
+	body       string
+	retryAfter time.Duration
+}
+
+func (e *retryableHTTPError) Error() string {
+	return fmt.Sprintf("cloudflare graphql returned status %d: %s", e.statusCode, e.body)
 }
 
 func newCloudflareClient() *cloudflareClient {
@@ -203,40 +219,106 @@ func (c *cloudflareClient) query(query string, variables map[string]any, out any
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, c.endpoint, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-	req.Header.Set("Content-Type", "application/json")
+	err = retry.Do(
+		func() error {
+			req, reqErr := http.NewRequest(http.MethodPost, c.endpoint, bytes.NewReader(body))
+			if reqErr != nil {
+				return retry.Unrecoverable(reqErr)
+			}
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+			req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+			resp, doErr := c.httpClient.Do(req)
+			if doErr != nil {
+				return doErr
+			}
+			defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("cloudflare graphql returned status %d: %s", resp.StatusCode, string(respBody))
+			respBody, readErr := io.ReadAll(resp.Body)
+			if readErr != nil {
+				return readErr
+			}
+			if resp.StatusCode >= 400 {
+				httpErr := &retryableHTTPError{
+					statusCode: resp.StatusCode,
+					body:       string(respBody),
+				}
+				if resp.StatusCode == http.StatusTooManyRequests {
+					if retryAfter, ok := parseRetryAfterHeader(resp.Header.Get("Retry-After"), time.Now()); ok {
+						httpErr.retryAfter = retryAfter
+					}
+				}
+				if isRetryableHTTPStatus(resp.StatusCode) {
+					return httpErr
+				}
+				return retry.Unrecoverable(httpErr)
+			}
+
+			var gqlResp gqlResponse
+			if unmarshalErr := json.Unmarshal(respBody, &gqlResp); unmarshalErr != nil {
+				return retry.Unrecoverable(unmarshalErr)
+			}
+			if len(gqlResp.Errors) > 0 {
+				messages := make([]string, 0, len(gqlResp.Errors))
+				for _, e := range gqlResp.Errors {
+					messages = append(messages, e.Message)
+				}
+				return retry.Unrecoverable(fmt.Errorf("cloudflare graphql error(s): %s", strings.Join(messages, "; ")))
+			}
+
+			if unmarshalErr := json.Unmarshal(gqlResp.Data, out); unmarshalErr != nil {
+				return retry.Unrecoverable(unmarshalErr)
+			}
+			return nil
+		},
+		retry.Attempts(GRAPHQL_RETRY_ATTEMPTS),
+		retry.Delay(time.Duration(GRAPHQL_RETRY_DELAY)*time.Second),
+		retry.MaxDelay(time.Duration(GRAPHQL_RETRY_MAX_DELAY)*time.Second),
+		retry.LastErrorOnly(true),
+		retry.DelayType(func(n uint, err error, _ *retry.Config) time.Duration {
+			var httpErr *retryableHTTPError
+			if errors.As(err, &httpErr) && httpErr.statusCode == http.StatusTooManyRequests && httpErr.retryAfter > 0 {
+				return httpErr.retryAfter
+			}
+			return time.Duration(math.Pow(2, float64(n))) * time.Second
+		}),
+		retry.RetryIf(func(err error) bool {
+			var httpErr *retryableHTTPError
+			if errors.As(err, &httpErr) {
+				return isRetryableHTTPStatus(httpErr.statusCode)
+			}
+			return true
+		}),
+		retry.OnRetry(func(n uint, err error) {
+			log.Printf("Cloudflare GraphQL retry attempt %d due to error: %v", n+1, err)
+		}),
+	)
+	return err
+}
+
+func isRetryableHTTPStatus(statusCode int) bool {
+	return statusCode == http.StatusTooManyRequests || statusCode >= 500
+}
+
+func parseRetryAfterHeader(headerValue string, now time.Time) (time.Duration, bool) {
+	if headerValue == "" {
+		return 0, false
 	}
 
-	var gqlResp gqlResponse
-	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
-		return err
-	}
-	if len(gqlResp.Errors) > 0 {
-		messages := make([]string, 0, len(gqlResp.Errors))
-		for _, e := range gqlResp.Errors {
-			messages = append(messages, e.Message)
+	if seconds, err := strconv.Atoi(strings.TrimSpace(headerValue)); err == nil {
+		if seconds <= 0 {
+			return 0, false
 		}
-		return fmt.Errorf("cloudflare graphql error(s): %s", strings.Join(messages, "; "))
+		return time.Duration(seconds) * time.Second, true
 	}
 
-	return json.Unmarshal(gqlResp.Data, out)
+	if retryAt, err := http.ParseTime(headerValue); err == nil {
+		delay := retryAt.Sub(now)
+		if delay > 0 {
+			return delay, true
+		}
+	}
+	return 0, false
 }
 
 func classifyActionType(actionType string) string {

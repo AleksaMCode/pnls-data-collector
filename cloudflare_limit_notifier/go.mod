@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/AleksaMCode/pnls-data-collector/util-go v0.0.0
+	github.com/avast/retry-go/v4 v4.7.0
 	github.com/joho/godotenv v1.5.1
 	golang.org/x/text v0.34.0
 )

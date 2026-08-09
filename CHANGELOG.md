@@ -4,17 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.2.0] - 2026-08-09
 
 ### Added
 
 - Redis-backed offline state caching was added to `collector-status-notifier` to persist per-device outage state (`first_discovered_at`, `updated_at`) until recovery. PR #356
 - Docker support was added for `collector-status-notifier`. PR #356
+- `cloudflare-limit-notifier` now exposes an HTTP trigger endpoint (`POST /check`) for on-demand Cloudflare R2 usage checks and Mattermost reporting. PR #367
+- Docker support was added for `cloudflare-limit-notifier`. PR #367
 
 ### Changed
 
 - `collector-status-notifier` now sends Mattermost alerts only on device status transitions (first offline and first online recovery) instead of repeated offline checks. PR #356
 - Go service logging now writes to both rotating file logs and stdout/stderr (console), so container runtime logs are visible while preserving local log rotation. PR #385
+- `cloudflare-limit-notifier` Cloudflare GraphQL client now uses `retry-go` with retry behavior for `429` and `5xx` responses, respects `Retry-After` when present, and logs retry attempts. PR #367
+  - Cloudflare GraphQL retry configuration in `cloudflare-limit-notifier` is now environment-driven via `CLOUDFLARE_GRAPHQL_RETRY_ATTEMPTS`, `CLOUDFLARE_GRAPHQL_RETRY_DELAY_SECONDS`, and `CLOUDFLARE_GRAPHQL_RETRY_MAX_DELAY_SECONDS`. PR #367
+- Home server cron trigger for Cloudflare usage checks now sends a direct HTTP `POST` request to the notifier endpoint instead of invoking a shell wrapper script. PR #367
 
 ### Fixed
 
