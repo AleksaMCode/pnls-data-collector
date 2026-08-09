@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"io"
 	"log"
 	"os"
 	"time"
@@ -10,13 +11,14 @@ import (
 )
 
 func InitLogging(logFile string) {
-	log.SetOutput(&lumberjack.Logger{
+	logger := &lumberjack.Logger{
 		Filename:   logFile,
 		MaxSize:    1_000, // Max size in MB before rotating
 		MaxBackups: 3,
 		MaxAge:     28,
 		Compress:   true,
-	})
+	}
+	log.SetOutput(io.MultiWriter(os.Stdout, logger))
 }
 
 func InitSentry(sentryDSN string, serviceName string) {
