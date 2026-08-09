@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - `collector-status-notifier` now sends Mattermost alerts only on device status transitions (first offline and first online recovery) instead of repeated offline checks. PR #356
+- Go service logging now writes to both rotating file logs and stdout/stderr (console), so container runtime logs are visible while preserving local log rotation. PR #385
 
 ### Fixed
 
