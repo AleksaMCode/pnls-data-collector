@@ -7,3 +7,4 @@
 0 20 */5 * * curl -sS -X POST "http://localhost:9099/check" >> /home/rpi5/Desktop/services/pnls-data-collector/cloudflare_limit_notifier.log 2>&1
 # @reboot /bin/bash /home/rpi5/Desktop/services/pnls-data-collector/start_home_limit.sh
 0 20 * * * curl -sS -X POST "http://localhost:9092/check" >> /home/rpi5/Desktop/services/pnls-data-collector/home_server_limit_notifier.log 2>&1
+0 5 * * * curl -sS --fail -X POST "http://localhost:9089/ssid_mapping" >> /home/rpi5/Desktop/services/pnls-data-collector/ssid_geo_mapper.log 2>&1

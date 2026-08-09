@@ -259,6 +259,7 @@ firebase_credentials.json
 settings.py
 !stats_api/settings.py
 !stats/settings.py
+!ssid_geo_mapper/settings.py
 
 # GO
 

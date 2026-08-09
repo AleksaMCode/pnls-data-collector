@@ -5,7 +5,7 @@ repos:
       - id: isort
         name: isort (python imports)
         args: ["--profile", "black"]
-        files: ^(aggregator|collector|firebase_housekeeping|tests|util|collector_metrics_agent|orchestrator|stats|stats_api)/
+        files: ^(aggregator|collector|firebase_housekeeping|tests|util|collector_metrics_agent|orchestrator|stats|stats_api|ssid_geo_mapper)/
         types: [python]
 
   - repo: https://github.com/psf/black
@@ -13,5 +13,5 @@ repos:
     hooks:
       - id: black
         name: black (python formatter)
-        files: ^(aggregator|collector|firebase_housekeeping|tests|util|collector_metrics_agent|orchestrator|stats|stats_api)/
+        files: ^(aggregator|collector|firebase_housekeeping|tests|util|collector_metrics_agent|orchestrator|stats|stats_api|ssid_geo_mapper)/
         types: [python]
