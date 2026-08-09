@@ -13,8 +13,6 @@ import (
 	"time"
 )
 
-const datadogQueryWindow = 5 * time.Minute
-
 type datadogQueryResponse struct {
 	Status string   `json:"status"`
 	Errors []string `json:"errors"`
@@ -43,7 +41,7 @@ func validateDatadogDeviceData(ctx context.Context) error {
 				"Device `%s` has no `%s` datapoints in Datadog within the last %s",
 				device,
 				DATADOG_HEARTBEAT_METRIC,
-				datadogQueryWindow.String(),
+				COLLECTOR_TIMEOUT.String(),
 			)
 			processDeviceStatus(ctx, device, true, message)
 			continue
@@ -69,7 +67,7 @@ func validateDatadogDeviceData(ctx context.Context) error {
 
 func getDatadogLastSeen(ctx context.Context, client *http.Client, device string) (time.Time, error) {
 	now := time.Now().Unix()
-	from := now - int64(datadogQueryWindow.Seconds())
+	from := now - int64(COLLECTOR_TIMEOUT.Seconds())
 	query := fmt.Sprintf("avg:%s{host:%s}", DATADOG_HEARTBEAT_METRIC, device)
 
 	requestURL := fmt.Sprintf(
