@@ -23,7 +23,7 @@ width="100%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 1</b>: PNLS-DC <code>3.0.0</code> system overview</label>
+    <label><b>Fig. 1</b>: PNLS-DC <code>3.2.0</code> system overview</label>
     </p>
 </p>
 
