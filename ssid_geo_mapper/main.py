@@ -64,27 +64,26 @@ async def ssid_mapping():
     ssids = get_unmapped_ssids(WIGLE_API_LIMIT)
 
     for ssid in tqdm(ssids, desc="Mapping SSIDs"):
-        count += 1
         try:
             logger.info(
-                f"Mapping SSID '{ssid.ssid}' using WIGLE API. Count: {count}/{WIGLE_API_LIMIT}"
+                f"Mapping SSID '{ssid.ssid}' using WIGLE API. Count: {count + 1}/{WIGLE_API_LIMIT}"
             )
             locations, reduced_locations = wigle.lookup_SSID(ssid.ssid)
 
             if not locations:
-                # If there is no location, the SSID is mapped with not GEO location
-                update_ssid_mapped(ssid.id)
+                # If there is no location, the SSID is mapped with GEO location flag set to False.
+                update_ssid_mapped(ssid.id, has_geo=False)
                 continue
 
             insert_ssid_geo_batch(ssid.id, locations, reduced_locations)
-            logger.info(f"Mapping SSID '{ssid}' complete.")
+            count += 1
+            logger.info(
+                f"Mapping SSID '{ssid.ssid}' complete with {len(locations)} locations."
+            )
         except Exception as e:
-            logger.error(f"Mapping SSID '{ssid}' failed. Exception: {str(e)}")
-            logger.info(f"Total mapped: {count}/{WIGLE_API_LIMIT}")
+            logger.error(f"Mapping SSID '{ssid.ssid}' failed. Exception: {str(e)}")
 
-    msg = (
-        f"SSID GEO mapping workflow completed. Total mapped: {count}/{WIGLE_API_LIMIT}"
-    )
+    msg = f"SSID GEO mapping workflow completed. Total mapped successfully: {count}/{WIGLE_API_LIMIT}"
     logger.info(msg)
     send_webhook_message(
         msg,
