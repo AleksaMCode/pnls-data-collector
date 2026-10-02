@@ -9,21 +9,26 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getLocale } from '../../i18nLocale';
 
-function getLastNMonths(n, locale) {
-  const result = [];
-  const now = new Date();
+function formatMonthKeyToLabel(monthKey, locale) {
+  const [yearStr, monthStr] = String(monthKey).split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
 
-  for (let i = n - 1; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-
-    const monthName = date.toLocaleString(locale, {
-      month: 'short',
-    });
-
-    result.push(monthName);
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    month < 1 ||
+    month > 12
+  ) {
+    return String(monthKey);
   }
 
-  return result;
+  const date = new Date(year, month - 1, 1);
+  const monthName = date
+    .toLocaleString(locale, { month: 'short' })
+    .toLowerCase();
+  const yearShort = String(year).slice(-2);
+  return `${monthName}-${yearShort}`;
 }
 
 export default function CapturedDataBarChart() {
@@ -99,7 +104,9 @@ export default function CapturedDataBarChart() {
       .then((data) => {
         const monthKeys = Object.keys(data); // e.g. ['2025-01', '2025-02', ...]
         setMonthCount(monthKeys.length);
-        setMonths(getLastNMonths(monthKeys.length, locale));
+        setMonths(
+          monthKeys.map((monthKey) => formatMonthKeyToLabel(monthKey, locale)),
+        );
 
         // Prepare separate series for each metric
         const probeData = [];
