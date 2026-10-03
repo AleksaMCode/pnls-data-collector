@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - `monitor-dashboard` Captured Info chart now uses month-year labels (e.g. `oct-25`) to prevent month-label collisions across years. PR #402
+- `stats-api` Logfire initialization order was fixed by moving observability setup to explicit startup initialization. PR #404
 
 ## [3.2.0] - 2026-08-09
 

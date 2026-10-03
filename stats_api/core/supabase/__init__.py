@@ -27,4 +27,12 @@ SessionFactory = sessionmaker(
 )
 
 _session = SessionFactory
-logfire.instrument_sqlalchemy(db)
+_sqlalchemy_instrumented = False
+
+
+def init_supabase_observability():
+    global _sqlalchemy_instrumented
+    if _sqlalchemy_instrumented:
+        return
+    logfire.instrument_sqlalchemy(db)
+    _sqlalchemy_instrumented = True
