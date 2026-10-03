@@ -1,4 +1,6 @@
 import os
+import random
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -16,6 +18,8 @@ from ssid_geo_mapper.settings import (
     SERVICE_VERSION,
     SLACK_WEBHOOK_URL,
     WIGLE_API_LIMIT,
+    WIGLE_BASE_DELAY_SECONDS,
+    WIGLE_DELAY_JITTER_SECONDS,
 )
 from ssid_geo_mapper.wigle_adapter.wigle import Wigle
 from util.logger import get_logger
@@ -82,6 +86,12 @@ async def ssid_mapping():
             )
         except Exception as e:
             logger.error(f"Mapping SSID '{ssid.ssid}' failed. Exception: {str(e)}")
+        finally:
+            # Proactively pace outgoing Wigle lookups to avoid hitting rate limits.
+            delay_seconds = WIGLE_BASE_DELAY_SECONDS + random.uniform(
+                0.0, WIGLE_DELAY_JITTER_SECONDS
+            )
+            time.sleep(delay_seconds)
 
     msg = f"SSID GEO mapping workflow completed. Total mapped successfully: {count}/{WIGLE_API_LIMIT}"
     logger.info(msg)
