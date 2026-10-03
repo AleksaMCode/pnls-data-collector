@@ -17,6 +17,7 @@ logging.basicConfig(
 )
 
 sentry_logging = LoggingIntegration(level=logging.INFO, event_level=logging.WARNING)
+_observability_initialized = False
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=2))
@@ -31,8 +32,13 @@ def sentry_init():
     )
 
 
-sentry_init()
-logfire.configure()
+def init_observability():
+    global _observability_initialized
+    if _observability_initialized:
+        return
+    sentry_init()
+    logfire.configure()
+    _observability_initialized = True
 
 
 def get_logger(name: str):

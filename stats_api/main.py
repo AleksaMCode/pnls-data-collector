@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 import logfire
 from core.redis.helpers import init_redis_cache
+from core.supabase import init_supabase_observability
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from middleware import FirebaseAuthMiddleware, setup_firebase_auth
@@ -10,14 +11,16 @@ from routers import stats_router
 from settings import SERVICE_DESCRIPTION, SERVICE_NAME, SERVICE_VERSION
 from starlette.middleware.cors import CORSMiddleware
 
-from util.logger import get_logger
+from util.logger import get_logger, init_observability
 
 load_dotenv()
+init_observability()
 logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_supabase_observability()
     redis_client = await init_redis_cache()
     setup_firebase_auth()
     logger.info("Server starting.")
