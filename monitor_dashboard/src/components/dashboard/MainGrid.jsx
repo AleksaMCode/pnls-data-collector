@@ -11,7 +11,8 @@ import HighlightedCard from './HighlightedCard';
 import CapturedDataBarChart from './CapturedDataBarChart';
 import SessionsChart from './SessionsChart';
 import StatCard from './StatCard';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { subscribeToLiveProbeRequestCount } from '../../firebase/firebase';
 import {
   fetchAverageDailyCounts,
@@ -121,8 +122,6 @@ const averageDailyTemplate = [
 
 export default function MainGrid() {
   const { t } = useTranslation();
-  // Total amount of captured data
-  const [dataTotal, setDataTotal] = useState(dataTotalTemplate);
   // Initial count for Probe Requsts
   const [initialCount, setInitialCount] = useState(0);
   // Live count of Probe Requests
@@ -131,72 +130,115 @@ export default function MainGrid() {
   // TODO Store devices somewhere else or better yet fetch from Firebase device names
   const devices = ['RPI-1', 'RPI-2', 'RPI-3'];
   const { enabled } = useLiveCount();
-  // Last 30 days data
-  const [dataLast30Days, setDataLast30Days] = useState(data);
-  const [totalDataSeriesDates, setTotalDataSeriesDates] = useState(null);
-  const [perDeviceTotalData, setPerDeviceTotalData] = useState(null);
-  const [probeSeriesPerDevice, setProbeSeriesPerDevice] = useState(null);
-  const [sankeyData, setSankeyData] = useState({});
-  const [isLoadingTotalStats, setIsLoadingTotalStats] = useState(true);
-  const [averageDailyData, setAverageDailyData] =
-    useState(averageDailyTemplate);
-  const [isLoadingAverageDaily, setIsLoadingAverageDaily] = useState(true);
-  const [manufacturers, setManufacturers] = useState([]);
-  const [isLoadingManufacturers, setIsLoadingManufacturers] = useState(false);
   const [isManufacturerExpanded, setIsManufacturerExpanded] = useState(false);
+  const [shouldLoadManufacturers, setShouldLoadManufacturers] = useState(false);
+  const [shouldLoadSankey, setShouldLoadSankey] = useState(false);
   // Only render the heavy world map once the accordion has finished expanding,
   // so the open/close animation stays smooth.
   const [isManufacturerEntered, setIsManufacturerEntered] = useState(false);
-  // Guards so the lazy-loaded sections only fire their API call once, on first expand.
-  const hasFetchedManufacturers = useRef(false);
-  const hasFetchedSankey = useRef(false);
 
-  useEffect(() => {
-    fetchProbeRequestsPerDeviceLastNDays(30)
-      .then((data) => {
-        setProbeSeriesPerDevice(data);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch probe series:', err);
-      });
-  }, []);
-  useEffect(() => {
-    fetchTotalPerDeviceStats()
-      .then((data) => {
-        setPerDeviceTotalData(data);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch all series:', err);
-      });
-  }, []);
+  const probeSeriesPerDeviceQuery = useQuery({
+    queryKey: ['probe-requests-per-device', 30],
+    queryFn: () => fetchProbeRequestsPerDeviceLastNDays(30),
+  });
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch both periods in parallel to avoid a request waterfall.
-        const [last30, prev30] = await Promise.all([
-          // Fetch last 30 days totals & series
-          fetchLast30DaysTotalsWithSeries(),
-          // Fetch previous 30 days totals & series
-          fetchPrevious30DaysTotals(),
-        ]);
+  const totalPerDeviceQuery = useQuery({
+    queryKey: ['total-per-device-stats'],
+    queryFn: fetchTotalPerDeviceStats,
+  });
 
-        // Update the data array
-        setDataLast30Days((prev) =>
-          prev.map((card) => ({
-            ...card,
-            value: last30.totals[card.id] ?? 0,
-            prevValue: prev30.totals[card.id] ?? 0,
-            data: last30.series[card.id] ?? [], // per-day last 30 days
-          })),
-        );
-      } catch (err) {
-        console.error('Failed to fetch 30 days data:', err);
-      }
+  const last30VsPrev30Query = useQuery({
+    queryKey: ['last-30-vs-prev-30'],
+    queryFn: async () => {
+      const [last30, prev30] = await Promise.all([
+        fetchLast30DaysTotalsWithSeries(),
+        fetchPrevious30DaysTotals(),
+      ]);
+
+      return { last30, prev30 };
+    },
+  });
+
+  const totalOverviewQuery = useQuery({
+    queryKey: ['total-overview-series-average'],
+    queryFn: async () => {
+      const [total, dataSeriesTotal, averageDaily] = await Promise.all([
+        fetchTotalStats(),
+        fetchAllDataSeries(),
+        fetchAverageDailyCounts(),
+      ]);
+
+      return { total, dataSeriesTotal, averageDaily };
+    },
+  });
+
+  const manufacturersQuery = useQuery({
+    queryKey: ['manufacturers'],
+    queryFn: async () => {
+      const manufacturersData = await fetchManufacturersData();
+      return [...manufacturersData].sort(
+        (a, b) => Number(b.count ?? 0) - Number(a.count ?? 0),
+      );
+    },
+    enabled: shouldLoadManufacturers,
+  });
+
+  const sankeyQuery = useQuery({
+    queryKey: ['sankey-data'],
+    queryFn: fetchSankeyData,
+    enabled: shouldLoadSankey,
+  });
+
+  const dataLast30Days = useMemo(() => {
+    const last30 = last30VsPrev30Query.data?.last30;
+    const prev30 = last30VsPrev30Query.data?.prev30;
+
+    if (!last30 || !prev30) {
+      return data;
     }
 
-    fetchData();
-  }, []);
+    return data.map((card) => ({
+      ...card,
+      value: last30.totals[card.id] ?? 0,
+      prevValue: prev30.totals[card.id] ?? 0,
+      data: last30.series[card.id] ?? [],
+    }));
+  }, [last30VsPrev30Query.data]);
+
+  const dataTotal = useMemo(() => {
+    const total = totalOverviewQuery.data?.total;
+    const dataSeriesTotal = totalOverviewQuery.data?.dataSeriesTotal;
+
+    if (!total || !dataSeriesTotal) {
+      return dataTotalTemplate;
+    }
+
+    return dataTotalTemplate.map((card) => ({
+      ...card,
+      value: total[card.id] ?? 0,
+      data: dataSeriesTotal[card.id] ?? [],
+    }));
+  }, [totalOverviewQuery.data]);
+
+  const averageDailyData = useMemo(() => {
+    const averageDaily = totalOverviewQuery.data?.averageDaily;
+
+    if (!averageDaily) {
+      return averageDailyTemplate;
+    }
+
+    return averageDailyTemplate.map((card) => ({
+      ...card,
+      value: averageDaily[card.id] ?? 0,
+    }));
+  }, [totalOverviewQuery.data]);
+
+  const totalDataSeriesDates =
+    totalOverviewQuery.data?.dataSeriesTotal?.dayCounts;
+  const perDeviceTotalData = totalPerDeviceQuery.data ?? null;
+  const probeSeriesPerDevice = probeSeriesPerDeviceQuery.data ?? null;
+  const sankeyData = sankeyQuery.data ?? {};
+  const manufacturers = manufacturersQuery.data ?? [];
 
   useEffect(() => {
     if (!enabled) {
@@ -237,96 +279,15 @@ export default function MainGrid() {
     };
   }, [enabled]);
 
-  // useEffect(() => {
-  //   fetchTotalStats().then((stats) => {
-  //     if (!stats) return;
-
-  //     setDataTotal((prev) =>
-  //       prev.map((card) => ({
-  //         ...card,
-  //         value: stats[card.id]?.toLocaleString() ?? '0',
-  //       })),
-  //     );
-  //   });
-  // }, []);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // Totals are needed here as it contains unique totals.
-        // Cannot use reduce on serises data as totals will not be unique across all time.
-        const [total, dataSeriesTotal, averageDaily] = await Promise.all([
-          fetchTotalStats(),
-          fetchAllDataSeries(),
-          fetchAverageDailyCounts(),
-        ]);
-        setTotalDataSeriesDates(dataSeriesTotal.dayCounts);
-        // Update the data array
-        setDataTotal((prev) =>
-          prev.map((card) => ({
-            ...card,
-            value: total[card.id] ?? 0,
-            data: dataSeriesTotal[card.id] ?? [],
-          })),
-        );
-        setAverageDailyData((prev) =>
-          prev.map((card) => ({
-            ...card,
-            value: averageDaily[card.id] ?? 0,
-          })),
-        );
-      } catch (err) {
-        console.error('Failed to fetch data for all days:', err);
-      } finally {
-        setIsLoadingTotalStats(false);
-        setIsLoadingAverageDaily(false);
-      }
-    }
-    setIsLoadingTotalStats(true);
-    setIsLoadingAverageDaily(true);
-    fetchData();
-  }, []);
-
-  // Lazily loaded when the manufacturer accordion is expanded so the single API
-  // call (feeding both the table and the map) only fires when the user opens it.
-  async function loadManufacturers() {
-    try {
-      setIsLoadingManufacturers(true);
-      const manufacturersData = await fetchManufacturersData();
-      const sortedData = [...manufacturersData].sort(
-        (a, b) => Number(b.count ?? 0) - Number(a.count ?? 0),
-      );
-      setManufacturers(sortedData);
-    } catch (err) {
-      console.error('Failed to fetch manufacturers data:', err);
-    } finally {
-      setIsLoadingManufacturers(false);
-    }
-  }
-
-  // Lazily loaded when the Sankey accordion is expanded.
-  async function loadSankeyData() {
-    try {
-      const data = await fetchSankeyData();
-      setSankeyData(data);
-    } catch (err) {
-      console.error('Failed to fetch sankey data:', err);
-    }
-  }
-
   function handleManufacturerAccordionChange(_, expanded) {
     setIsManufacturerExpanded(expanded);
-    if (expanded && !hasFetchedManufacturers.current) {
-      hasFetchedManufacturers.current = true;
-      loadManufacturers();
+    if (expanded) {
+      setShouldLoadManufacturers(true);
     }
   }
 
   function handleSankeyExpand() {
-    if (!hasFetchedSankey.current) {
-      hasFetchedSankey.current = true;
-      loadSankeyData();
-    }
+    setShouldLoadSankey(true);
   }
 
   return (
@@ -371,7 +332,7 @@ export default function MainGrid() {
               interval={t(card.intervalKey)}
               hideTrendValues={true}
               dayCount={totalDataSeriesDates}
-              isLoading={isLoadingTotalStats}
+              isLoading={totalOverviewQuery.isLoading}
             />
           </Grid>
         ))}
@@ -383,7 +344,7 @@ export default function MainGrid() {
               interval={t(card.intervalKey)}
               hideSparkLineChart={true}
               hideTrendValues={true}
-              isLoading={isLoadingAverageDaily}
+              isLoading={totalOverviewQuery.isLoading}
             />
           </Grid>
         ))}
@@ -423,7 +384,7 @@ export default function MainGrid() {
           </Typography>
           <ManufacturerDataGrid
             manufacturers={manufacturers}
-            loading={isLoadingManufacturers}
+            loading={manufacturersQuery.isLoading}
             mapReady={isManufacturerEntered}
           />
         </AccordionDetails>

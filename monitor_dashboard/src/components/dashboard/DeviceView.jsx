@@ -19,12 +19,13 @@ import {
   Typography,
 } from '@mui/material';
 import { Navigate, useParams } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { subscribeToDeviceLiveData } from '../../firebase/firebase';
 import { fetchDeviceDataSeries } from '../../statsApi/StatsApi';
 import { FilterAlt } from '@mui/icons-material';
 import StatCard from './StatCard';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 const DEFAULT_FILTERS = ['CERN', 'CERN-Visitors', '*'];
 const dataTotalTemplate = [
@@ -64,40 +65,33 @@ export default function DeviceView() {
   const bottomRef = useRef(null);
   const { enabled } = useLiveCount();
 
-  const [dataTotal, setDataTotal] = useState(dataTotalTemplate);
-  const [totalDataSeriesDates, setTotalDataSeriesDates] = useState(null);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
-
   const ALLOWED_DEVICES = ['RPI-1', 'RPI-2', 'RPI-3'];
 
   if (!ALLOWED_DEVICES.includes(deviceId)) {
     return <Navigate to="/home" replace />;
   }
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const dataSeriesTotal = await fetchDeviceDataSeries(deviceId);
-        setTotalDataSeriesDates(dataSeriesTotal.dayCounts);
-        // Update the data array
-        setDataTotal((prev) =>
-          prev.map((card) => ({
-            ...card,
-            value:
-              dataSeriesTotal[card.id].reduce((sum, value) => sum + value, 0) ??
-              0,
-            data: dataSeriesTotal[card.id] ?? [],
-          })),
-        );
-        setIsLoadingStats(false);
-      } catch (err) {
-        console.error('Failed to fetch data for all days:', err);
-      }
+  const deviceSeriesQuery = useQuery({
+    queryKey: ['device-series', deviceId],
+    queryFn: () => fetchDeviceDataSeries(deviceId),
+    enabled: Boolean(deviceId),
+  });
+
+  const totalDataSeriesDates = deviceSeriesQuery.data?.dayCounts ?? null;
+  const dataTotal = useMemo(() => {
+    const dataSeriesTotal = deviceSeriesQuery.data;
+
+    if (!dataSeriesTotal) {
+      return dataTotalTemplate;
     }
 
-    setIsLoadingStats(true);
-    fetchData();
-  }, []);
+    return dataTotalTemplate.map((card) => ({
+      ...card,
+      value:
+        dataSeriesTotal[card.id]?.reduce((sum, value) => sum + value, 0) ?? 0,
+      data: dataSeriesTotal[card.id] ?? [],
+    }));
+  }, [deviceSeriesQuery.data]);
 
   useEffect(() => {
     filtersRef.current = filters;
@@ -161,7 +155,7 @@ export default function DeviceView() {
               interval={t(card.intervalKey)}
               hideTrendValues={true}
               dayCount={totalDataSeriesDates}
-              isLoading={isLoadingStats}
+              isLoading={deviceSeriesQuery.isLoading}
             />
           </Grid>
         ))}

@@ -11,11 +11,14 @@ import {
   getDeviceGridColumns,
   rows as defaultRows,
 } from '../../internals/data/gridData';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { fetchDeviceOnlineStatus } from '../../firebase/firebase';
 import CustomSankeyDiagram from './CustomSankeyDiagram';
 import DeviceHeatMap from './DeviceHeatMap';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+
+const EMPTY_STATUS = {};
 
 function getWorkingStatus(status) {
   const now = new Date();
@@ -39,17 +42,21 @@ export default function CustomizedDataGrid({
   onSankeyExpand,
 }) {
   const { t } = useTranslation();
-  const [rows, setRows] = useState(defaultRows);
-  const [onlineStatus, setOnlineStatus] = useState({});
   const [isSankeyExpanded, setIsSankeyExpanded] = useState(false);
   const [isHeatMapExpanded, setIsHeatMapExpanded] = useState(true);
   const [showExpandTooltip, setShowExpandTooltip] = useState(false);
   const columns = getDeviceGridColumns(t);
+  const onlineStatusQuery = useQuery({
+    queryKey: ['device-online-status'],
+    queryFn: fetchDeviceOnlineStatus,
+    refetchInterval: 10 * 60 * 1000,
+  });
+  const onlineStatus = onlineStatusQuery.data ?? EMPTY_STATUS;
 
-  useEffect(() => {
-    if (!totalsPerDeviceData || !probeSeries) return;
+  const rows = useMemo(() => {
+    if (!totalsPerDeviceData || !probeSeries) return defaultRows;
 
-    const rowsMapped = defaultRows.map((row) => {
+    return defaultRows.map((row) => {
       const totals = totalsPerDeviceData[row.device];
       const trendSeries = probeSeries[row.device];
       const status = onlineStatus[row.device] ? 'Online' : 'Offline';
@@ -79,28 +86,7 @@ export default function CustomizedDataGrid({
             : row.trend,
       };
     });
-    setRows(rowsMapped);
   }, [totalsPerDeviceData, probeSeries, onlineStatus]);
-
-  useEffect(() => {
-    const updateStatus = async () => {
-      try {
-        const statusMap = await fetchDeviceOnlineStatus();
-        setOnlineStatus(statusMap);
-      } catch (err) {
-        console.error('Failed to fetch device status', err);
-      }
-    };
-
-    updateStatus();
-
-    // Check online status every 10 minutes
-    const interval = setInterval(updateStatus, 10 * 60 * 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
 
   return (
     <Box>
