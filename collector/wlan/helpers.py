@@ -32,32 +32,54 @@ FREQ_TO_CHANNEL_24GHZ = {
 
 
 @yaspin(text="Checking interface mode...")
-def check_interface_mode():
+def check_interface_mode(interface_cli: str = None):
     """
     Checks if the wireless interface has been set to the Monitor mode.
     """
     global INTERFACE
-    for default_interface in INTERFACES:
-        # Changed for #213
-        interface = f"{default_interface}mon"
-        try:
-            interface_info = subprocess.run(
-                ["iwconfig", interface], capture_output=True, text=True
-            ).stdout
 
-            if "Mode:" in interface_info:
-                # Parse out only the interface mode.
-                interface_mode = interface_info.split("Mode:", 1)[1].split(" ", 1)[0]
-                if interface_mode.strip() == "Monitor":
-                    INTERFACE = interface
-                    logger.info(f"Interface `{interface}` is in Monitor mode.")
-                    return True
-                else:
-                    logger.warning(f"Interface `{interface}` not in Monitor mode.")
-        except Exception as e:
-            logger.error(
-                f"An Exception occurred during checking interface mode - {str(e)}"
-            )
+    if interface_cli:
+        logger.info(
+            f"Interface mode is set to {interface_cli}. Running in a multi-sensor mode."
+        )
+    else:
+        # If no argument is used for interface, it will be set to None, meaning RPi device is using only one antenna.
+        logger.info("Interface mode is not set. Running in a single sensor mode.")
+
+    for default_interface in INTERFACES:
+        # If specific interface is used then use that interface instead of setting's defaults. Change for #278
+        if interface_cli and default_interface != interface_cli:
+            continue
+        else:
+            logger.info(f"Interface mode is set to {default_interface}.")
+        interfaces = (
+            # Fix for wlan2 that us probably always just wlan2 and never wlan2mon but still has to be checked.
+            [default_interface, f"{default_interface}mon"]
+            if interface_cli is not None
+            # Changed for #213
+            else [f"{default_interface}mon"]
+        )
+        for wlan_int in interfaces:
+            try:
+                interface_info = subprocess.run(
+                    ["iwconfig", wlan_int], capture_output=True, text=True
+                ).stdout
+
+                if "Mode:" in interface_info:
+                    # Parse out only the interface mode.
+                    interface_mode = interface_info.split("Mode:", 1)[1].split(" ", 1)[
+                        0
+                    ]
+                    if interface_mode.strip() == "Monitor":
+                        INTERFACE = wlan_int
+                        logger.info(f"Interface `{wlan_int}` is in Monitor mode.")
+                        return True
+                    else:
+                        logger.warning(f"Interface `{wlan_int}` not in Monitor mode.")
+            except Exception as e:
+                logger.error(
+                    f"An Exception occurred during checking interface mode - {str(e)}"
+                )
 
     return False
 
