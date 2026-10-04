@@ -18,9 +18,8 @@ import { useState } from 'react';
 import { Collapse, Divider } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
-// TODO this should be built dynamically based on data in Firebase
-const devices = ['RPI-1', 'RPI-2', 'RPI-3'];
+import { useQuery } from '@tanstack/react-query';
+import { fetchTotalPerDeviceStats } from '../../statsApi/StatsApi';
 
 const secondaryListItems = [
   { key: 'common.settings', icon: <SettingsRoundedIcon /> },
@@ -32,6 +31,11 @@ export default function MenuContent({ collapsed = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const devicesQuery = useQuery({
+    queryKey: ['total-per-device-stats'],
+    queryFn: fetchTotalPerDeviceStats,
+  });
+  const devices = Object.keys(devicesQuery.data ?? {}).sort();
   const iconSx = collapsed
     ? {
         minWidth: 'auto',
@@ -95,8 +99,14 @@ export default function MenuContent({ collapsed = false }) {
             {devices.map((device) => (
               <ListItem key={device} disablePadding sx={{ pl: 4 }}>
                 <ListItemButton
-                  selected={location.pathname === `/device/${device}`}
-                  onClick={() => navigate(`/device/${device}`)}
+                  selected={
+                    decodeURIComponent(
+                      location.pathname.split('/').pop() ?? '',
+                    ) === device
+                  }
+                  onClick={() =>
+                    navigate(`/device/${encodeURIComponent(device)}`)
+                  }
                 >
                   <ListItemIcon sx={iconSx}>
                     <TapAndPlay />

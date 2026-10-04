@@ -39,6 +39,7 @@ export default function CustomizedDataGrid({
   totalsPerDeviceData,
   probeSeries,
   sankeyData,
+  deviceNames = [],
   onSankeyExpand,
 }) {
   const { t } = useTranslation();
@@ -47,9 +48,9 @@ export default function CustomizedDataGrid({
   const [showExpandTooltip, setShowExpandTooltip] = useState(false);
   const columns = getDeviceGridColumns(t);
   const onlineStatusQuery = useQuery({
-    queryKey: ['device-online-status'],
-    queryFn: fetchDeviceOnlineStatus,
-    refetchInterval: 10 * 60 * 1000,
+    queryKey: ['device-online-status', deviceNames],
+    queryFn: () => fetchDeviceOnlineStatus(deviceNames),
+    enabled: deviceNames.length > 0,
   });
   const onlineStatus = onlineStatusQuery.data ?? EMPTY_STATUS;
 

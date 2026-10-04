@@ -127,8 +127,6 @@ export default function MainGrid() {
   // Live count of Probe Requests
   const [liveCount, setLiveCount] = useState(0);
   const [isLoadingLiveCount, setIsLoadingLiveCount] = useState(false);
-  // TODO Store devices somewhere else or better yet fetch from Firebase device names
-  const devices = ['RPI-1', 'RPI-2', 'RPI-3'];
   const { enabled } = useLiveCount();
   const [isManufacturerExpanded, setIsManufacturerExpanded] = useState(false);
   const [shouldLoadManufacturers, setShouldLoadManufacturers] = useState(false);
@@ -236,12 +234,16 @@ export default function MainGrid() {
   const totalDataSeriesDates =
     totalOverviewQuery.data?.dataSeriesTotal?.dayCounts;
   const perDeviceTotalData = totalPerDeviceQuery.data ?? null;
+  const devices = useMemo(
+    () => Object.keys(perDeviceTotalData ?? {}).sort(),
+    [perDeviceTotalData],
+  );
   const probeSeriesPerDevice = probeSeriesPerDeviceQuery.data ?? null;
   const sankeyData = sankeyQuery.data ?? {};
   const manufacturers = manufacturersQuery.data ?? [];
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || devices.length === 0) {
       setIsLoadingLiveCount(false);
       return;
     }
@@ -277,7 +279,7 @@ export default function MainGrid() {
       cancelled = true;
       if (unsubscribe) unsubscribe();
     };
-  }, [enabled]);
+  }, [devices, enabled]);
 
   function handleManufacturerAccordionChange(_, expanded) {
     setIsManufacturerExpanded(expanded);
@@ -399,6 +401,7 @@ export default function MainGrid() {
             totalsPerDeviceData={perDeviceTotalData}
             probeSeries={probeSeriesPerDevice}
             sankeyData={sankeyData}
+            deviceNames={devices}
             onSankeyExpand={handleSankeyExpand}
           />
         </Grid>
