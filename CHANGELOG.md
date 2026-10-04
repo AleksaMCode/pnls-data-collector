@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - SSID GEO tables were migrated to include a `create_date` column. PR #372
+- `monitor-dashboard` API-backed dashboard reads were migrated to TanStack Query with shared query-client defaults, replacing ad-hoc component fetch effects with query-keyed caching and reuse. PR #409
+- `monitor-dashboard` device lists are now sourced dynamically from `/stats/devices` across dashboard navigation, live probe subscriptions, and device-route validation instead of hardcoded `RPI-*` arrays. PR #409
 
 ### Fixed
 
