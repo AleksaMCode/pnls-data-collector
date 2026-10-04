@@ -43,7 +43,7 @@ function getLastNDates(n) {
   return dates;
 }
 
-export async function fetchDeviceOnlineStatus() {
+export async function fetchDeviceOnlineStatus(devices = []) {
   const db = getFirebaseDb();
 
   // Today in Europe/Paris (YYYY-MM-DD)
@@ -53,7 +53,10 @@ export async function fetchDeviceOnlineStatus() {
 
   const now = Date.now();
   const onlineStatus = {};
-  const devices = ['RPI-1', 'RPI-2', 'RPI-3'];
+
+  if (!Array.isArray(devices) || devices.length === 0) {
+    return onlineStatus;
+  }
 
   await Promise.all(
     devices.map(async (device) => {

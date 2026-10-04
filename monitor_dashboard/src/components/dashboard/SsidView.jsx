@@ -14,6 +14,7 @@ import { toast } from 'react-toastify';
 import { downloadSsidStatsCsv, fetchSsidStats } from '../../statsApi/StatsApi';
 import { useTranslation } from 'react-i18next';
 import { getLocale } from '../../i18nLocale';
+import { useQuery } from '@tanstack/react-query';
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -53,9 +54,6 @@ export default function SsidView() {
     { field: 'last_seen', sort: 'desc' },
   ]);
 
-  const [rows, setRows] = useState([]);
-  const [rowCount, setRowCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
 
   const columns = useMemo(
@@ -121,54 +119,48 @@ export default function SsidView() {
     return { sortBy: 'last_seen', sortOrder: 'desc' };
   }, [sortModel]);
 
+  const ssidStatsQuery = useQuery({
+    queryKey: [
+      'ssid-stats',
+      {
+        search: debouncedSearch || '',
+        sortBy,
+        sortOrder,
+        page: paginationModel.page,
+        pageSize: paginationModel.pageSize,
+      },
+    ],
+    queryFn: () =>
+      fetchSsidStats({
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortOrder,
+        offset: paginationModel.page * paginationModel.pageSize,
+        limit: paginationModel.pageSize,
+      }),
+    placeholderData: (previousData) => previousData,
+  });
+
+  const rows = useMemo(() => {
+    const items = ssidStatsQuery.data?.items ?? [];
+    return items.map((item, index) => ({
+      id: `${item.ssid ?? 'ssid'}-${index}`,
+      ssid: item.ssid,
+      seen_count: item.seen_count,
+      first_seen: item.first_seen,
+      last_seen: item.last_seen,
+    }));
+  }, [ssidStatsQuery.data]);
+
+  const rowCount = ssidStatsQuery.data?.pagination?.total ?? 0;
+
   useEffect(() => {
-    let isActive = true;
-
-    async function loadSsids() {
-      setIsLoading(true);
-      try {
-        const response = await fetchSsidStats({
-          search: debouncedSearch || undefined,
-          sortBy,
-          sortOrder,
-          offset: paginationModel.page * paginationModel.pageSize,
-          limit: paginationModel.pageSize,
-        });
-
-        if (!isActive) {
-          return;
-        }
-
-        const items = response.items ?? [];
-        setRows(
-          items.map((item, index) => ({
-            id: `${item.ssid ?? 'ssid'}-${index}`,
-            ssid: item.ssid,
-            seen_count: item.seen_count,
-            first_seen: item.first_seen,
-            last_seen: item.last_seen,
-          })),
-        );
-        setRowCount(response.pagination?.total ?? 0);
-      } catch (err) {
-        if (isActive) {
-          console.error('Failed to fetch SSID stats:', err);
-          setRows([]);
-          setRowCount(0);
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
+    if (!ssidStatsQuery.isError) {
+      return;
     }
 
-    loadSsids();
-
-    return () => {
-      isActive = false;
-    };
-  }, [debouncedSearch, sortBy, sortOrder, paginationModel]);
+    console.error('Failed to fetch SSID stats:', ssidStatsQuery.error);
+  }, [ssidStatsQuery.error, ssidStatsQuery.isError]);
 
   async function handleDownloadCsv() {
     setIsDownloadingCsv(true);
@@ -249,7 +241,7 @@ export default function SsidView() {
           <DataGrid
             rows={rows}
             columns={columns}
-            loading={isLoading}
+            loading={ssidStatsQuery.isFetching}
             rowCount={rowCount}
             paginationMode="server"
             sortingMode="server"

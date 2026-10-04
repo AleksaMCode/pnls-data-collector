@@ -19,12 +19,16 @@ import {
   Typography,
 } from '@mui/material';
 import { Navigate, useParams } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { subscribeToDeviceLiveData } from '../../firebase/firebase';
-import { fetchDeviceDataSeries } from '../../statsApi/StatsApi';
+import {
+  fetchDeviceDataSeries,
+  fetchTotalPerDeviceStats,
+} from '../../statsApi/StatsApi';
 import { FilterAlt } from '@mui/icons-material';
 import StatCard from './StatCard';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 const DEFAULT_FILTERS = ['CERN', 'CERN-Visitors', '*'];
 const dataTotalTemplate = [
@@ -57,6 +61,7 @@ const dataTotalTemplate = [
 export default function DeviceView() {
   const { t } = useTranslation();
   const { deviceId } = useParams();
+  const normalizedDeviceId = decodeURIComponent(deviceId ?? '');
   const [rows, setRows] = useState([]);
   const [filterInput, setFilterInput] = useState('');
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -64,51 +69,48 @@ export default function DeviceView() {
   const bottomRef = useRef(null);
   const { enabled } = useLiveCount();
 
-  const [dataTotal, setDataTotal] = useState(dataTotalTemplate);
-  const [totalDataSeriesDates, setTotalDataSeriesDates] = useState(null);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const devicesQuery = useQuery({
+    queryKey: ['total-per-device-stats'],
+    queryFn: fetchTotalPerDeviceStats,
+  });
+  const allowedDevices = useMemo(
+    () => Object.keys(devicesQuery.data ?? {}).sort(),
+    [devicesQuery.data],
+  );
+  const isKnownDevice = allowedDevices.includes(normalizedDeviceId);
 
-  const ALLOWED_DEVICES = ['RPI-1', 'RPI-2', 'RPI-3'];
+  const deviceSeriesQuery = useQuery({
+    queryKey: ['device-series', normalizedDeviceId],
+    queryFn: () => fetchDeviceDataSeries(normalizedDeviceId),
+    enabled: Boolean(normalizedDeviceId) && isKnownDevice,
+  });
 
-  if (!ALLOWED_DEVICES.includes(deviceId)) {
-    return <Navigate to="/home" replace />;
-  }
+  const totalDataSeriesDates = deviceSeriesQuery.data?.dayCounts ?? null;
+  const dataTotal = useMemo(() => {
+    const dataSeriesTotal = deviceSeriesQuery.data;
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const dataSeriesTotal = await fetchDeviceDataSeries(deviceId);
-        setTotalDataSeriesDates(dataSeriesTotal.dayCounts);
-        // Update the data array
-        setDataTotal((prev) =>
-          prev.map((card) => ({
-            ...card,
-            value:
-              dataSeriesTotal[card.id].reduce((sum, value) => sum + value, 0) ??
-              0,
-            data: dataSeriesTotal[card.id] ?? [],
-          })),
-        );
-        setIsLoadingStats(false);
-      } catch (err) {
-        console.error('Failed to fetch data for all days:', err);
-      }
+    if (!dataSeriesTotal) {
+      return dataTotalTemplate;
     }
 
-    setIsLoadingStats(true);
-    fetchData();
-  }, []);
+    return dataTotalTemplate.map((card) => ({
+      ...card,
+      value:
+        dataSeriesTotal[card.id]?.reduce((sum, value) => sum + value, 0) ?? 0,
+      data: dataSeriesTotal[card.id] ?? [],
+    }));
+  }, [deviceSeriesQuery.data]);
 
   useEffect(() => {
     filtersRef.current = filters;
   }, [filters]);
 
   useEffect(() => {
-    if (!deviceId || !enabled) return;
+    if (!normalizedDeviceId || !enabled) return;
 
     setRows([]);
 
-    const unsubscribe = subscribeToDeviceLiveData(deviceId, (row) => {
+    const unsubscribe = subscribeToDeviceLiveData(normalizedDeviceId, (row) => {
       if (filtersRef.current.includes(row.ssid)) {
         return;
       }
@@ -116,7 +118,7 @@ export default function DeviceView() {
     });
 
     return () => unsubscribe();
-  }, [deviceId, enabled]);
+  }, [enabled, normalizedDeviceId]);
   const handleFilterKeyDown = (e) => {
     if (e.key === 'Enter' && filterInput.trim()) {
       const value = filterInput.trim();
@@ -142,10 +144,19 @@ export default function DeviceView() {
     setFilters([]);
   };
 
+  if (
+    !devicesQuery.isLoading &&
+    !devicesQuery.isError &&
+    normalizedDeviceId &&
+    !isKnownDevice
+  ) {
+    return <Navigate to="/home" replace />;
+  }
+
   return (
     <Box sx={{ width: '100%' }}>
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        {t('deviceView.title', { deviceId })}
+        {t('deviceView.title', { deviceId: normalizedDeviceId })}
       </Typography>
       <Grid
         container
@@ -161,7 +172,7 @@ export default function DeviceView() {
               interval={t(card.intervalKey)}
               hideTrendValues={true}
               dayCount={totalDataSeriesDates}
-              isLoading={isLoadingStats}
+              isLoading={deviceSeriesQuery.isLoading}
             />
           </Grid>
         ))}
