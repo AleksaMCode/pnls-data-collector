@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { areaElementClasses } from '@mui/x-charts/LineChart';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CircularProgress, Fade } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { getLocale } from '../../i18nLocale';
@@ -60,9 +60,12 @@ export function getLastNDays(
   n = 30,
   locale = 'en-US',
   timeZone = 'Europe/Paris',
+  forceYear = false,
 ) {
   const days = [];
   const today = new Date();
+  // Past a year, "Mon D" labels repeat and collide on a band axis.
+  const withYear = forceYear && n > 365;
 
   for (let i = n; i > 0; i--) {
     const d = new Date(today);
@@ -73,10 +76,33 @@ export function getLastNDays(
       timeZone,
     });
     const dayNumber = d.getDate();
-    days.push(`${monthName} ${dayNumber}`);
+    days.push(
+      withYear
+        ? `${monthName} ${dayNumber}, ${d.getFullYear()}`
+        : `${monthName} ${dayNumber}`,
+    );
   }
 
   return days;
+}
+
+/**
+ * Formats ISO dates (YYYY-MM-DD) as axis labels that include the year, so
+ * series spanning more than a year never produce duplicate band categories.
+ */
+export function formatDateLabels(dates, locale = 'en-US') {
+  const formatter = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    // Parse and format in UTC so the calendar day never shifts.
+    timeZone: 'UTC',
+  });
+
+  return dates.map((isoDate) => {
+    const d = new Date(`${isoDate}T00:00:00Z`);
+    return Number.isNaN(d.getTime()) ? String(isoDate) : formatter.format(d);
+  });
 }
 
 function AreaGradient({ color, id }) {
@@ -107,12 +133,22 @@ function StatCard({
   liveValue = 0,
   liveFeed = false,
   dayCount = 30,
+  dates,
   isLoading = false,
 }) {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const locale = getLocale(i18n.resolvedLanguage);
-  const daysInWeek = getLastNDays(dayCount, locale);
+  // Prefer the real dates of the series. Without them (or if they don't line
+  // up with the data) fall back to calendar days, always sized to the data so
+  // the axis never has fewer labels than the series has points.
+  const pointCount = data?.length ?? 0;
+  const xAxisLabels = useMemo(() => {
+    if (dates?.length && dates.length === pointCount) {
+      return formatDateLabels(dates, locale);
+    }
+    return getLastNDays(pointCount || dayCount, locale, undefined, true);
+  }, [dates, pointCount, dayCount, locale]);
   const [displayValue, setDisplayValue] = useState(value);
   const [livePercentage, setLivePercentage] = useState(0);
   const [computedTrend, setComputedTrend] = useState(trend);
@@ -307,7 +343,7 @@ function StatCard({
                   showTooltip
                   xAxis={{
                     scaleType: 'band',
-                    data: daysInWeek, // Use the correct property 'data' for xAxis
+                    data: xAxisLabels,
                   }}
                   sx={{
                     [`& .${areaElementClasses.root}`]: {
@@ -331,6 +367,7 @@ function StatCard({
 
 StatCard.propTypes = {
   data: PropTypes.arrayOf(PropTypes.number).isRequired,
+  dates: PropTypes.arrayOf(PropTypes.string),
   interval: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   trend: PropTypes.oneOf(['down', 'neutral', 'up']).isRequired,
