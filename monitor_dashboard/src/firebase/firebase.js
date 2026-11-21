@@ -59,7 +59,12 @@ export async function fetchDeviceOnlineStatus(devices = []) {
   yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
   const yesterday = yesterdayDate.toISOString().slice(0, 10);
 
-  const now = Date.now();
+  // Heartbeats are Paris wall time with no UTC offset. Express "now" the same
+  // way so both parse in the viewer's timezone and it cancels out. `sv-SE` is
+  // used only because it formats as "YYYY-MM-DD HH:MM:SS", like the collector.
+  const now = Date.parse(
+    new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Paris' }),
+  );
   const onlineStatus = {};
 
   if (!Array.isArray(devices) || devices.length === 0) {
@@ -81,8 +86,9 @@ export async function fetchDeviceOnlineStatus(devices = []) {
         return;
       }
 
-      const timestamp = Date.parse(snapshot.val());
-      onlineStatus[device] = now - timestamp < ONLINE_WINDOW_MS;
+      // Bounded on both sides so a future-dated heartbeat doesn't read as online.
+      const age = now - Date.parse(snapshot.val());
+      onlineStatus[device] = Math.abs(age) < ONLINE_WINDOW_MS;
     }),
   );
 
