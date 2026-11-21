@@ -143,12 +143,16 @@ function StatCard({
   // up with the data) fall back to calendar days, always sized to the data so
   // the axis never has fewer labels than the series has points.
   const pointCount = data?.length ?? 0;
-  const xAxisLabels = useMemo(() => {
-    if (dates?.length && dates.length === pointCount) {
-      return formatDateLabels(dates, locale);
-    }
-    return getLastNDays(pointCount || dayCount, locale, undefined, true);
-  }, [dates, pointCount, dayCount, locale]);
+  const hasAlignedDates = Boolean(dates?.length) && dates.length === pointCount;
+  const dateLabels = useMemo(
+    () => (hasAlignedDates ? formatDateLabels(dates, locale) : null),
+    [hasAlignedDates, dates, locale],
+  );
+  // Fallback labels depend on the current date, so they are deliberately not
+  // memoized: a card left mounted overnight must relabel when its rolling
+  // series advances, even though none of its props change shape.
+  const xAxisLabels =
+    dateLabels ?? getLastNDays(pointCount || dayCount, locale, undefined, true);
   const [displayValue, setDisplayValue] = useState(value);
   const [livePercentage, setLivePercentage] = useState(0);
   const [computedTrend, setComputedTrend] = useState(trend);
