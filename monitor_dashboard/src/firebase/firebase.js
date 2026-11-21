@@ -51,6 +51,14 @@ export async function fetchDeviceOnlineStatus(devices = []) {
     timeZone: 'Europe/Paris',
   });
 
+  // Devices write their heartbeat under a per-day node, so right after
+  // midnight today's node doesn't exist until the first heartbeat of the new
+  // day. Fall back to yesterday's node; the freshness check below still
+  // marks a device offline if that heartbeat is stale.
+  const yesterdayDate = new Date(`${today}T00:00:00Z`);
+  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+  const yesterday = yesterdayDate.toISOString().slice(0, 10);
+
   const now = Date.now();
   const onlineStatus = {};
 
@@ -60,8 +68,13 @@ export async function fetchDeviceOnlineStatus(devices = []) {
 
   await Promise.all(
     devices.map(async (device) => {
-      const path = `/${device}-${today}/status/timestamp`;
-      const snapshot = await get(ref(db, path));
+      let snapshot = await get(ref(db, `/${device}-${today}/status/timestamp`));
+
+      if (!snapshot.exists()) {
+        snapshot = await get(
+          ref(db, `/${device}-${yesterday}/status/timestamp`),
+        );
+      }
 
       if (!snapshot.exists()) {
         onlineStatus[device] = false;
