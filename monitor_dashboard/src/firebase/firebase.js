@@ -51,7 +51,23 @@ export async function fetchDeviceOnlineStatus(devices = []) {
     timeZone: 'Europe/Paris',
   });
 
-  const now = Date.now();
+  // Devices write their heartbeat under a per-day node, so right after
+  // midnight today's node doesn't exist until the first heartbeat of the new
+  // day. Fall back to yesterday's node; the freshness check below still
+  // marks a device offline if that heartbeat is stale.
+  const yesterdayDate = new Date(`${today}T00:00:00Z`);
+  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+  const yesterday = yesterdayDate.toISOString().slice(0, 10);
+
+  // Heartbeats are Paris wall time with no UTC offset. Express "now" the same
+  // way and read both as if they were UTC, so their difference is the elapsed
+  // time and never depends on the viewer's timezone or DST rules. `sv-SE` is
+  // used only because it formats as "YYYY-MM-DD HH:MM:SS", like the collector.
+  const wallTimeMs = (value) =>
+    Date.parse(`${String(value).slice(0, 23).replace(' ', 'T')}Z`);
+  const now = wallTimeMs(
+    new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Paris' }),
+  );
   const onlineStatus = {};
 
   if (!Array.isArray(devices) || devices.length === 0) {
@@ -60,16 +76,22 @@ export async function fetchDeviceOnlineStatus(devices = []) {
 
   await Promise.all(
     devices.map(async (device) => {
-      const path = `/${device}-${today}/status/timestamp`;
-      const snapshot = await get(ref(db, path));
+      let snapshot = await get(ref(db, `/${device}-${today}/status/timestamp`));
+
+      if (!snapshot.exists()) {
+        snapshot = await get(
+          ref(db, `/${device}-${yesterday}/status/timestamp`),
+        );
+      }
 
       if (!snapshot.exists()) {
         onlineStatus[device] = false;
         return;
       }
 
-      const timestamp = Date.parse(snapshot.val());
-      onlineStatus[device] = now - timestamp < ONLINE_WINDOW_MS;
+      // Bounded on both sides so a future-dated heartbeat doesn't read as online.
+      const age = now - wallTimeMs(snapshot.val());
+      onlineStatus[device] = Math.abs(age) < ONLINE_WINDOW_MS;
     }),
   );
 

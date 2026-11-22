@@ -85,7 +85,7 @@ export default function DeviceView() {
     enabled: Boolean(normalizedDeviceId) && isKnownDevice,
   });
 
-  const totalDataSeriesDates = deviceSeriesQuery.data?.dayCounts ?? null;
+  const totalDataSeriesDates = deviceSeriesQuery.data?.dates;
   const dataTotal = useMemo(() => {
     const dataSeriesTotal = deviceSeriesQuery.data;
 
@@ -171,7 +171,7 @@ export default function DeviceView() {
               title={t(card.titleKey)}
               interval={t(card.intervalKey)}
               hideTrendValues={true}
-              dayCount={totalDataSeriesDates}
+              dates={totalDataSeriesDates}
               isLoading={deviceSeriesQuery.isLoading}
             />
           </Grid>

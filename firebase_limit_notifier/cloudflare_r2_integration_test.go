@@ -75,7 +75,7 @@ func TestUploadImageToR2WithMinioTestcontainer(t *testing.T) {
 
 	container, err := minio.Run(
 		ctx,
-		"minio/minio:latest",
+		"pgsty/silo:RELEASE.2026-11-12T00-00-00Z",
 		minio.WithUsername(minioUser),
 		minio.WithPassword(minioPass),
 		tc.WithWaitStrategy(wait.ForListeningPort("9000/tcp")),

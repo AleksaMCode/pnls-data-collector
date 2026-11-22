@@ -185,6 +185,7 @@ def fetch_all_data_series(tz: str = "Europe/Paris") -> dict:
             "macCount": [],
             "probeRequestCount": [],
             "ssidCount": [],
+            "dates": [],
             "dayCounts": 0,
         }
 
@@ -196,6 +197,8 @@ def fetch_all_data_series(tz: str = "Europe/Paris") -> dict:
         "macCount": [mac_map.get(d, 0) for d in dates],
         "probeRequestCount": [probes_map.get(d, 0) for d in dates],
         "ssidCount": [ssid_map.get(d, 0) for d in dates],
+        # ISO dates aligned index-for-index with the series above.
+        "dates": [d.isoformat() for d in dates],
         "dayCounts": len(dates),
     }
 
@@ -247,6 +250,8 @@ def fetch_device_data_series(device_name: str, tz: str = "Europe/Paris") -> dict
         "macCount": mac_series,
         "probeRequestCount": probe_series,
         "ssidCount": ssid_series,
+        # ISO dates aligned index-for-index with the series above.
+        "dates": [d.isoformat() for d in dates],
         "dayCounts": len(dates),
     }
 

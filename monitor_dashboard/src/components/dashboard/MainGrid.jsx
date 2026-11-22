@@ -231,8 +231,7 @@ export default function MainGrid() {
     }));
   }, [totalOverviewQuery.data]);
 
-  const totalDataSeriesDates =
-    totalOverviewQuery.data?.dataSeriesTotal?.dayCounts;
+  const totalDataSeriesDates = totalOverviewQuery.data?.dataSeriesTotal?.dates;
   const perDeviceTotalData = totalPerDeviceQuery.data ?? null;
   const devices = useMemo(
     () => Object.keys(perDeviceTotalData ?? {}).sort(),
@@ -333,7 +332,7 @@ export default function MainGrid() {
               title={t(card.titleKey)}
               interval={t(card.intervalKey)}
               hideTrendValues={true}
-              dayCount={totalDataSeriesDates}
+              dates={totalDataSeriesDates}
               isLoading={totalOverviewQuery.isLoading}
             />
           </Grid>
