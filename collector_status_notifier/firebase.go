@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"firebase.google.com/go/v4/db"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/common"
 )
 
 func validateFirebaseNode(deviceKey, today string) bool {
@@ -28,8 +29,13 @@ func validateFirebaseNode(deviceKey, today string) bool {
 }
 
 func validateFirebaseDeviceData(client *db.Client, ctx context.Context) {
-	// Get today's date in YYYY-MM-DD format (for the device nodes)
-	today := time.Now().Format(strings.Split(TIMESTAMP_FORMAT, " ")[0])
+	// Collectors name the node and stamp the heartbeat in TIMEZONE wall time,
+	// so derive today's date (YYYY-MM-DD) and parse timestamps in that zone
+	// rather than the container's (UTC).
+	now := common.GetTimeNow(TIMEZONE)
+	dateFormat := strings.Split(TIMESTAMP_FORMAT, " ")[0]
+	today := now.Format(dateFormat)
+	yesterday := now.AddDate(0, 0, -1).Format(dateFormat)
 
 	rootRef := client.NewRef(FIREBASE_BASE_PATH)
 
@@ -52,6 +58,17 @@ func validateFirebaseDeviceData(client *db.Client, ctx context.Context) {
 			continue
 		}
 
+		// Right after midnight today's node has no status until the device's
+		// first heartbeat of the day. Fall back to yesterday's node; the
+		// staleness check below still alerts if that heartbeat is old.
+		if deviceData == nil {
+			prevNodeName := fmt.Sprintf("%s-%s", device, yesterday)
+			if err := rootRef.Child(prevNodeName).Child("status").Get(ctx, &deviceData); err != nil {
+				log.Printf("Error fetching status for node %s: %v", prevNodeName, err)
+				continue
+			}
+		}
+
 		// Handle the edge case when data is missing.
 		if deviceData == nil {
 			message := fmt.Sprintf("Device `%s` has no status for today (%s)", device, today)
@@ -60,7 +77,7 @@ func validateFirebaseDeviceData(client *db.Client, ctx context.Context) {
 		}
 
 		timestamp, _ := deviceData["timestamp"].(string)
-		timestampTime, err := time.Parse(TIMESTAMP_FORMAT, timestamp)
+		timestampTime, err := time.ParseInLocation(TIMESTAMP_FORMAT, timestamp, now.Location())
 		if err != nil {
 			message := fmt.Sprintf("Device `%s` has invalid timestamp in Firebase status: %q", device, timestamp)
 			processDeviceStatus(ctx, device, true, message)
