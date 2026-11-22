@@ -95,7 +95,7 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 
 	minioContainer, err := minio.Run(
 		ctx,
-		"minio/minio:latest",
+		"pgsty/silo:RELEASE.2026-11-12T00-00-00Z",
 		minio.WithUsername("minioadmin"),
 		minio.WithPassword("minioadmin"),
 		tc.WithWaitStrategy(wait.ForHTTP("/minio/health/live").WithPort("9000/tcp")),
