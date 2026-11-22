@@ -17,11 +17,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - SSID GEO tables were migrated to include a `create_date` column. PR #372
 - `monitor-dashboard` API-backed dashboard reads were migrated to TanStack Query with shared query-client defaults, replacing ad-hoc component fetch effects with query-keyed caching and reuse. PR #409
 - `monitor-dashboard` device lists are now sourced dynamically from `/stats/devices` across dashboard navigation, live probe subscriptions, and device-route validation instead of hardcoded `RPI-*` arrays. PR #409
+- `stats-api` data series responses (all devices and per device) now include a `dates` array of ISO dates aligned index-for-index with the series; `dayCounts` is kept for backward compatibility. PR #415
+- `collector` status heartbeat timestamp and Firebase status node date are now derived from the configured `TIMEZONE` instead of the host's local time. PR #415
+- `collector-status-notifier` now derives the status node date and parses heartbeat timestamps in the configured `TIMEZONE` instead of the container's timezone. PR #415
+- Go code style workflow now pins `golangci-lint` to `v2.12.2`, the last release that supports Go 1.25. PR #415
+- `firebase-limit-notifier` and `db-backup` integration tests now use the `pgsty/silo` image, a MinIO-compatible fork, in place of the removed `minio/minio` image. PR #415
 
 ### Fixed
 
 - `monitor-dashboard` Captured Info chart now uses month-year labels (e.g. `oct-25`) to prevent month-label collisions across years. PR #402
 - `stats-api` Logfire initialization order was fixed by moving observability setup to explicit startup initialization. PR #404
+- `monitor-dashboard` full-history totals charts (probe requests, SSIDs, MAC addresses) on the main and device views now label the x-axis with the real series dates including the year, fixing overlapping points once the history exceeded one year. PR #415
+- `monitor-dashboard` device table no longer shows devices as offline and not capturing for up to 10 minutes after midnight; the status check now falls back to the previous day's Firebase node until the first heartbeat of the new day. PR #415
+- `monitor-dashboard` device online check now compares the heartbeat and the current time as Europe/Paris wall time, so the result no longer depends on the viewer's timezone. PR #415
+- `collector-status-notifier` no longer reports devices as having no status right after midnight; it falls back to the previous day's Firebase status node. PR #415
 
 ## [3.2.0] - 2026-08-09
 
