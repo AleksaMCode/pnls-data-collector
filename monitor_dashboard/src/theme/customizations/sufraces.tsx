@@ -15,19 +15,11 @@ export const surfacesCustomizations: Components<Theme> = {
         backgroundColor: (theme.vars || theme).palette.background.default,
         border: '1px solid',
         borderColor: (theme.vars || theme).palette.divider,
+        // Accordions are used as standalone, spaced-out panels rather than
+        // stacked groups, so each one keeps its full border and radius.
+        borderRadius: (theme.vars || theme).shape.borderRadius,
         ':before': {
           backgroundColor: 'transparent',
-        },
-        '&:not(:last-of-type)': {
-          borderBottom: 'none',
-        },
-        '&:first-of-type': {
-          borderTopLeftRadius: (theme.vars || theme).shape.borderRadius,
-          borderTopRightRadius: (theme.vars || theme).shape.borderRadius,
-        },
-        '&:last-of-type': {
-          borderBottomLeftRadius: (theme.vars || theme).shape.borderRadius,
-          borderBottomRightRadius: (theme.vars || theme).shape.borderRadius,
         },
       }),
     },
