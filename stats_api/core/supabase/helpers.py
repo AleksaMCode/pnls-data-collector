@@ -397,6 +397,8 @@ def _ssid_stats_order_by(sort_by: str, sort_order: str) -> list:
         # A boolean alone gives unstable pages, so the most recent SSIDs come first within each group.
         # The (has_geo, last_seen) index serves the descending case; ascending is sorted by the database.
         order_by.append(desc(SsidStats.last_seen))
+        # Many SSIDs share a `last_seen`. The unique `ssid` makes the order total, so offset pages never repeat or skip a row.
+        order_by.append(asc(SsidStats.ssid))
     return order_by
 
 
