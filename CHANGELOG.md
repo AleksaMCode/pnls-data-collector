@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `ssid-geo-mapper` service implementation. PR #372
 - Mattermost notifications for `ssid-geo-mapper`. PR #372
 - New SSID GEO database views. PR #372
+- `monitor-dashboard` Manufacturer data accordion on the home page now shows a hover tooltip prompting the user to expand it while collapsed, matching the Sankey accordion. PR #417
 
 ### Changed
 
@@ -33,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `monitor-dashboard` device online check now compares the heartbeat and the current time as Europe/Paris wall time, so the result no longer depends on the viewer's timezone. PR #415
 - `collector-status-notifier` no longer reports devices as having no status right after midnight; it falls back to the previous day's Firebase status node. PR #415
 - `monitor-dashboard` SSIDs table no longer leaves an empty gap between the last row and the pagination controls on tall screens; the table now ends after its last row and only scrolls when it exceeds the viewport height. PR #416
+- `monitor-dashboard` home page Manufacturer data and Sankey accordions no longer lose their bottom border; every accordion now keeps its full border and border radius. PR #417
+- `monitor-dashboard` Manufacturer data and Sankey accordion summaries now keep their titles as accessible names; the expand tooltip text is exposed as a description instead of replacing the label for screen readers. PR #417
 
 ## [3.2.0] - 2026-08-09
 
