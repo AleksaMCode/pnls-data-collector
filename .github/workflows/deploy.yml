@@ -11,7 +11,7 @@ on:
 
 jobs:
   changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       stats_api: ${{ steps.filter.outputs.stats_api }}
       monitor_dashboard: ${{ steps.filter.outputs.monitor_dashboard }}
@@ -34,7 +34,7 @@ jobs:
   deploy_stats_api:
     needs: changes
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.stats_api == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     defaults:
       run:
         working-directory: stats_api
@@ -64,7 +64,7 @@ jobs:
       always() &&
       (github.event_name == 'workflow_dispatch' || needs.changes.outputs.monitor_dashboard == 'true') &&
       (needs.deploy_stats_api.result == 'success' || needs.deploy_stats_api.result == 'skipped')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     defaults:
       run:
         working-directory: monitor_dashboard
