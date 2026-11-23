@@ -5,6 +5,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Tooltip from '@mui/material/Tooltip';
 import CustomizedDataGrid from './CustomizedDataGrid';
 import ManufacturerDataGrid from './ManufacturerDataGrid';
 import HighlightedCard from './HighlightedCard';
@@ -129,6 +130,7 @@ export default function MainGrid() {
   const [isLoadingLiveCount, setIsLoadingLiveCount] = useState(false);
   const { enabled } = useLiveCount();
   const [isManufacturerExpanded, setIsManufacturerExpanded] = useState(false);
+  const [showManufacturerTooltip, setShowManufacturerTooltip] = useState(false);
   const [shouldLoadManufacturers, setShouldLoadManufacturers] = useState(false);
   const [shouldLoadSankey, setShouldLoadSankey] = useState(false);
   // Only render the heavy world map once the accordion has finished expanding,
@@ -282,6 +284,7 @@ export default function MainGrid() {
 
   function handleManufacturerAccordionChange(_, expanded) {
     setIsManufacturerExpanded(expanded);
+    setShowManufacturerTooltip(false);
     if (expanded) {
       setShouldLoadManufacturers(true);
     }
@@ -374,11 +377,24 @@ export default function MainGrid() {
           },
         }}
       >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography component="h2" variant="h6">
-            {t('mainGrid.manufacturerData')}
-          </Typography>
-        </AccordionSummary>
+        <Tooltip
+          title={t('mainGrid.expandManufacturer')}
+          describeChild
+          arrow
+          open={!isManufacturerExpanded && showManufacturerTooltip}
+          onOpen={() => setShowManufacturerTooltip(true)}
+          onClose={() => setShowManufacturerTooltip(false)}
+          disableHoverListener={isManufacturerExpanded}
+          disableFocusListener
+          disableTouchListener
+          disableInteractive
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography component="h2" variant="h6">
+              {t('mainGrid.manufacturerData')}
+            </Typography>
+          </AccordionSummary>
+        </Tooltip>
         <AccordionDetails>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {t('mainGrid.manufacturerDescription')}

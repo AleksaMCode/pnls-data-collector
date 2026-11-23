@@ -145,6 +145,7 @@ export default function CustomizedDataGrid({
       >
         <Tooltip
           title={t('customizedGrid.expandSankey')}
+          describeChild
           arrow
           open={!isSankeyExpanded && showExpandTooltip}
           onOpen={() => setShowExpandTooltip(true)}

@@ -42,6 +42,7 @@
     "overview": "Overview",
     "manufacturerData": "Manufacturer data",
     "manufacturerDescription": "Based on the MAC addresses of devices captured at CERN, the following represents the manufacturers most frequently observed among the recorded devices.",
+    "expandManufacturer": "Click to expand and see the manufacturer data",
     "live": "Live",
     "last30Days": "Last 30 days",
     "total": "Total",

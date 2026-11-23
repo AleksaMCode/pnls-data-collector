@@ -42,6 +42,7 @@
     "overview": "Uebersicht",
     "manufacturerData": "Herstellerdaten",
     "manufacturerDescription": "Basierend auf den am CERN erfassten MAC-Adressen zeigt dies die am haeufigsten beobachteten Hersteller unter den aufgezeichneten Geraeten.",
+    "expandManufacturer": "Klicken, um zu erweitern und die Herstellerdaten zu sehen",
     "live": "Live",
     "last30Days": "Letzte 30 Tage",
     "total": "Gesamt",
