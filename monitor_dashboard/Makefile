@@ -1,4 +1,4 @@
-.PHONY: clean-install install fmt run build preview
+.PHONY: clean-install install fmt run build preview audit audit-fix
 
 clean-install:
 	rm -rf node_modules package-lock.json
@@ -18,3 +18,9 @@ build:
 
 preview:
 	npm run preview
+
+audit:
+	npm audit
+
+audit-fix:
+	npm audit fix
