@@ -1,7 +1,9 @@
 from sqlalchemy import (
     JSON,
     BigInteger,
+    Boolean,
     Column,
+    Computed,
     Date,
     DateTime,
     Float,
@@ -10,6 +12,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 
 from . import Base
 
@@ -102,6 +105,11 @@ class SsidStats(Base):
     seen_count = Column(BigInteger, nullable=False)
     first_seen = Column(DateTime, nullable=False, index=True)
     last_seen = Column(DateTime, nullable=False, index=True)
+    # Reduced geolocations: [{"lat": .., "lon": .., "cc": ..}, ...] or NULL.
+    geo = Column(JSONB, nullable=True)
+    # Date the geolocation was created by `ssid-geo-mapper`.
+    geo_updated = Column(Date, nullable=True)
+    has_geo = Column(Boolean, Computed("geo IS NOT NULL", persisted=True))
 
 
 class UniqueTotalStats(Base):

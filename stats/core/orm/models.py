@@ -88,6 +88,20 @@ class MacFirstLastSeen(Base):
     last_seen = Column(DateTime, nullable=False)
 
 
+class SsidGeoReducedResolved(Base):
+    __tablename__ = "ssid_geo_reduced_resolved"
+    __table_args__ = {"info": {"is_view": True}}
+
+    # SQLAlchemy requires a primary key for ORM-mapped views.
+    id = Column(Integer, primary_key=True)
+    ssid = Column(String, nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    country = Column(String, nullable=True)
+    country_alpha3 = Column(String(3), nullable=True)
+    created_date = Column(Date, nullable=False)
+
+
 class ImportsInfo(Base):
     __tablename__ = "imports_info"
 

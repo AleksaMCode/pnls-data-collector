@@ -31,6 +31,8 @@ router = APIRouter(prefix="/stats", tags=["stats"])
 load_dotenv()
 CACHE_TTL = int(os.getenv("REDIS_TTL", "3600"))
 
+SsidSortBy = Literal["ssid", "seen_count", "first_seen", "last_seen", "has_geo"]
+
 
 @router.get("/total")
 @cache(expire=CACHE_TTL)
@@ -109,9 +111,7 @@ async def get_sankey_data():
 @router.get("/ssids")
 async def get_ssid_stats(
     search: str | None = Query(default=None),
-    sort_by: Literal["ssid", "seen_count", "first_seen", "last_seen"] = Query(
-        default="last_seen"
-    ),
+    sort_by: SsidSortBy = Query(default="last_seen"),
     sort_order: Literal["asc", "desc"] = Query(default="desc"),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
@@ -128,9 +128,8 @@ async def get_ssid_stats(
 @router.get("/ssids/export")
 async def export_ssid_stats_csv(
     search: str | None = Query(default=None),
-    sort_by: Literal["ssid", "seen_count", "first_seen", "last_seen"] = Query(
-        default="last_seen"
-    ),
+    # `has_geo` only orders the rows; the exported columns stay the same.
+    sort_by: SsidSortBy = Query(default="last_seen"),
     sort_order: Literal["asc", "desc"] = Query(default="desc"),
 ):
     rows = fetch_ssid_export_rows(sort_by=sort_by, sort_order=sort_order, search=search)

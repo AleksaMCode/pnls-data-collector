@@ -381,6 +381,25 @@ def fetch_sankey_data() -> dict:
     return sankey_data
 
 
+def _ssid_stats_order_by(sort_by: str, sort_order: str) -> list:
+    sort_columns = {
+        "ssid": SsidStats.ssid,
+        "seen_count": SsidStats.seen_count,
+        "first_seen": SsidStats.first_seen,
+        "last_seen": SsidStats.last_seen,
+        "has_geo": SsidStats.has_geo,
+    }
+    sort_column = sort_columns.get(sort_by, SsidStats.last_seen)
+    sort_direction = asc if sort_order == "asc" else desc
+
+    order_by = [sort_direction(sort_column)]
+    if sort_by == "has_geo":
+        # A boolean alone gives unstable pages. `last_seen` follows the same direction
+        # so the (has_geo, last_seen) index serves both orders.
+        order_by.append(sort_direction(SsidStats.last_seen))
+    return order_by
+
+
 def fetch_ssid_stats(
     offset: int = 0,
     limit: int = 100,
@@ -388,15 +407,6 @@ def fetch_ssid_stats(
     sort_order: str = "desc",
     search: str | None = None,
 ) -> dict:
-    sort_columns = {
-        "ssid": SsidStats.ssid,
-        "seen_count": SsidStats.seen_count,
-        "first_seen": SsidStats.first_seen,
-        "last_seen": SsidStats.last_seen,
-    }
-    sort_column = sort_columns.get(sort_by, SsidStats.last_seen)
-    sort_direction = asc if sort_order == "asc" else desc
-
     with _session() as db:
         query = db.query(SsidStats)
 
@@ -405,7 +415,7 @@ def fetch_ssid_stats(
 
         total = query.count()
         rows = (
-            query.order_by(sort_direction(sort_column))
+            query.order_by(*_ssid_stats_order_by(sort_by, sort_order))
             .offset(offset)
             .limit(limit)
             .all()
@@ -418,6 +428,8 @@ def fetch_ssid_stats(
                 "seen_count": scalar_to_int(row.seen_count),
                 "first_seen": row.first_seen,
                 "last_seen": row.last_seen,
+                "has_geo": bool(row.has_geo),
+                "geo": row.geo,
             }
             for row in rows
         ],
@@ -438,20 +450,17 @@ def fetch_ssid_export_rows(
     sort_order: str = "desc",
     search: str | None = None,
 ) -> list[dict]:
-    sort_columns = {
-        "ssid": SsidStats.ssid,
-        "seen_count": SsidStats.seen_count,
-        "first_seen": SsidStats.first_seen,
-        "last_seen": SsidStats.last_seen,
-    }
-    sort_column = sort_columns.get(sort_by, SsidStats.last_seen)
-    sort_direction = asc if sort_order == "asc" else desc
-
     with _session() as db:
-        query = db.query(SsidStats)
+        # Only the exported columns are selected, so the `geo` JSON is never loaded for the whole table.
+        query = db.query(
+            SsidStats.ssid,
+            SsidStats.seen_count,
+            SsidStats.first_seen,
+            SsidStats.last_seen,
+        )
         if search:
             query = query.filter(SsidStats.ssid.ilike(f"%{search}%"))
-        rows = query.order_by(sort_direction(sort_column)).all()
+        rows = query.order_by(*_ssid_stats_order_by(sort_by, sort_order)).all()
 
     return [
         {

@@ -14,6 +14,7 @@ from stats.core.orm.models import (
     LocationMappingResolved,
     MacFirstLastSeen,
     SsidFirstLastSeen,
+    SsidGeoReducedResolved,
     TotalCapturedPerDevice,
 )
 from util.core.orm.models import Device
@@ -166,6 +167,25 @@ def get_all_data_from_mac_first_last_seen(
         query = db.query(MacFirstLastSeen)
         if updated_from is not None:
             query = query.filter(MacFirstLastSeen.last_seen >= updated_from)
+        return query.all()
+
+
+def get_ssid_geo_reduced_rows(
+    created_from: date | None = None,
+) -> list[SsidGeoReducedResolved]:
+    """
+    Returns reduced SSID geolocation points, one row per point.
+
+    :param created_from: Only points created by `ssid-geo-mapper` on or after this date. All points when None.
+    """
+    logger.info(
+        "Getting reduced ssid geolocations"
+        + (f" created from {created_from}." if created_from else ".")
+    )
+    with _session() as db:
+        query = db.query(SsidGeoReducedResolved)
+        if created_from is not None:
+            query = query.filter(SsidGeoReducedResolved.created_date >= created_from)
         return query.all()
 
 

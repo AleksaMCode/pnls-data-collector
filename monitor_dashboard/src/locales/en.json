@@ -61,7 +61,12 @@
     "firstSeen": "First seen",
     "lastSeen": "Last seen",
     "downloadSuccess": "SSID CSV downloaded successfully.",
-    "downloadError": "Failed to download SSID CSV."
+    "downloadError": "Failed to download SSID CSV.",
+    "hasGeo": "Geolocation",
+    "mapTitle": "SSID geolocation",
+    "mapSelectHint": "Select an SSID in the table to show its known locations on the map.",
+    "mapNoGeo": "No geolocation is available for \"{{ssid}}\".",
+    "mapShowing": "Showing {{count}} location(s) for \"{{ssid}}\". Locations are approximate (about 1 km)."
   },
   "status": {
     "online": "Online",

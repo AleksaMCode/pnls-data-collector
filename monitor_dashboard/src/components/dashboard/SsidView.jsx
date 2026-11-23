@@ -15,6 +15,7 @@ import { downloadSsidStatsCsv, fetchSsidStats } from '../../statsApi/StatsApi';
 import { useTranslation } from 'react-i18next';
 import { getLocale } from '../../i18nLocale';
 import { useQuery } from '@tanstack/react-query';
+import SsidGeoMap from './SsidGeoMap';
 
 const PAGE_SIZE = 25;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -25,6 +26,7 @@ const SERVER_SORTABLE_FIELDS = new Set([
   'seen_count',
   'first_seen',
   'last_seen',
+  'has_geo',
 ]);
 
 function formatDateTime(value, locale) {
@@ -72,13 +74,15 @@ export default function SsidView() {
   ]);
 
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState(null);
 
   const columns = useMemo(
     () => [
       {
         field: 'ssid',
         headerName: t('common.ssids'),
-        flex: 1.5,
+        // Takes the width left over by the fixed-width columns.
+        flex: 1,
         minWidth: 240,
         renderCell: (params) => params.row.ssid || '-',
       },
@@ -86,8 +90,7 @@ export default function SsidView() {
         field: 'seen_count',
         headerName: t('ssidView.seenCount'),
         type: 'number',
-        flex: 0.8,
-        minWidth: 130,
+        width: 140,
         align: 'right',
         headerAlign: 'right',
         renderCell: (params) =>
@@ -96,16 +99,22 @@ export default function SsidView() {
       {
         field: 'first_seen',
         headerName: t('ssidView.firstSeen'),
-        flex: 1,
-        minWidth: 190,
+        width: 210,
         renderCell: (params) => formatDateTime(params.row.first_seen, locale),
       },
       {
         field: 'last_seen',
         headerName: t('ssidView.lastSeen'),
-        flex: 1,
-        minWidth: 190,
+        width: 210,
         renderCell: (params) => formatDateTime(params.row.last_seen, locale),
+      },
+      {
+        field: 'has_geo',
+        headerName: t('ssidView.hasGeo'),
+        type: 'boolean',
+        width: 130,
+        // First click shows the SSIDs with a geolocation first.
+        sortingOrder: ['desc', 'asc', null],
       },
     ],
     [locale, t],
@@ -166,10 +175,45 @@ export default function SsidView() {
       seen_count: item.seen_count,
       first_seen: item.first_seen,
       last_seen: item.last_seen,
+      has_geo: Boolean(item.has_geo),
+      geo: item.geo ?? null,
     }));
   }, [ssidStatsQuery.data]);
 
   const rowCount = ssidStatsQuery.data?.pagination?.total ?? 0;
+
+  // Row ids are only unique within a page, so the selection is dropped
+  // whenever a different set of rows is requested.
+  useEffect(() => {
+    setSelectedRowId(null);
+  }, [debouncedSearch, sortBy, sortOrder, paginationModel]);
+
+  const selectedRow = useMemo(
+    () => rows.find((row) => row.id === selectedRowId) ?? null,
+    [rows, selectedRowId],
+  );
+
+  const rowSelectionModel = useMemo(
+    () => ({
+      type: 'include',
+      ids: new Set(selectedRowId == null ? [] : [selectedRowId]),
+    }),
+    [selectedRowId],
+  );
+
+  const mapHint = useMemo(() => {
+    if (!selectedRow) {
+      return t('ssidView.mapSelectHint');
+    }
+    const ssid = selectedRow.ssid || '-';
+    if (!selectedRow.has_geo) {
+      return t('ssidView.mapNoGeo', { ssid });
+    }
+    return t('ssidView.mapShowing', {
+      ssid,
+      count: selectedRow.geo?.length ?? 0,
+    });
+  }, [selectedRow, t]);
 
   useEffect(() => {
     if (!ssidStatsQuery.isError) {
@@ -276,12 +320,29 @@ export default function SsidView() {
             onPaginationModelChange={setPaginationModel}
             sortModel={sortModel}
             onSortModelChange={setSortModel}
-            disableRowSelectionOnClick
+            disableMultipleRowSelection
+            // Hand cursor: clicking a row shows its locations on the map.
+            sx={{ '& .MuiDataGrid-row': { cursor: 'pointer' } }}
+            rowSelectionModel={rowSelectionModel}
+            onRowSelectionModelChange={(model) => {
+              const [nextId] = [...model.ids];
+              setSelectedRowId(nextId ?? null);
+            }}
             disableColumnResize
             getRowClassName={(params) =>
               params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
             }
           />
+        </Box>
+
+        <Box>
+          <Typography component="h3" variant="subtitle1" sx={{ mb: 0.5 }}>
+            {t('ssidView.mapTitle')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            {mapHint}
+          </Typography>
+          <SsidGeoMap geo={selectedRow?.geo ?? null} />
         </Box>
       </Stack>
     </Box>
