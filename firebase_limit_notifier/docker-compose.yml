@@ -8,6 +8,8 @@ services:
       - ./.env
     environment:
       TZ: Europe/Paris
+      # Same value as the port mapping below, also when HTTP_PORT is overridden in the shell
+      HTTP_PORT: "${HTTP_PORT}"
     ports:
       - "${HTTP_PORT}:${HTTP_PORT}"
     volumes:
