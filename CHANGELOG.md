@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `stats` tool `initial_ssid_geo_publisher` that publishes all SSID geolocations to Supabase, replacing already published values. PR #421
 - `stats-api` endpoint `GET /stats/ssids` now returns `has_geo` and `geo` for each SSID and supports `sort_by=has_geo`. `GET /stats/ssids/export` accepts the same sort while its CSV columns are unchanged. PR #421
 - `monitor-dashboard` SSIDs view now has a sortable Geolocation column and a world map below the table that shows the locations of the selected SSID. PR #421
+- `collector-status-notifier` can now send a push heartbeat to Uptime Kuma after every status check, enabled with `KUMA_PUSH_ENABLED` and pointed at the monitor with `KUMA_PUSH_URL`. PR #423
 
 ### Changed
 
@@ -37,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ssid` table now tracks failed WiGLE lookups in the new `failed_attempts`, `last_failure_reason` and `last_attempt_at` columns (migration `000010`). PR #420
 - `ssid-geo-mapper` now maps SSIDs that never failed first; previously failed SSIDs only fill the rest with the batch, fewest failures and least recently tried first. The Mattermost summary reports how many of them were retried. PR #420
 - `ssid-geo-mapper` no longer marks an SSID as mapped without GEO data when WiGLE answers `200` with an unusable payload; the SSID stays unmapped and is retried on the next run. PR #420
+- `firebase-limit-notifier` is now a long-running HTTP microservice with a `POST /check` trigger endpoint (`HTTP_PORT`, `CHECK_ENDPOINT_PATH`) and a Docker setup, instead of a one-shot program. The home server cron job now calls the endpoint on the same weekly schedule. PR #423
 
 ### Fixed
 
