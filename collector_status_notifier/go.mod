@@ -1,6 +1,6 @@
 module collstatnot
 
-go 1.25.5
+go 1.27.4
 
 require (
 	firebase.google.com/go/v4 v4.19.0

@@ -1,6 +1,6 @@
 module hslimnot
 
-go 1.25.5
+go 1.27.4
 
 require (
 	github.com/AleksaMCode/pnls-data-collector/util-go v0.0.0

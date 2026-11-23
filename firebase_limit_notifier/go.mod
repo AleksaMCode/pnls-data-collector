@@ -1,18 +1,6 @@
 module fblimnot
 
-go 1.25.5
-
-require (
-	firebase.google.com/go/v4 v4.19.0
-	github.com/aws/aws-sdk-go-v2 v1.41.5
-	github.com/aws/aws-sdk-go-v2/config v1.32.14
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.14
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.98.0
-	github.com/go-analyze/charts v0.5.23
-	github.com/joho/godotenv v1.5.1
-	google.golang.org/api v0.264.0 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-)
+go 1.27.4
 
 require (
 	cel.dev/expr v0.25.1 // indirect
