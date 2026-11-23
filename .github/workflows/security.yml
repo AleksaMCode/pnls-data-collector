@@ -6,6 +6,7 @@ on:
     paths:
       - "monitor_dashboard/package.json"
       - "monitor_dashboard/package-lock.json"
+      - "**/*.go"
       - "**/go.mod"
       - "**/go.sum"
       - ".go-version"
@@ -16,6 +17,7 @@ on:
     paths:
       - "monitor_dashboard/package.json"
       - "monitor_dashboard/package-lock.json"
+      - "**/*.go"
       - "**/go.mod"
       - "**/go.sum"
       - ".go-version"
