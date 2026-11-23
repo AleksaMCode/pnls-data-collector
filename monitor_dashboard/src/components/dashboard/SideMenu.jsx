@@ -12,9 +12,16 @@ import OptionsMenu from './OptionsMenu';
 import { useAuth } from '../../context/authContext';
 import PnlsCard from './PnlsCard';
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 
 const drawerWidth = 250;
 const collapsedDrawerWidth = 65;
+const transitionMs = 200;
+const toggleButtonWidth = 48;
+// Width of the logo card when the menu is open: drawer minus its border,
+// the header padding (2 x 12), the gap (8) and the toggle button. Keeping it
+// fixed stops the card from reflowing while the panel animates.
+const headerCardWidth = drawerWidth - 1 - 24 - 8 - toggleButtonWidth;
 
 function getDisplayNameFromEmail(email) {
   if (!email) {
@@ -38,9 +45,11 @@ function getDisplayNameFromEmail(email) {
 }
 
 const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ open }) => ({
-  width: open ? drawerWidth : collapsedDrawerWidth,
+  shouldForwardProp: (prop) => prop !== 'open' && prop !== 'layoutOpen',
+})(({ open, layoutOpen }) => ({
+  // The root is the slot the page content flows around. It follows
+  // `layoutOpen`, which trails `open` until the panel animation is done.
+  width: layoutOpen ? drawerWidth : collapsedDrawerWidth,
   flexShrink: 0,
   boxSizing: 'border-box',
   mt: 10,
@@ -48,7 +57,7 @@ const Drawer = styled(MuiDrawer, {
     width: open ? drawerWidth : collapsedDrawerWidth,
     boxSizing: 'border-box',
     overflowX: 'hidden',
-    transition: 'width 200ms ease',
+    transition: `width ${transitionMs}ms ease`,
   },
 }));
 
@@ -57,10 +66,22 @@ export default function SideMenu({ open, onToggle }) {
   const { t } = useTranslation();
   const displayName = getDisplayNameFromEmail(currentUser?.email);
 
+  const [layoutOpen, setLayoutOpen] = useState(open);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setLayoutOpen(open), transitionMs);
+    return () => clearTimeout(timeoutId);
+  }, [open]);
+
+  const fadeSx = {
+    opacity: open ? 1 : 0,
+    transition: 'opacity 150ms ease',
+  };
+
   return (
     <Drawer
       variant="permanent"
       open={open}
+      layoutOpen={layoutOpen}
       sx={{
         display: { xs: 'none', md: 'block' },
         [`& .${drawerClasses.paper}`]: {
@@ -72,34 +93,41 @@ export default function SideMenu({ open, onToggle }) {
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: open ? 'space-between' : 'center',
           mt: 'calc(var(--template-frame-height, 0px) + 4px)',
-          p: 1.5,
-          gap: 1,
+          py: 1.5,
+          px: open ? 1.5 : 1,
+          gap: open ? 1 : 0,
+          transition: `padding ${transitionMs}ms ease, gap ${transitionMs}ms ease`,
         }}
       >
-        {open && (
-          <PnlsCard
-            primary="PNLS-DC"
-            secondary={t('menu.monitoringDashboard')}
-            color="primary.main"
-            icon={
-              <Box
-                component="img"
-                src="https://raw.githubusercontent.com/AleksaMCode/Preferred-Network-List-Sniffer/refs/heads/main/resources/rpis_logo.png"
-                alt="PNLS logo"
-                sx={{ width: 24, height: 24, objectFit: 'contain' }}
-              />
-            }
-          />
-        )}
+        <Box
+          aria-hidden={!open}
+          sx={{ flex: 1, minWidth: 0, overflow: 'hidden', ...fadeSx }}
+        >
+          <Box sx={{ width: headerCardWidth }}>
+            <PnlsCard
+              primary="PNLS-DC"
+              secondary={t('menu.monitoringDashboard')}
+              color="primary.main"
+              icon={
+                <Box
+                  component="img"
+                  src="https://raw.githubusercontent.com/AleksaMCode/Preferred-Network-List-Sniffer/refs/heads/main/resources/rpis_logo.png"
+                  alt="PNLS logo"
+                  sx={{ width: 24, height: 24, objectFit: 'contain' }}
+                />
+              }
+            />
+          </Box>
+        </Box>
         <IconButton
           size="small"
           onClick={onToggle}
           aria-label="toggle sidebar"
           sx={{
+            flexShrink: 0,
             height: 76,
-            width: 48,
+            width: toggleButtonWidth,
             borderRadius: 3,
             border: 1,
             borderColor: 'divider',
@@ -123,36 +151,41 @@ export default function SideMenu({ open, onToggle }) {
       <Stack
         direction="row"
         sx={{
-          p: 2,
+          py: 2,
+          // 14px keeps the 36px avatar centred in the collapsed rail.
+          px: open ? 2 : 1.75,
           gap: 1,
           alignItems: 'center',
           borderTop: '1px solid',
           borderColor: 'divider',
-          justifyContent: open ? 'flex-start' : 'center',
+          overflow: 'hidden',
+          transition: `padding ${transitionMs}ms ease`,
         }}
       >
         <Avatar
           sizes="small"
           alt={displayName}
           src="/static/images/avatar/7.jpg"
-          sx={{ width: 36, height: 36 }}
+          sx={{ width: 36, height: 36, flexShrink: 0 }}
         />
-        {open && (
-          <>
-            <Box sx={{ mr: 'auto' }}>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 500, lineHeight: '16px' }}
-              >
-                {displayName}
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                {currentUser?.email}
-              </Typography>
-            </Box>
-            <OptionsMenu />
-          </>
-        )}
+        <Box aria-hidden={!open} sx={{ flex: 1, minWidth: 0, ...fadeSx }}>
+          <Typography
+            noWrap
+            variant="body2"
+            sx={{ fontWeight: 500, lineHeight: '16px' }}
+          >
+            {displayName}
+          </Typography>
+          <Typography
+            noWrap
+            component="div"
+            variant="caption"
+            sx={{ color: 'text.secondary' }}
+          >
+            {currentUser?.email}
+          </Typography>
+        </Box>
+        {open && <OptionsMenu />}
       </Stack>
     </Drawer>
   );
