@@ -394,9 +394,9 @@ def _ssid_stats_order_by(sort_by: str, sort_order: str) -> list:
 
     order_by = [sort_direction(sort_column)]
     if sort_by == "has_geo":
-        # A boolean alone gives unstable pages. `last_seen` follows the same direction
-        # so the (has_geo, last_seen) index serves both orders.
-        order_by.append(sort_direction(SsidStats.last_seen))
+        # A boolean alone gives unstable pages, so the most recent SSIDs come first within each group.
+        # The (has_geo, last_seen) index serves the descending case; ascending is sorted by the database.
+        order_by.append(desc(SsidStats.last_seen))
     return order_by
 
 
