@@ -44,4 +44,7 @@ func checkDevicesStatus(client *db.Client, ctx context.Context) {
 		log.Printf("Datadog status check failed, falling back to Firebase status: %v", err)
 		validateFirebaseDeviceData(client, ctx)
 	}
+
+	// Let Uptime Kuma know that the status check loop is still running
+	sendKumaPush(ctx)
 }
