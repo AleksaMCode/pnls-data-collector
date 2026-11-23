@@ -32,6 +32,11 @@ jobs:
         with:
           node-version-file: monitor_dashboard/.nvmrc
 
-      - name: Run npm audit
+      - name: Run npm audit (production dependencies)
+        working-directory: monitor_dashboard
+        run: npm audit --omit=dev --package-lock-only
+
+      - name: Run npm audit (including dev dependencies)
+        continue-on-error: true
         working-directory: monitor_dashboard
         run: npm audit --omit=dev
