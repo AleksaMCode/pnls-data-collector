@@ -42,6 +42,7 @@
     "overview": "Vue d'ensemble",
     "manufacturerData": "Donnees fabricant",
     "manufacturerDescription": "Base sur les adresses MAC des appareils captures au CERN, ceci represente les fabricants les plus frequemment observes parmi les appareils enregistres.",
+    "expandManufacturer": "Cliquer pour developper et voir les donnees fabricant",
     "live": "Direct",
     "last30Days": "30 derniers jours",
     "total": "Total",
