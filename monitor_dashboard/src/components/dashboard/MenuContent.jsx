@@ -63,6 +63,10 @@ export default function MenuContent({ collapsed = false }) {
       whiteSpace: 'nowrap',
       ...fadeSx,
     },
+    '& .MuiCollapse-root .MuiListItemText-root': {
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
+    },
     '& .MuiListItemButton-root > .MuiSvgIcon-root': {
       flexShrink: 0,
       ...fadeSx,
