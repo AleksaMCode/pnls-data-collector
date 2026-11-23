@@ -379,6 +379,7 @@ export default function MainGrid() {
       >
         <Tooltip
           title={t('mainGrid.expandManufacturer')}
+          describeChild
           arrow
           open={!isManufacturerExpanded && showManufacturerTooltip}
           onOpen={() => setShowManufacturerTooltip(true)}
