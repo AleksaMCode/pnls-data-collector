@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `collector-status-notifier` now derives the status node date and parses heartbeat timestamps in the configured `TIMEZONE` instead of the container's timezone. PR #415
 - Go code style workflow now pins `golangci-lint` to `v2.12.2`, the last release that supports Go 1.25. PR #415
 - `firebase-limit-notifier` and `db-backup` integration tests now use the `pgsty/silo` image, a MinIO-compatible fork, in place of the removed `minio/minio` image. PR #415
+- `monitor-dashboard` SSIDs table now shows first seen and last seen dates as `DD/MM/YYYY` with a 12-hour AM/PM time (e.g. `05/03/2026, 03:07:09 PM`) in English instead of the US month-first format. PR #416
 
 ### Fixed
 
@@ -31,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `monitor-dashboard` device table no longer shows devices as offline and not capturing for up to 10 minutes after midnight; the status check now falls back to the previous day's Firebase node until the first heartbeat of the new day. PR #415
 - `monitor-dashboard` device online check now compares the heartbeat and the current time as Europe/Paris wall time, so the result no longer depends on the viewer's timezone. PR #415
 - `collector-status-notifier` no longer reports devices as having no status right after midnight; it falls back to the previous day's Firebase status node. PR #415
+- `monitor-dashboard` SSIDs table no longer leaves an empty gap between the last row and the pagination controls on tall screens; the table now ends after its last row and only scrolls when it exceeds the viewport height. PR #416
 
 ## [3.2.0] - 2026-08-09
 
