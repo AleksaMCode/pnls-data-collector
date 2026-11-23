@@ -17,6 +17,7 @@ const (
 	TIMEZONE        = "Europe/Paris"
 )
 
+// TODO: Read used device from DB?
 const (
 	DEVICE_RPI_1 = "RPI-1"
 	DEVICE_RPI_2 = "RPI-2"
