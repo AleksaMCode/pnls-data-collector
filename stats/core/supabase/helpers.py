@@ -585,9 +585,12 @@ def publish_ssid_geo(overwrite: bool = False, batch_size: int = 1000):
     Publishes reduced SSID geolocations to the `geo` column of `ssid_stats`.
 
     Daily mode (`overwrite=False`): reads the newest `geo_updated` date from Supabase (the watermark),
-    publishes the geolocations created locally on or after that date, and only fills rows that have
+    publishes the SSIDs that got a geolocation locally on or after that date, and only fills rows that have
     no geolocation yet. The watermark day itself is sent again on every run, because `ssid-geo-mapper`
     can still add geolocations on that day after this step ran; those rows are skipped by the guard.
+
+    The watermark only selects SSIDs. A selected SSID is always sent with all of its points, including
+    points older than the watermark, because the guard would block any later completion of a partial value.
 
     Backfill mode (`overwrite=True`): publishes every geolocation and replaces existing values.
 

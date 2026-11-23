@@ -2,7 +2,7 @@ import logging
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, select
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_exponential
 from yaspin import yaspin
 
@@ -176,16 +176,27 @@ def get_ssid_geo_reduced_rows(
     """
     Returns reduced SSID geolocation points, one row per point.
 
-    :param created_from: Only points created by `ssid-geo-mapper` on or after this date. All points when None.
+    The date only selects which SSIDs are returned. Every point of a selected SSID is returned,
+    including points older than the date, so an SSID is never published with a part of its points.
+
+    :param created_from: Only SSIDs with at least one point created by `ssid-geo-mapper` on or after this date.
+        All SSIDs when None.
     """
     logger.info(
         "Getting reduced ssid geolocations"
-        + (f" created from {created_from}." if created_from else ".")
+        + (
+            f" of SSIDs with points created from {created_from}."
+            if created_from
+            else "."
+        )
     )
     with _session() as db:
         query = db.query(SsidGeoReducedResolved)
         if created_from is not None:
-            query = query.filter(SsidGeoReducedResolved.created_date >= created_from)
+            recent_ssids = select(SsidGeoReducedResolved.ssid).where(
+                SsidGeoReducedResolved.created_date >= created_from
+            )
+            query = query.filter(SsidGeoReducedResolved.ssid.in_(recent_ssids))
         return query.all()
 
 
