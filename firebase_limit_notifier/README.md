@@ -41,8 +41,11 @@ go run .
 ## Trigger check
 
 ```bash
-curl -X POST http://localhost:<HTTP_PORT><CHECK_ENDPOINT_PATH>
+curl -X POST http://localhost:9093/check
 ```
+
+> [!NOTE]
+> This uses the values from `.env.template`. If you changed `HTTP_PORT` or `CHECK_ENDPOINT_PATH`, replace `9093` and `/check` with your values.
 
 ## Docker
 
