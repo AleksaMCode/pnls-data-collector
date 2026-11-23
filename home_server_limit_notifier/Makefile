@@ -1,4 +1,4 @@
-.PHONY: fmt run test
+.PHONY: fmt run test audit audit-fix
 
 fmt:
 	golangci-lint fmt
@@ -8,3 +8,10 @@ run:
 
 test:
 	go test ./...
+
+audit:
+	go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+
+audit-fix:
+	go get -u -t ./...
+	go mod tidy
