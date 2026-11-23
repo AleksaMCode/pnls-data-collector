@@ -6,7 +6,7 @@
 [![Code style (Python): black](https://img.shields.io/badge/code%20style%20(python)-black-000000.svg)](https://github.com/psf/black)
 [![Go 1.25.5](https://img.shields.io/badge/go-1.25.5-00ADD8.svg)](https://go.dev/dl/)
 [![Code style (Go): golangci-lint](https://img.shields.io/badge/code%20style%20(go)-golangci--lint-00ADD8.svg)](https://golangci-lint.run/)
-[![Node 22.19.0](https://img.shields.io/badge/node-22.19.0-3C873A.svg)](https://nodejs.org/en/blog/release/v22.19.0)
+[![Node 26.13.0](https://img.shields.io/badge/node-26.13.0-3C873A.svg)](https://nodejs.org/en/blog/release/v26.13.0)
 [![Code style (JS/TS): Prettier](https://img.shields.io/badge/code%20style%20(JS/TS)-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 ![Python tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/python-tests.yml/badge.svg?branch=master)
 ![Go tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/go-tests.yml/badge.svg?branch=master)
