@@ -1,6 +1,7 @@
 import logging
 from typing import List
 
+from sqlalchemy import func
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_exponential
 
 from ssid_geo_mapper.core.orm._init_runtime import _session
@@ -8,6 +9,9 @@ from ssid_geo_mapper.core.orm.models import SSID, Country, SSIDGeo, SSIDGeoReduc
 from util.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Matches the length of the `ssid.last_failure_reason` column.
+FAILURE_REASON_MAX_LENGTH = 64
 
 
 def insert_ssid_geo_batch(
@@ -57,6 +61,7 @@ def insert_ssid_geo_batch(
                 {
                     SSID.mapped: True,
                     SSID.has_geo: bool(full_rows or reduced_rows),
+                    SSID.last_attempt_at: func.now(),
                 },
                 synchronize_session=False,
             )
@@ -74,6 +79,11 @@ def insert_ssid_geo_batch(
     after=after_log(logger, logging.ERROR),
 )
 def get_unmapped_ssids(limit: int) -> List[SSID]:
+    """Returns the next SSIDs to map.
+
+    SSIDs that never failed come first, in id order. Previously failed SSIDs only fill what is left of the limit:
+    fewest failures first, then least recently tried.
+    """
     try:
         with _session() as db:
             return (
@@ -83,7 +93,11 @@ def get_unmapped_ssids(limit: int) -> List[SSID]:
                     SSID.has_geo.is_(False),
                     SSID.ssid != "*",
                 )
-                .order_by(SSID.id.asc())
+                .order_by(
+                    SSID.failed_attempts.asc(),
+                    SSID.last_attempt_at.asc().nulls_first(),
+                    SSID.id.asc(),
+                )
                 .limit(limit)
                 .all()
             )
@@ -98,6 +112,21 @@ def update_ssid_mapped(ssid_id: int, has_geo: bool = False):
             {
                 SSID.mapped: True,
                 SSID.has_geo: has_geo,
+                SSID.last_attempt_at: func.now(),
+            },
+            synchronize_session=False,
+        )
+        db.commit()
+
+
+def record_ssid_failure(ssid_id: int, reason: str):
+    """Counts a failed lookup for the SSID, which stays unmapped and moves back in the queue."""
+    with _session() as db:
+        db.query(SSID).filter(SSID.id == ssid_id).update(
+            {
+                SSID.failed_attempts: SSID.failed_attempts + 1,
+                SSID.last_failure_reason: reason[:FAILURE_REASON_MAX_LENGTH],
+                SSID.last_attempt_at: func.now(),
             },
             synchronize_session=False,
         )

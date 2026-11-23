@@ -1,56 +1,35 @@
-import math
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
+class WigleError(Exception):
+    """Base error for a failed WiGLE lookup, carrying the HTTP status and response body."""
 
-import httpx
-from tenacity import wait_exponential
-
-
-class RetryableWigleError(httpx.HTTPError):
-    """HTTPError carrying optional server-suggested retry delay."""
-
-    MAX_RETRY_DELAY_SECONDS = 60.0
-
-    def __init__(self, message: str, retry_after: str | int | float | None = None):
+    def __init__(
+        self, message: str, status_code: int | None = None, body: str | None = None
+    ):
         super().__init__(message)
-        self.retry_after = self._parse_retry_after(retry_after)
-
-    @classmethod
-    def _parse_retry_after(cls, retry_after: str | int | float | None) -> float | None:
-        if retry_after is None:
-            return None
-
-        value = str(retry_after).strip()
-
-        # Retry-After: <delay-seconds>
-        try:
-            seconds = float(value)
-            if math.isfinite(seconds):
-                return min(max(seconds, 0.0), cls.MAX_RETRY_DELAY_SECONDS)
-        except (TypeError, ValueError):
-            pass
-
-        # Retry-After: <http-date>
-        try:
-            retry_dt = parsedate_to_datetime(value)
-        except (TypeError, ValueError):
-            return None
-
-        if retry_dt is None:
-            return None
-
-        if retry_dt.tzinfo is None:
-            retry_dt = retry_dt.replace(tzinfo=timezone.utc)
-
-        now = datetime.now(timezone.utc)
-        seconds = (retry_dt - now).total_seconds()
-        return min(max(seconds, 0.0), cls.MAX_RETRY_DELAY_SECONDS)
+        self.status_code = status_code
+        self.body = body
 
 
-def wait_retry_after_or_exponential(retry_state):
-    # If exception has retry_after, prefer that; else fallback exponential.
-    ex = retry_state.outcome.exception()
-    if isinstance(ex, RetryableWigleError) and ex.retry_after is not None:
-        return ex.retry_after
-    # Same shape as wait_exponential(multiplier=1, min=1, max=60)
-    return wait_exponential(multiplier=1, min=1, max=60)(retry_state)
+class WigleAbortRunError(WigleError):
+    """WiGLE refused the request in a way no other SSID can get past. The run must stop."""
+
+    def __init__(
+        self,
+        message: str,
+        status_code: int | None = None,
+        body: str | None = None,
+        retry_after: str | None = None,
+    ):
+        super().__init__(message, status_code=status_code, body=body)
+        self.retry_after = retry_after
+
+
+class WigleRateLimitError(WigleAbortRunError):
+    """WiGLE answered 429. The daily quota is spent."""
+
+
+class WigleAccessDeniedError(WigleAbortRunError):
+    """WiGLE answered 401 or 403. The credentials are rejected or the client is blocked."""
+
+
+class WigleLookupError(WigleError):
+    """WiGLE rejected a single lookup (any other non-2xx status, or an unusable payload)."""

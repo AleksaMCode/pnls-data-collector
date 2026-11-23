@@ -3,6 +3,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     Date,
+    DateTime,
     Float,
     ForeignKey,
     Integer,
@@ -47,6 +48,11 @@ class SSID(Base):
 
     mapped = Column(Boolean, nullable=False, default=False)
     has_geo = Column(Boolean, nullable=False, default=False)
+
+    # Lookup failure tracking. SSIDs that never failed are mapped first.
+    failed_attempts = Column(Integer, nullable=False, default=0, server_default="0")
+    last_failure_reason = Column(String(64), nullable=True)
+    last_attempt_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class Country(Base):

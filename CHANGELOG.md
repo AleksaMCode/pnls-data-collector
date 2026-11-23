@@ -25,7 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `firebase-limit-notifier` and `db-backup` integration tests now use the `pgsty/silo` image, a MinIO-compatible fork, in place of the removed `minio/minio` image. PR #415
 - `monitor-dashboard` SSIDs table now shows first seen and last seen dates as `DD/MM/YYYY` with a 12-hour AM/PM time (e.g. `05/03/2026, 03:07:09 PM`) in English instead of the US month-first format. PR #416
 - `monitor-dashboard` side menu rows are now 40px tall with 20px icons and more spacing between icon and label; the sizing is scoped to the side menu, and long device names still wrap in the Devices sub-list. PR #419
-- `monitor-dashboard` side menu footer now truncates a long user name or email with an ellipsis instead of pushing the options button out of view. PR #419
+- `monitor-dashboard` side menu footer now truncates a long username or email with an ellipsis instead of pushing the options button out of view. PR #419
+- `ssid-geo-mapper` now aborts the whole run on the first WiGLE `429`, `401` or `403` instead of retrying each SSID up to 10 times with exponential backoff or carrying on with the next SSID; `410` is no longer retried either. PR #420
+- `ssid-geo-mapper` now fetches 240 SSIDs per run (`WIGLE_BATCH_SIZE`) and caps the run at 250 WiGLE requests, leaving headroom below the daily quota. PR #420
+- `ssid-geo-mapper` now logs the WiGLE response body on every non-2xx status, and its Mattermost summary reports requests sent, SSIDs with locations, SSIDs without results, failures by reason and, on abort, the status and request index that stopped the run. PR #420
+- `ssid` table now tracks failed WiGLE lookups in the new `failed_attempts`, `last_failure_reason` and `last_attempt_at` columns (migration `000010`). PR #420
+- `ssid-geo-mapper` now maps SSIDs that never failed first; previously failed SSIDs only fill the rest with the batch, fewest failures and least recently tried first. The Mattermost summary reports how many of them were retried. PR #420
+- `ssid-geo-mapper` no longer marks an SSID as mapped without GEO data when WiGLE answers `200` with an unusable payload; the SSID stays unmapped and is retried on the next run. PR #420
 
 ### Fixed
 
