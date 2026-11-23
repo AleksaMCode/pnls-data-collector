@@ -37,6 +37,23 @@ function formatDateTime(value, locale) {
     return value;
   }
 
+  // English uses DD/MM/YYYY with a 12-hour clock instead of the US
+  // month-first format, e.g. "23/11/2026, 03:45:12 PM".
+  if (locale.startsWith('en')) {
+    return parsed
+      .toLocaleString('en-GB', {
+        timeZone: 'Europe/Paris',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h12',
+      })
+      .toUpperCase();
+  }
+
   return parsed.toLocaleString(locale, { timeZone: 'Europe/Paris' });
 }
 
@@ -237,7 +254,16 @@ export default function SsidView() {
               : t('common.downloadCsv')}
           </Button>
         </Stack>
-        <Box sx={{ height: 'calc(100vh - 100px)', width: '100%' }}>
+        {/* Flex column + maxHeight: the grid ends after its last row on tall
+            screens and scrolls inside the viewport on short ones. */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: 'calc(100vh - 100px)',
+            width: '100%',
+          }}
+        >
           <DataGrid
             rows={rows}
             columns={columns}
