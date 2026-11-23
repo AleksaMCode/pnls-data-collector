@@ -7,6 +7,7 @@ const (
 	LOG_FILE                  = "firebase_limit_notifier.log"
 	R2_BUCKET_DIR             = "firebase-limit"
 	TIMEZONE                  = "Europe/Paris"
+	CHECK_PATH                = "/check"
 	// Free tier has 1 GB limit on Realtime DB
 	FIREBASE_LIMIT_MB = 1_000
 
@@ -23,8 +24,11 @@ var (
 	CLOUDFLARE_ACCOUNT_ID  string
 	R2_BUCKET_PUBLIC_URL   string
 	R2_ENDPOINT            string
+	HTTP_PORT              string
+	CHECK_ENDPOINT_PATH    string
 )
 
+// TODO: Read used device from DB?
 const (
 	DEVICE_RPI_1 = "RPI-1"
 	DEVICE_RPI_2 = "RPI-2"

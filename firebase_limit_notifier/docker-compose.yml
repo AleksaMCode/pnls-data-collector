@@ -1,0 +1,16 @@
+services:
+  firebase_limit_notifier:
+    build:
+      context: ..
+      dockerfile: ./firebase_limit_notifier/Dockerfile
+    container_name: firebase_limit_notifier
+    env_file:
+      - ./.env
+    environment:
+      TZ: Europe/Paris
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./firebase_credentials.json:/app/firebase_credentials.json:ro
+    restart: unless-stopped

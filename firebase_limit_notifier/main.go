@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"firebase.google.com/go/v4/db"
@@ -17,13 +18,42 @@ func main() {
 	loadEnvVariables()
 	logging.InitObservability(LOG_FILE, SENTRY_DSN, SERVICE_NAME)
 
+	if err := validateRequiredEnv(); err != nil {
+		logging.Fatal(fmt.Sprintf("Invalid configuration: %v", err))
+		return
+	}
+
 	ctx := context.Background()
 	client := firebase.GetFirebaseClient(ctx, FIREBASE_CREDENTIALS_FILE, FIREBASE_DATABASE_URL)
 
-	// Check Firebase usage
-	usage := checkUsage(client, ctx)
-	// Create a pie chart and send a Mattermost usage message
-	createUsageChart(usage)
+	http.HandleFunc(CHECK_ENDPOINT_PATH, newCheckFirebaseUsageHandler(func() {
+		// Check Firebase usage
+		usage := checkUsage(client, ctx)
+		// Create a pie chart and send a Mattermost usage message
+		createUsageChart(usage)
+	}))
+	log.Printf("%s listening on :%s%s", SERVICE_NAME, HTTP_PORT, CHECK_ENDPOINT_PATH)
+
+	if err := http.ListenAndServe(":"+HTTP_PORT, nil); err != nil {
+		logging.Fatal(fmt.Sprintf("HTTP server failed: %v", err))
+	}
+}
+
+// newCheckFirebaseUsageHandler returns a handler that runs the usage check on every POST request.
+func newCheckFirebaseUsageHandler(runCheck func()) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			http.Error(responseWriter, "Only POST method is allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		runCheck()
+
+		responseWriter.WriteHeader(http.StatusOK)
+		if _, err := responseWriter.Write([]byte("Firebase usage check sent to Mattermost info channel.")); err != nil {
+			log.Printf("Failed to write response body: %v", err)
+		}
+	}
 }
 
 func checkUsage(client *db.Client, ctx context.Context) float64 {
