@@ -10,3 +10,18 @@ services:
       - /app/node_modules
     env_file:
       - ./monitor_dashboard/.env
+
+  uptime_kuma:
+    image: louislam/uptime-kuma:2
+    container_name: uptime_kuma
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    # Lets monitors reach services published on the host via host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  uptime_kuma_data:
