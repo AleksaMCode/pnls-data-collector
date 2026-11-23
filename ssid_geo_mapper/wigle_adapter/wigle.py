@@ -4,11 +4,11 @@ from typing import Tuple
 
 import httpx
 from dotenv import load_dotenv
-from tenacity import retry, retry_if_exception_type, stop_after_attempt
 
 from ssid_geo_mapper.exceptions.wigle import (
-    RetryableWigleError,
-    wait_retry_after_or_exponential,
+    WigleAccessDeniedError,
+    WigleLookupError,
+    WigleRateLimitError,
 )
 from ssid_geo_mapper.geo.reducer import reduce_locations
 from util.logger import get_logger
@@ -16,6 +16,9 @@ from util.logger import get_logger
 logger = get_logger(__name__)
 
 load_dotenv()
+
+# Max. number of response body characters kept for logs and notifications.
+BODY_SNIPPET_LENGTH = 500
 
 
 class Wigle:
@@ -29,52 +32,76 @@ class Wigle:
             self.api_key = os.getenv("WIGLE_API_KEY")
             self.api_secret = os.getenv("WIGLE_API_SECRET")
         self.auth = (self.api_key, self.api_secret)
+        # Every HTTP call sent to WiGLE, whatever its outcome. Used to enforce the request budget.
+        self.request_count = 0
 
-    @retry(
-        stop=stop_after_attempt(10),
-        retry=retry_if_exception_type(RetryableWigleError),
-        wait=wait_retry_after_or_exponential,
-        reraise=True,
-    )
     def lookup_SSID(
         self, ssid
-    ) -> (
-        Tuple[list[dict[str, str | float]], list[dict[str, str | float]]]
-        | Tuple[None, None]
-    ):
-        # Normalize SSID
-        # ssid = ssid.strip()
+    ) -> Tuple[list[dict[str, str | float]], list[dict[str, str | float]]]:
+        """Looks up a single SSID with exactly one WiGLE request (no retries).
+
+        Raises:
+            WigleRateLimitError: on 429. The caller must stop the whole run.
+            WigleAccessDeniedError: on 401 or 403. The caller must stop the whole run.
+            WigleLookupError: on any other non-2xx status or an unusable payload.
+            httpx.HTTPError: on transport problems such as timeouts.
+        """
         params = {
             "first": 0,
             "freenet": "false",
             "paynet": "false",
             "ssid": ssid,
         }
+        self.request_count += 1
         with httpx.Client(auth=self.auth, timeout=30.0) as client:
             r = client.get(self.URL, params=params)
 
-        if r.status_code in (HTTPStatus.GONE, HTTPStatus.TOO_MANY_REQUESTS):
+        body = r.text[:BODY_SNIPPET_LENGTH]
+
+        if r.status_code == HTTPStatus.TOO_MANY_REQUESTS:
             retry_after = r.headers.get("Retry-After")
-            raise RetryableWigleError(
-                f"Retryable status {r.status_code} for SSID {ssid}",
-                retry_after=retry_after,
+            msg = (
+                f"Rate limited (429) on SSID {ssid!r}. "
+                f"Retry-After: {retry_after}. Body: {body}"
             )
-        if not (200 <= r.status_code < 300):
-            # Stop the mapping workflow here if HTTPStatus.BAD_REQUEST, HTTPStatus.PAYMENT_REQUIRED or any other error.
-            msg = f"Unable to lookup {ssid}, bad status: {r.status_code}"
             logger.error(msg)
-            raise Exception(msg)
+            raise WigleRateLimitError(
+                msg, status_code=r.status_code, body=body, retry_after=retry_after
+            )
+
+        if r.status_code in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+            msg = f"Access denied ({r.status_code}) on SSID {ssid!r}. Body: {body}"
+            logger.error(msg)
+            raise WigleAccessDeniedError(msg, status_code=r.status_code, body=body)
+
+        if not (200 <= r.status_code < 300):
+            msg = (
+                f"Unable to lookup {ssid!r}, bad status: {r.status_code}. Body: {body}"
+            )
+            logger.error(msg)
+            raise WigleLookupError(msg, status_code=r.status_code, body=body)
 
         try:
             result = r.json()
-            locations = self._location_duplicate_reducer(
-                self._location_formatter(result["results"], ssid)
-            )
-            reduced_locations = reduce_locations(locations)
-            return locations, reduced_locations
-        except Exception as e:
-            logger.error(f"Unable to decode JSON response for SSID {ssid}: {e}")
-            return None, None
+        except ValueError as e:
+            msg = f"Unable to decode JSON response for SSID {ssid!r}: {e}. Body: {body}"
+            logger.error(msg)
+            raise WigleLookupError(msg, status_code=r.status_code, body=body) from e
+
+        if (
+            not isinstance(result, dict)
+            or result.get("success") is False
+            or not isinstance(result.get("results"), list)
+        ):
+            msg = f"Unusable WiGLE payload for SSID {ssid!r}. Body: {body}"
+            logger.error(msg)
+            raise WigleLookupError(msg, status_code=r.status_code, body=body)
+
+        locations = self._location_duplicate_reducer(
+            self._location_formatter(result["results"], ssid)
+        )
+        reduced_locations = reduce_locations(locations)
+        return locations, reduced_locations
 
     def _location_formatter(self, locations: list[dict[str, str | float]], ssid: str):
         return [
