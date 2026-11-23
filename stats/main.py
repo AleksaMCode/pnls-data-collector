@@ -13,6 +13,7 @@ from stats.core.supabase.helpers import (
     publish_device_manufacturer_stats_all,
     publish_manufacturer_stats_all,
     publish_ssid_all,
+    publish_ssid_geo,
     publish_ssid_stats_all_batched,
     publish_unique_total_stats,
 )
@@ -52,6 +53,9 @@ async def publish_stats():
     daily_totals = get_daily_totals_all_devices(start_date=latest_import_date)
 
     if not daily_totals:
+        # `ssid-geo-mapper` runs on its own schedule, so new geolocations
+        # can exist without a new import.
+        publish_ssid_geo()
         msg = f"No daily totals available from {latest_import_date}."
         logger.info(msg)
         return {"status": "skipped", "message": msg}
@@ -63,6 +67,8 @@ async def publish_stats():
     publish_device_manufacturer_stats_all(target_date=latest_import_date)
     publish_manufacturer_stats_all()
     publish_ssid_stats_all_batched(updated_from=latest_import_date)
+    # After the SSID stats, so the rows the geolocations are written to exist.
+    publish_ssid_geo()
     publish_unique_total_stats(target_date=latest_import_date)
 
     msg = (

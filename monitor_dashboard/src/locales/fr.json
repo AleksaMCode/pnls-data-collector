@@ -61,7 +61,12 @@
     "firstSeen": "Premiere vue",
     "lastSeen": "Derniere vue",
     "downloadSuccess": "CSV SSID telecharge avec succes.",
-    "downloadError": "Echec du telechargement du CSV SSID."
+    "downloadError": "Echec du telechargement du CSV SSID.",
+    "hasGeo": "Geolocalisation",
+    "mapTitle": "Geolocalisation des SSID",
+    "mapSelectHint": "Selectionnez un SSID dans le tableau pour afficher ses emplacements connus sur la carte.",
+    "mapNoGeo": "Aucune geolocalisation disponible pour \"{{ssid}}\".",
+    "mapShowing": "{{count}} emplacement(s) pour \"{{ssid}}\". Les emplacements sont approximatifs (environ 1 km)."
   },
   "status": {
     "online": "En ligne",

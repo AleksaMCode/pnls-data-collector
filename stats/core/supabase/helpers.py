@@ -1,9 +1,10 @@
+import json
 import os
 from datetime import date
 from datetime import date as dt_date
 from warnings import deprecated
 
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from tqdm import tqdm
@@ -17,6 +18,7 @@ from stats.core.orm.helpers import (
     get_all_data_from_mac_first_last_seen,
     get_all_data_from_ssid_first_last_seen,
     get_daily_totals_all_devices,
+    get_ssid_geo_reduced_rows,
     get_today_data_from_daily_captured_stats_per_device,
     get_unique_totals_snapshot,
 )
@@ -34,6 +36,7 @@ from stats.core.supabase.models import (
     SsidStats,
     UniqueTotalStats,
 )
+from stats.util.geo import build_ssid_geo_payloads
 from stats.util.util import hash_mac_hmac_sha256
 from util.core.orm.models import Device
 from util.logger import get_logger
@@ -571,6 +574,106 @@ def publish_ssid_stats_all_batched(
             db.rollback()
             logger.error(
                 "Publishing ssid stats rows in batches to "
+                f"'{SsidStats.__tablename__}' failed: {str(e)}"
+            )
+            raise
+
+
+@yaspin(text="Publishing ssid geolocations to Supabase...")
+def publish_ssid_geo(overwrite: bool = False, batch_size: int = 1000):
+    """
+    Publishes reduced SSID geolocations to the `geo` column of `ssid_stats`.
+
+    Daily mode (`overwrite=False`): reads the newest `geo_updated` date from Supabase (the watermark),
+    publishes the SSIDs that got a geolocation locally on or after that date, and only fills rows that have
+    no geolocation yet. The watermark day itself is sent again on every run, because `ssid-geo-mapper`
+    can still add geolocations on that day after this step ran; those rows are skipped by the guard.
+
+    The watermark only selects SSIDs. A selected SSID is always sent with all of its points, including
+    points older than the watermark, because the guard would block any later completion of a partial value.
+
+    Backfill mode (`overwrite=True`): publishes every geolocation and replaces existing values.
+
+    Rows are only updated, never created: an SSID without an `ssid_stats` row is reported and left out.
+    """
+    if batch_size <= 0:
+        raise ValueError("batch_size must be > 0")
+
+    watermark = None
+    if not overwrite:
+        with _session() as db:
+            watermark = db.query(func.max(SsidStats.geo_updated)).scalar()
+    logger.info(
+        "Publishing ssid geolocations "
+        + (
+            "in backfill mode (all data, overwriting)."
+            if overwrite
+            else f"created from {watermark or 'the beginning'}."
+        )
+    )
+
+    payloads = build_ssid_geo_payloads(
+        get_ssid_geo_reduced_rows(created_from=watermark)
+    )
+    if not payloads:
+        logger.info("No ssid geolocations to publish.")
+        return
+
+    update_stmt = text(
+        """
+        UPDATE ssid_stats AS s
+        SET geo = v.geo, geo_updated = v.geo_updated
+        FROM jsonb_to_recordset(CAST(:payload AS jsonb))
+            AS v(ssid text, geo jsonb, geo_updated date)
+        WHERE s.ssid = v.ssid
+        """
+        # Daily runs must never touch an already published geolocation.
+        + ("" if overwrite else " AND s.geo IS NULL")
+        + " RETURNING s.ssid"
+    )
+
+    with _session() as db:
+        try:
+            written_count = 0
+            already_published_count = 0
+            missing_count = 0
+
+            for i in tqdm(
+                range(0, len(payloads), batch_size),
+                desc="Publishing ssid geolocations (batches)",
+                unit="batch",
+            ):
+                chunk = payloads[i : i + batch_size]
+
+                existing = (
+                    db.query(SsidStats.ssid, SsidStats.has_geo)
+                    .filter(SsidStats.ssid.in_([row["ssid"] for row in chunk]))
+                    .all()
+                )
+                already_published_count += sum(1 for row in existing if row.has_geo)
+                missing_count += len(chunk) - len(existing)
+
+                result = db.execute(update_stmt, {"payload": json.dumps(chunk)})
+                written_count += len(result.fetchall())
+
+            db.commit()
+            logger.info(
+                "Published ssid geolocations to "
+                f"'{SsidStats.__tablename__}' "
+                f"(sent={len(payloads)}, written={written_count}, "
+                f"{'overwritten' if overwrite else 'skipped_already_published'}="
+                f"{already_published_count}, missing_ssid_stats_row={missing_count})."
+            )
+            if missing_count:
+                logger.warning(
+                    f"{missing_count} SSID(s) with geolocation have no row in "
+                    f"'{SsidStats.__tablename__}' and were not published. "
+                    "Run `stats/tools/initial_ssid_geo_publisher.py` once their stats are published."
+                )
+        except Exception as e:
+            db.rollback()
+            logger.error(
+                "Publishing ssid geolocations to "
                 f"'{SsidStats.__tablename__}' failed: {str(e)}"
             )
             raise

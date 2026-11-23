@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Mattermost notifications for `ssid-geo-mapper`. PR #372
 - New SSID GEO database views. PR #372
 - `monitor-dashboard` Manufacturer data accordion on the home page now shows a hover tooltip prompting the user to expand it while collapsed, matching the Sankey accordion. PR #417
+- Supabase `ssid_stats` table now has `geo` (JSONB list of reduced geolocations), `geo_updated` and a generated `has_geo` column, with indexes on `(has_geo, last_seen)` and `geo_updated` (migration `20261123120000_add_geo_to_ssid_stats`).
+- `stats` service now publishes reduced SSID geolocations to Supabase in a separate step of `POST /stats`. It publishes the geolocations created on or after the newest `geo_updated` date in Supabase and only fills rows that have no geolocation yet. Coordinates are rounded to 2 decimals (about 1 km). PR #421
+- New `stats` tool `initial_ssid_geo_publisher` that publishes all SSID geolocations to Supabase, replacing already published values. PR #421
+- `stats-api` endpoint `GET /stats/ssids` now returns `has_geo` and `geo` for each SSID and supports `sort_by=has_geo`. `GET /stats/ssids/export` accepts the same sort while its CSV columns are unchanged. PR #421
+- `monitor-dashboard` SSIDs view now has a sortable Geolocation column and a world map below the table that shows the locations of the selected SSID. PR #421
 
 ### Changed
 
