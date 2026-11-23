@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Go code style workflow now pins `golangci-lint` to `v2.12.2`, the last release that supports Go 1.25. PR #415
 - `firebase-limit-notifier` and `db-backup` integration tests now use the `pgsty/silo` image, a MinIO-compatible fork, in place of the removed `minio/minio` image. PR #415
 - `monitor-dashboard` SSIDs table now shows first seen and last seen dates as `DD/MM/YYYY` with a 12-hour AM/PM time (e.g. `05/03/2026, 03:07:09 PM`) in English instead of the US month-first format. PR #416
+- `monitor-dashboard` side menu rows are now 40px tall with 20px icons and more spacing between icon and label; the sizing is scoped to the side menu, and long device names still wrap in the Devices sub-list. PR #419
+- `monitor-dashboard` side menu footer now truncates a long user name or email with an ellipsis instead of pushing the options button out of view. PR #419
 
 ### Fixed
 
@@ -36,6 +38,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `monitor-dashboard` SSIDs table no longer leaves an empty gap between the last row and the pagination controls on tall screens; the table now ends after its last row and only scrolls when it exceeds the viewport height. PR #416
 - `monitor-dashboard` home page Manufacturer data and Sankey accordions no longer lose their bottom border; every accordion now keeps its full border and border radius. PR #417
 - `monitor-dashboard` Manufacturer data and Sankey accordion summaries now keep their titles as accessible names; the expand tooltip text is exposed as a description instead of replacing the label for screen readers. PR #417
+- `monitor-dashboard` pages with data grids (home and SSIDs) no longer overflow horizontally when zooming in or reopening the side menu; the main content area can now shrink with the viewport. PR #419
+- `monitor-dashboard` side menu toggle is smoother: the page content now resizes once after the panel animation ends instead of redrawing every chart and data grid mid-animation, and menu labels fade instead of being mounted and unmounted. PR #419
+- `monitor-dashboard` collapsed side menu items keep their labels as accessible names for screen readers, and menu icons no longer shift position when toggling. PR #419
 
 ## [3.2.0] - 2026-08-09
 
