@@ -1,21 +1,21 @@
 name: Security
 
 on:
-  # push:
-  #   branches: [master]
-  #   paths:
-  #     - "monitor_dashboard/package.json"
-  #     - "monitor_dashboard/package-lock.json"
-  #     - ".github/workflows/security.yml"
-  # pull_request:
-  #   branches: [master]
-  #   paths:
-  #     - "monitor_dashboard/package.json"
-  #     - "monitor_dashboard/package-lock.json"
-  #     - ".github/workflows/security.yml"
+  push:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/package.json"
+      - "monitor_dashboard/package-lock.json"
+      - ".github/workflows/security.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/package.json"
+      - "monitor_dashboard/package-lock.json"
+      - ".github/workflows/security.yml"
   # New advisories are published without any change to the repo.
-  # schedule:
-  #   - cron: "0 6 * * 1"
+  schedule:
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -34,4 +34,4 @@ jobs:
 
       - name: Run npm audit
         working-directory: monitor_dashboard
-        run: npm audit
+        run: npm audit --omit=dev
