@@ -4,7 +4,7 @@
 [![License: GPL-2.0](https://img.shields.io/badge/license-GPLv2.0-red.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Python 3.13.7](https://img.shields.io/badge/python-3.13.7-blue.svg)](https://www.python.org/downloads/release/python-3137/)
 [![Code style (Python): black](https://img.shields.io/badge/code%20style%20(python)-black-000000.svg)](https://github.com/psf/black)
-[![Go 1.25.5](https://img.shields.io/badge/go-1.25.5-00ADD8.svg)](https://go.dev/dl/)
+[![Go 1.27.4](https://img.shields.io/badge/go-1.27.4-00ADD8.svg)](https://go.dev/dl/)
 [![Code style (Go): golangci-lint](https://img.shields.io/badge/code%20style%20(go)-golangci--lint-00ADD8.svg)](https://golangci-lint.run/)
 [![Node 26.13.0](https://img.shields.io/badge/node-26.13.0-3C873A.svg)](https://nodejs.org/en/blog/release/v26.13.0)
 [![Code style (JS/TS): Prettier](https://img.shields.io/badge/code%20style%20(JS/TS)-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
