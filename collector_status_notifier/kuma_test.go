@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -120,6 +121,58 @@ func TestPushKumaHeartbeatUnreachableServer(t *testing.T) {
 
 	if err := pushKumaHeartbeat(context.Background(), unreachableURL); err == nil {
 		t.Fatal("expected an error for an unreachable server, got nil")
+	}
+}
+
+func TestPushKumaHeartbeatErrorsDoNotExposePushToken(t *testing.T) {
+	const pushToken = "s3cr3tPushT0ken"
+
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	unreachableURL := server.URL
+	server.Close()
+
+	slowServer := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	defer slowServer.Close()
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	tests := []struct {
+		name    string
+		ctx     context.Context
+		pushURL string
+	}{
+		{
+			name:    "connection refused",
+			ctx:     context.Background(),
+			pushURL: unreachableURL + "/api/push/" + pushToken + "?status=up",
+		},
+		{
+			name:    "canceled request",
+			ctx:     canceledCtx,
+			pushURL: slowServer.URL + "/api/push/" + pushToken + "?status=up",
+		},
+		{
+			name:    "malformed url",
+			ctx:     context.Background(),
+			pushURL: "http://uptime_kuma:3001/api/push/" + pushToken + "\x7f",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := pushKumaHeartbeat(tt.ctx, tt.pushURL)
+			if err == nil {
+				t.Fatal("expected an error, got nil")
+			}
+			if strings.Contains(err.Error(), pushToken) {
+				t.Errorf("error exposes the push token: %v", err)
+			}
+			if strings.Contains(err.Error(), "/api/push/") {
+				t.Errorf("error exposes the push URL path: %v", err)
+			}
+		})
 	}
 }
 

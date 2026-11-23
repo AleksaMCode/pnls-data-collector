@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -39,13 +40,13 @@ func sendKumaPush(ctx context.Context) {
 func pushKumaHeartbeat(ctx context.Context, pushURL string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pushURL, nil)
 	if err != nil {
-		return err
+		return redactPushURL(err)
 	}
 
 	client := &http.Client{Timeout: KUMA_PUSH_TIMEOUT}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return redactPushURL(err)
 	}
 	defer resp.Body.Close()
 
@@ -53,4 +54,14 @@ func pushKumaHeartbeat(ctx context.Context, pushURL string) error {
 		return fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// redactPushURL drops the request URL from an HTTP client error and keeps only the failure cause.
+// The push URL holds the monitor's token in its path, so it must not end up in the logs.
+func redactPushURL(err error) error {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		return fmt.Errorf("%s request failed: %w", urlErr.Op, urlErr.Err)
+	}
+	return err
 }
