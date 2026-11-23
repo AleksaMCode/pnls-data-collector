@@ -21,7 +21,15 @@ services:
     # Lets monitors reach services published on the host via host.docker.internal
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # Shared network, so services can send push heartbeats to http://uptime_kuma:3001
+    networks:
+      - pnls
     restart: unless-stopped
 
 volumes:
   uptime_kuma_data:
+
+networks:
+  pnls:
+    name: pnls
+    driver: bridge
