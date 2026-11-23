@@ -5,10 +5,16 @@ on:
     branches: [master]
     paths:
       - "**/*.go"
+      - ".go-version"
+      - "**/go.mod"
+      - "**/go.sum"
   pull_request:
     branches: [master]
     paths:
       - "**/*.go"
+      - ".go-version"
+      - "**/go.mod"
+      - "**/go.sum"
 
 jobs:
   format-check:

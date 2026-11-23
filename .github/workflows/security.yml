@@ -8,6 +8,7 @@ on:
       - "monitor_dashboard/package-lock.json"
       - "**/go.mod"
       - "**/go.sum"
+      - ".go-version"
       - ".github/workflows/security.yml"
   pull_request:
     branches: [master]
@@ -16,6 +17,7 @@ on:
       - "monitor_dashboard/package-lock.json"
       - "**/go.mod"
       - "**/go.sum"
+      - ".go-version"
       - ".github/workflows/security.yml"
   # New advisories are published without any change to the repo.
   schedule:
