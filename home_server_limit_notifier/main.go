@@ -41,7 +41,12 @@ func checkDiskAndNotifyHandler(responseWriter http.ResponseWriter, request *http
 
 	message := formatUsageMessage(usage, DISK_MOUNT_PATH)
 	log.Print(message)
-	mattermost.SendMattermostMessage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message)
+	// A failed report is returned as an HTTP error, so the service stays available for the next check
+	if err := mattermost.TrySendMattermostMessage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message); err != nil {
+		log.Printf("Failed to send disk usage report to Mattermost: %v", err)
+		http.Error(responseWriter, "Failed to send disk usage report to Mattermost", http.StatusBadGateway)
+		return
+	}
 
 	responseWriter.WriteHeader(http.StatusOK)
 	if _, err := responseWriter.Write([]byte("Disk usage check sent to Mattermost info channel.")); err != nil {

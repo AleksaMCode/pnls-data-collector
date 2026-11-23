@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +13,10 @@ func TestCheckFirebaseUsageHandlerRejectsNonPost(t *testing.T) {
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
 			checkRuns := 0
-			handler := newCheckFirebaseUsageHandler(func() { checkRuns++ })
+			handler := newCheckFirebaseUsageHandler(func() error {
+				checkRuns++
+				return nil
+			})
 
 			recorder := httptest.NewRecorder()
 			handler(recorder, httptest.NewRequest(method, CHECK_PATH, nil))
@@ -29,7 +33,10 @@ func TestCheckFirebaseUsageHandlerRejectsNonPost(t *testing.T) {
 
 func TestCheckFirebaseUsageHandlerRunsCheckOnPost(t *testing.T) {
 	checkRuns := 0
-	handler := newCheckFirebaseUsageHandler(func() { checkRuns++ })
+	handler := newCheckFirebaseUsageHandler(func() error {
+		checkRuns++
+		return nil
+	})
 
 	recorder := httptest.NewRecorder()
 	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, nil))
@@ -42,5 +49,25 @@ func TestCheckFirebaseUsageHandlerRunsCheckOnPost(t *testing.T) {
 	}
 	if recorder.Body.Len() == 0 {
 		t.Error("expected a response body, got none")
+	}
+}
+
+func TestCheckFirebaseUsageHandlerReportsFailedCheck(t *testing.T) {
+	handler := newCheckFirebaseUsageHandler(func() error {
+		return errors.New("failed to send message to Mattermost: connection refused")
+	})
+
+	recorder := httptest.NewRecorder()
+	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, nil))
+
+	if recorder.Code != http.StatusBadGateway {
+		t.Errorf("status = %d, want %d", recorder.Code, http.StatusBadGateway)
+	}
+
+	// The handler must keep serving requests after a failed check
+	recorder = httptest.NewRecorder()
+	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, nil))
+	if recorder.Code != http.StatusBadGateway {
+		t.Errorf("status after a second failed check = %d, want %d", recorder.Code, http.StatusBadGateway)
 	}
 }

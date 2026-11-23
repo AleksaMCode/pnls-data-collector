@@ -3,6 +3,8 @@ package mattermost
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -29,15 +31,56 @@ func iconURLForService(serviceName string) string {
 	return botIconBaseURL + filename
 }
 
+// webhookStatusError is returned when Mattermost answers with a status code other than 200.
+type webhookStatusError struct {
+	status string
+}
+
+func (e *webhookStatusError) Error() string {
+	return "Mattermost webhook response: " + e.status
+}
+
+// SendMattermostMessage sends a message and terminates the process if the message can't be delivered to Mattermost.
+// Long-running services that must stay available should use TrySendMattermostMessage instead.
 func SendMattermostMessage(webhookURL string, serviceName string, message string) {
-	sendMattermostMessage(webhookURL, serviceName, message, "")
+	exitOnDeliveryFailure(postMattermostMessage(webhookURL, serviceName, message, ""))
 }
 
+// SendMattermostMessageWithImage sends a message with an image attachment and terminates the process if the message
+// can't be delivered to Mattermost. Long-running services that must stay available should use
+// TrySendMattermostMessageWithImage instead.
 func SendMattermostMessageWithImage(webhookURL string, serviceName string, message string, imageURL string) {
-	sendMattermostMessage(webhookURL, serviceName, message, imageURL)
+	exitOnDeliveryFailure(postMattermostMessage(webhookURL, serviceName, message, imageURL))
 }
 
-func sendMattermostMessage(webhookURL string, serviceName string, message string, imageURL string) {
+// TrySendMattermostMessage sends a message and returns an error, instead of terminating the process, if the message
+// can't be delivered or Mattermost doesn't answer with status 200.
+func TrySendMattermostMessage(webhookURL string, serviceName string, message string) error {
+	return postMattermostMessage(webhookURL, serviceName, message, "")
+}
+
+// TrySendMattermostMessageWithImage sends a message with an image attachment and returns an error, instead of
+// terminating the process, if the message can't be delivered or Mattermost doesn't answer with status 200.
+func TrySendMattermostMessageWithImage(webhookURL string, serviceName string, message string, imageURL string) error {
+	return postMattermostMessage(webhookURL, serviceName, message, imageURL)
+}
+
+// exitOnDeliveryFailure keeps the behavior of the Send functions: an unexpected status code is only logged, while
+// any other failure terminates the process.
+func exitOnDeliveryFailure(err error) {
+	if err == nil {
+		return
+	}
+
+	var statusErr *webhookStatusError
+	if errors.As(err, &statusErr) {
+		log.Print(statusErr.Error())
+		return
+	}
+	log.Fatal(err.Error())
+}
+
+func postMattermostMessage(webhookURL string, serviceName string, message string, imageURL string) error {
 	payload := map[string]any{
 		"text":     message,
 		"username": serviceName,
@@ -58,24 +101,25 @@ func sendMattermostMessage(webhookURL string, serviceName string, message string
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		log.Fatalf("Failed to marshal message: %v", err)
+		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
 	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		log.Fatalf("Failed to create HTTP request: %v", err)
+		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatalf("Failed to send message to Mattermost: %v", err)
+		return fmt.Errorf("failed to send message to Mattermost: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Mattermost webhook response: %s", resp.Status)
-	} else {
-		log.Println("Successfully sent message to Mattermost!")
+		return &webhookStatusError{status: resp.Status}
 	}
+
+	log.Println("Successfully sent message to Mattermost!")
+	return nil
 }

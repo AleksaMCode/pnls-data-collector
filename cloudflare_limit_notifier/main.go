@@ -45,14 +45,20 @@ func checkCloudflareUsageAndNotifyHandler(responseWriter http.ResponseWriter, re
 		return
 	}
 
-	sendUsageReport(usage)
+	// A failed report is returned as an HTTP error, so the service stays available for the next check
+	if err := sendUsageReport(usage); err != nil {
+		log.Printf("Failed to send Cloudflare usage report to Mattermost: %v", err)
+		http.Error(responseWriter, "Failed to send Cloudflare usage report to Mattermost", http.StatusBadGateway)
+		return
+	}
+
 	responseWriter.WriteHeader(http.StatusOK)
 	if _, err := responseWriter.Write([]byte("Cloudflare usage check sent to Mattermost info channel.")); err != nil {
 		log.Printf("Failed to write response body: %v", err)
 	}
 }
 
-func sendUsageReport(usage usageMetrics) {
+func sendUsageReport(usage usageMetrics) error {
 	storageGB := usage.StorageBytes / BYTES_IN_GB
 
 	printer := message.NewPrinter(language.English)
@@ -70,5 +76,5 @@ func sendUsageReport(usage usageMetrics) {
 	)
 
 	log.Print(message)
-	mattermost.SendMattermostMessage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message)
+	return mattermost.TrySendMattermostMessage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message)
 }
