@@ -176,6 +176,15 @@ class TestBuildSummary(unittest.TestCase):
             )
         )
 
+    def test_retried_ssids_are_reported_only_when_present(self):
+        stats = MappingRunStats(
+            request_budget=250, attempted=240, requests_sent=240, no_results=240
+        )
+        self.assertNotIn("Retried after earlier failure", build_summary(stats, 5))
+
+        stats.retried = 12
+        self.assertIn("Retried after earlier failure: 12", build_summary(stats, 5))
+
     def test_budget_exhausted_run(self):
         stats = MappingRunStats(
             request_budget=250, attempted=250, requests_sent=250, budget_exhausted=True

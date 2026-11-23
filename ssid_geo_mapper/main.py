@@ -11,6 +11,7 @@ from tqdm import tqdm
 from ssid_geo_mapper.core.orm.helpers import (
     get_unmapped_ssids,
     insert_ssid_geo_batch,
+    record_ssid_failure,
     update_ssid_mapped,
 )
 from ssid_geo_mapper.exceptions.wigle import WigleAbortRunError, WigleLookupError
@@ -55,6 +56,21 @@ app.add_middleware(
 )
 
 
+def _record_failure(ssid, reason: str, stats: MappingRunStats):
+    """Counts a per-SSID failure in the run stats and on the SSID row.
+
+    429, 401 and 403 never get here: they abort the run and say nothing about the SSID.
+    """
+    stats.failures[reason] += 1
+    try:
+        record_ssid_failure(ssid.id, reason)
+    except Exception as e:
+        # Losing one failure count must not stop the run.
+        logger.error(
+            f"Unable to record failure '{reason}' for SSID '{ssid.ssid}': {repr(e)}"
+        )
+
+
 @app.post(
     "/ssid_mapping",
     summary="Maps SSIDs from DB",
@@ -89,6 +105,8 @@ async def ssid_mapping():
             )
 
         stats.attempted += 1
+        if ssid.failed_attempts:
+            stats.retried += 1
         try:
             logger.info(
                 f"Mapping SSID '{ssid.ssid}' using WIGLE API. "
@@ -125,14 +143,14 @@ async def ssid_mapping():
                 if e.status_code and not 200 <= e.status_code < 300
                 else "bad payload"
             )
-            stats.failures[reason] += 1
             logger.error(f"Mapping SSID '{ssid.ssid}' failed. Exception: {str(e)}")
+            _record_failure(ssid, reason, stats)
         except httpx.TimeoutException as e:
-            stats.failures["timeout"] += 1
             logger.error(f"Mapping SSID '{ssid.ssid}' timed out. Exception: {repr(e)}")
+            _record_failure(ssid, "timeout", stats)
         except Exception as e:
-            stats.failures[type(e).__name__] += 1
             logger.error(f"Mapping SSID '{ssid.ssid}' failed. Exception: {repr(e)}")
+            _record_failure(ssid, type(e).__name__, stats)
 
     stats.requests_sent = wigle.request_count
     msg = build_summary(stats, time.monotonic() - started)

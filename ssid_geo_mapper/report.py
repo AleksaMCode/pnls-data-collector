@@ -8,6 +8,8 @@ class MappingRunStats:
 
     request_budget: int
     attempted: int = 0
+    # Attempted SSIDs that had already failed in an earlier run.
+    retried: int = 0
     requests_sent: int = 0
     with_locations: int = 0
     no_results: int = 0
@@ -58,6 +60,9 @@ def build_summary(stats: MappingRunStats, duration_seconds: float) -> str:
         f"With locations: {stats.with_locations} | No results: {stats.no_results} "
         f"| Failed: {stats.failed}",
     ]
+
+    if stats.retried:
+        lines.append(f"Retried after earlier failure: {stats.retried}")
 
     if stats.failures:
         breakdown = ", ".join(
