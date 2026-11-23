@@ -254,7 +254,16 @@ export default function SsidView() {
               : t('common.downloadCsv')}
           </Button>
         </Stack>
-        <Box sx={{ height: 'calc(100vh - 100px)', width: '100%' }}>
+        {/* Flex column + maxHeight: the grid ends after its last row on tall
+            screens and scrolls inside the viewport on short ones. */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: 'calc(100vh - 100px)',
+            width: '100%',
+          }}
+        >
           <DataGrid
             rows={rows}
             columns={columns}
