@@ -162,7 +162,7 @@ width="90%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 6</b>: Part of the monitoring dashboard <code>1.0.0</code></label>
+    <label><b>Fig. 7</b>: Part of the monitoring dashboard <code>1.0.0</code></label>
     </p>
 </p>
 
@@ -199,7 +199,7 @@ width="90%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 8</b>: Uptime Kuma dashboard</label>
+    <label><b>Fig. 9</b>: Uptime Kuma dashboard</label>
     </p>
 </p>
 
