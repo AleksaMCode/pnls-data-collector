@@ -172,17 +172,17 @@ class="center"
    - Datadog for edge devices (`collector`) metrics dashboard tracking.
      - The same metrics agent (`collector_metrics_agent`) also runs on the home server.
 
-<p align="center">
-<img
-src="./resources/datadog.png?raw=true"
-alt="Part of the monitoring dashboard"
-width="90%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 8</b>: Datadog dashboard</label>
+    <p align="center">
+    <img
+    src="./resources/datadog.png?raw=true"
+    alt="Part of the monitoring dashboard"
+    width="90%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 8</b>: Datadog dashboard</label>
+        </p>
     </p>
-</p>
 
    - Pydantic's [Logfires](https://github.com/pydantic/logfire), an observability platform built on OpenTelemetry, is used for tracking of `stats-api`.
    - [Uptime Kuma](https://github.com/louislam/uptime-kuma) for uptime monitoring of the services running on the home server with webhook notifications.
@@ -191,17 +191,17 @@ class="center"
      - `collector-status-notifier` has no HTTP port, so it sends a push heartbeat to Uptime Kuma after every status check.
      - `stats-api`, the client-facing API of the monitoring dashboard, is the only monitored service that doesn't run on the home server. Its public `/health` endpoint on FastAPI Cloud is checked with an HTTP monitor.
 
-<p align="center">
-<img
-src="./resources/uptime-kuma.png?raw=true"
-alt="Part of the monitoring dashboard"
-width="90%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 9</b>: Uptime Kuma dashboard</label>
+    <p align="center">
+    <img
+    src="./resources/uptime-kuma.png?raw=true"
+    alt="Part of the monitoring dashboard"
+    width="90%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 9</b>: Uptime Kuma dashboard</label>
+        </p>
     </p>
-</p>
 
 
 ## Key Characteristics
