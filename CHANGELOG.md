@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `stats` tool `initial_ssid_geo_publisher` that publishes all SSID geolocations to Supabase, replacing already published values. PR #421
 - `stats-api` endpoint `GET /stats/ssids` now returns `has_geo` and `geo` for each SSID and supports `sort_by=has_geo`. `GET /stats/ssids/export` accepts the same sort while its CSV columns are unchanged. PR #421
 - `monitor-dashboard` SSIDs view now has a sortable Geolocation column and a world map below the table that shows the locations of the selected SSID. PR #421
+- New `Security` GitHub workflow that runs `npm audit` for `monitor-dashboard`, `govulncheck` for every Go module and a Trivy scan of the React and Go Docker images. It runs on dependency, Go source and `Dockerfile` changes and on a weekly schedule. PR #423
+- Uptime Kuma was added to the root `docker-compose.yml` for uptime monitoring of the services running on the home server and of the cloud-hosted service (e.g. `stats-api`). PR #423
 - `collector-status-notifier` can now send a push heartbeat to Uptime Kuma after every status check, enabled with `KUMA_PUSH_ENABLED` and pointed at the monitor with `KUMA_PUSH_URL`. PR #423
 
 ### Changed
@@ -39,6 +41,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ssid-geo-mapper` now maps SSIDs that never failed first; previously failed SSIDs only fill the rest with the batch, fewest failures and least recently tried first. The Mattermost summary reports how many of them were retried. PR #420
 - `ssid-geo-mapper` no longer marks an SSID as mapped without GEO data when WiGLE answers `200` with an unusable payload; the SSID stays unmapped and is retried on the next run. PR #420
 - `firebase-limit-notifier` is now a long-running HTTP microservice with a `POST /check` trigger endpoint (`HTTP_PORT`, `CHECK_ENDPOINT_PATH`) and a Docker setup, instead of a one-shot program. The home server cron job now calls the endpoint on the same weekly schedule. PR #423
+- Go was upgraded from 1.25.5 to 1.27.4 in all Go services, their Docker images and the GitHub workflows, and the Go dependencies were upgraded. PR #423
+- Node was upgraded to 26.13 for `monitor-dashboard`, in its Docker image and the GitHub workflows. PR #423
+- `monitor-dashboard` now overrides `@grpc/grpc-js`, a transitive dependency of `firebase`, to a patched `1.14.x` release, and its Docker image updates the bundled npm to `11.21.3`, to clear known vulnerabilities. PR #423
+- All GitHub workflows now run on `ubuntu-26.04` instead of `ubuntu-latest`. PR #423
+- Go tests and Go code style workflows now also run when `.go-version`, `go.mod` or `go.sum` change. PR #423
+- Go code style workflow now pins `golangci-lint` to `v2.15.0` to match Go 1.27.4. PR #423
 
 ### Fixed
 
@@ -54,6 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `monitor-dashboard` pages with data grids (home and SSIDs) no longer overflow horizontally when zooming in or reopening the side menu; the main content area can now shrink with the viewport. PR #419
 - `monitor-dashboard` side menu toggle is smoother: the page content now resizes once after the panel animation ends instead of redrawing every chart and data grid mid-animation, and menu labels fade instead of being mounted and unmounted. PR #419
 - `monitor-dashboard` collapsed side menu items keep their labels as accessible names for screen readers, and menu icons no longer shift position when toggling. PR #419
+- `firebase-limit-notifier`, `cloudflare-limit-notifier` and `home-server-limit-notifier` no longer terminate when the Mattermost report can't be sent; the check request now fails with `502` and the service stays available. PR #423
 
 ## [3.2.0] - 2026-08-09
 
