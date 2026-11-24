@@ -127,3 +127,48 @@ func TestSendMattermostMessageInvalidWebhookFatal(t *testing.T) {
 		t.Fatalf("expected *exec.ExitError, got %T (%v)", err, err)
 	}
 }
+
+func TestTrySendMattermostMessageReturnsNilOnSuccess(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	if err := TrySendMattermostMessage(server.URL, "svc", "hello"); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if err := TrySendMattermostMessageWithImage(server.URL, "svc", "hello", "https://example.com/a.png"); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func TestTrySendMattermostMessageReturnsErrorOnNon200(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	err := TrySendMattermostMessage(server.URL, "svc", "hello")
+	if err == nil {
+		t.Fatal("expected an error for a non-200 response, got nil")
+	}
+	if !strings.Contains(err.Error(), "Mattermost webhook response:") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestTrySendMattermostMessageReturnsErrorOnInvalidWebhook(t *testing.T) {
+	if err := TrySendMattermostMessage("://bad-url", "svc", "hello"); err == nil {
+		t.Fatal("expected an error for an invalid webhook URL, got nil")
+	}
+}
+
+func TestTrySendMattermostMessageReturnsErrorWhenConnectionIsRefused(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	refusedURL := server.URL
+	server.Close()
+
+	if err := TrySendMattermostMessageWithImage(refusedURL, "svc", "hello", ""); err == nil {
+		t.Fatal("expected an error for a refused connection, got nil")
+	}
+}

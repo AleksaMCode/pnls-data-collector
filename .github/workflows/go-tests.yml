@@ -10,6 +10,9 @@ on:
       - "db_backup/**/*.go"
       - "cloudflare_limit_notifier/**/*.go"
       - "home_server_limit_notifier/**/*.go"
+      - ".go-version"
+      - "**/go.mod"
+      - "**/go.sum"
   pull_request:
     branches: [master]
     paths:
@@ -19,10 +22,13 @@ on:
       - "db_backup/**/*.go"
       - "cloudflare_limit_notifier/**/*.go"
       - "home_server_limit_notifier/**/*.go"
+      - ".go-version"
+      - "**/go.mod"
+      - "**/go.sum"
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout code
@@ -31,7 +37,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: "1.25.5"
+          go-version-file: .go-version
           cache: true
           cache-dependency-path: |
             collector_status_notifier/go.sum

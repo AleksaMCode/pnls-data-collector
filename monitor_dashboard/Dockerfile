@@ -1,4 +1,8 @@
-FROM node:22-alpine
+FROM node:26.13-alpine
+
+# The npm bundled in the base image ships libraries with known vulnerabilities (undici, brace-expansion).
+# Pinned to a release that has the fixes. Bump or remove once the base image catches up.
+RUN npm install -g npm@11.21.3
 
 WORKDIR /app
 

@@ -1,0 +1,18 @@
+services:
+  firebase_limit_notifier:
+    build:
+      context: ..
+      dockerfile: ./firebase_limit_notifier/Dockerfile
+    container_name: firebase_limit_notifier
+    env_file:
+      - ./.env
+    environment:
+      TZ: Europe/Paris
+      # Same value as the port mapping below, also when HTTP_PORT is overridden in the shell
+      HTTP_PORT: "${HTTP_PORT}"
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./firebase_credentials.json:/app/firebase_credentials.json:ro
+    restart: unless-stopped

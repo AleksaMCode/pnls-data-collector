@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"firebase.google.com/go/v4/db"
@@ -17,13 +18,47 @@ func main() {
 	loadEnvVariables()
 	logging.InitObservability(LOG_FILE, SENTRY_DSN, SERVICE_NAME)
 
+	if err := validateRequiredEnv(); err != nil {
+		logging.Fatal(fmt.Sprintf("Invalid configuration: %v", err))
+		return
+	}
+
 	ctx := context.Background()
 	client := firebase.GetFirebaseClient(ctx, FIREBASE_CREDENTIALS_FILE, FIREBASE_DATABASE_URL)
 
-	// Check Firebase usage
-	usage := checkUsage(client, ctx)
-	// Create a pie chart and send a Mattermost usage message
-	createUsageChart(usage)
+	http.HandleFunc(CHECK_ENDPOINT_PATH, newCheckFirebaseUsageHandler(func() error {
+		// Check Firebase usage
+		usage := checkUsage(client, ctx)
+		// Create a pie chart and send a Mattermost usage message
+		return createUsageChart(usage)
+	}))
+	log.Printf("%s listening on :%s%s", SERVICE_NAME, HTTP_PORT, CHECK_ENDPOINT_PATH)
+
+	if err := http.ListenAndServe(":"+HTTP_PORT, nil); err != nil {
+		logging.Fatal(fmt.Sprintf("HTTP server failed: %v", err))
+	}
+}
+
+// newCheckFirebaseUsageHandler returns a handler that runs the usage check on every POST request.
+// A failed check is reported as an HTTP error, so the service stays available for the next check.
+func newCheckFirebaseUsageHandler(runCheck func() error) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			http.Error(responseWriter, "Only POST method is allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		if err := runCheck(); err != nil {
+			log.Printf("Firebase usage check failed: %v", err)
+			http.Error(responseWriter, "Failed to send Firebase usage report to Mattermost", http.StatusBadGateway)
+			return
+		}
+
+		responseWriter.WriteHeader(http.StatusOK)
+		if _, err := responseWriter.Write([]byte("Firebase usage check sent to Mattermost info channel.")); err != nil {
+			log.Printf("Failed to write response body: %v", err)
+		}
+	}
 }
 
 func checkUsage(client *db.Client, ctx context.Context) float64 {
@@ -70,7 +105,7 @@ func checkUsage(client *db.Client, ctx context.Context) float64 {
 	return usage
 }
 
-func createUsageChart(usage float64) {
+func createUsageChart(usage float64) error {
 	pieChart, err := generatePieChartInMemory(usage, 1_000-usage)
 	// If the generating of Pie chart has failed the message should still be sent to the Mattermost channel
 	// Same goes for the R2 upload. If the upload fails, the link will be empty.
@@ -91,10 +126,10 @@ func createUsageChart(usage float64) {
 		usage,
 		common.GetPercentage(usage, FIREBASE_LIMIT_MB),
 	)
-	sendMattermostMsg(message, publicURL)
+	return sendMattermostMsg(message, publicURL)
 }
 
-func sendMattermostMsg(message string, publicURL string) {
+func sendMattermostMsg(message string, publicURL string) error {
 	log.Print(message)
-	mattermost.SendMattermostMessageWithImage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message, publicURL)
+	return mattermost.TrySendMattermostMessageWithImage(MATTERMOST_WEBHOOK_URL, SERVICE_NAME, message, publicURL)
 }

@@ -1,27 +1,37 @@
 name: Security
 
 on:
-  # push:
-  #   branches: [master]
-  #   paths:
-  #     - "monitor_dashboard/package.json"
-  #     - "monitor_dashboard/package-lock.json"
-  #     - ".github/workflows/security.yml"
-  # pull_request:
-  #   branches: [master]
-  #   paths:
-  #     - "monitor_dashboard/package.json"
-  #     - "monitor_dashboard/package-lock.json"
-  #     - ".github/workflows/security.yml"
+  push:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/package.json"
+      - "monitor_dashboard/package-lock.json"
+      - "**/*.go"
+      - "**/go.mod"
+      - "**/go.sum"
+      - ".go-version"
+      - "**/Dockerfile"
+      - ".github/workflows/security.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/package.json"
+      - "monitor_dashboard/package-lock.json"
+      - "**/*.go"
+      - "**/go.mod"
+      - "**/go.sum"
+      - ".go-version"
+      - "**/Dockerfile"
+      - ".github/workflows/security.yml"
   # New advisories are published without any change to the repo.
-  # schedule:
-  #   - cron: "0 6 * * 1"
+  schedule:
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 jobs:
   npm-audit:
     name: npm audit (monitor-dashboard)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout repo
@@ -30,8 +40,92 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version-file: monitor_dashboard/.nvmrc
 
-      - name: Run npm audit
+      - name: Run npm audit (production dependencies)
         working-directory: monitor_dashboard
-        run: npm audit
+        run: npm audit --omit=dev --package-lock-only
+
+      - name: Run npm audit (including dev dependencies)
+        continue-on-error: true
+        working-directory: monitor_dashboard
+        run: npm audit --package-lock-only
+
+  govulncheck:
+    name: govulncheck (${{ matrix.module }})
+    runs-on: ubuntu-26.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - cloudflare_limit_notifier
+          - collector_status_notifier
+          - db_backup
+          - firebase_limit_notifier
+          - home_server_limit_notifier
+          - util-go
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: .go-version
+          cache-dependency-path: ${{ matrix.module }}/go.sum
+
+      - name: Run govulncheck
+        working-directory: ${{ matrix.module }}
+        run: make audit
+
+  # Builds the Docker images of this repo and scans them for OS and library vulnerabilities.
+  # TODO: The Python images are missing: aggregator, firebase_housekeeping, ssid_geo_mapper, stats and stats_api.
+  trivy-image-scan:
+    name: trivy (${{ matrix.image }})
+    runs-on: ubuntu-26.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # React
+          - image: monitor_dashboard
+            context: monitor_dashboard
+            dockerfile: monitor_dashboard/Dockerfile
+          # Go
+          - image: cloudflare_limit_notifier
+            context: .
+            dockerfile: cloudflare_limit_notifier/Dockerfile
+          - image: collector_status_notifier
+            context: .
+            dockerfile: collector_status_notifier/Dockerfile
+          - image: firebase_limit_notifier
+            context: .
+            dockerfile: firebase_limit_notifier/Dockerfile
+          - image: db_backup
+            context: db_backup
+            dockerfile: db_backup/Dockerfile
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # The Cloudflare image copies its .env file, which is not in the repo, so an empty one stands in for it.
+      - name: Create placeholder .env
+        if: matrix.image == 'cloudflare_limit_notifier'
+        run: touch cloudflare_limit_notifier/.env
+
+      - name: Build image
+        run: docker build -t ${{ matrix.image }}:scan -f ${{ matrix.dockerfile }} ${{ matrix.context }}
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image }}:scan
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          # Only report vulnerabilities that have a fixed version to upgrade to
+          ignore-unfixed: true
+          exit-code: "1"

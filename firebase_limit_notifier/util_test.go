@@ -108,3 +108,52 @@ func TestGetNodeSizeInvalidInput(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestNormalizePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{name: "empty", path: "", expected: ""},
+		{name: "only spaces", path: "   ", expected: ""},
+		{name: "already has slash", path: "/check", expected: "/check"},
+		{name: "missing slash", path: "check", expected: "/check"},
+		{name: "surrounding spaces", path: "  check ", expected: "/check"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if result := normalizePath(tt.path); result != tt.expected {
+				t.Errorf("normalizePath(%q) = %q, want %q", tt.path, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidateRequiredEnv(t *testing.T) {
+	tests := []struct {
+		name      string
+		port      string
+		path      string
+		expectErr bool
+	}{
+		{name: "valid", port: "9093", path: "/check", expectErr: false},
+		{name: "missing port", port: "", path: "/check", expectErr: true},
+		{name: "missing path", port: "9093", path: "", expectErr: true},
+	}
+
+	originalPort, originalPath := HTTP_PORT, CHECK_ENDPOINT_PATH
+	t.Cleanup(func() { HTTP_PORT, CHECK_ENDPOINT_PATH = originalPort, originalPath })
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			HTTP_PORT, CHECK_ENDPOINT_PATH = tt.port, tt.path
+
+			err := validateRequiredEnv()
+			if (err != nil) != tt.expectErr {
+				t.Errorf("validateRequiredEnv() error = %v, expectErr %v", err, tt.expectErr)
+			}
+		})
+	}
+}

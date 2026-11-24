@@ -1,4 +1,4 @@
-.PHONY: run test test-integration test-coverage test-coverage-view test-coverage-view-browser
+.PHONY: run test test-integration test-coverage test-coverage-view test-coverage-view-browser audit audit-fix
 
 fmt:
 	golangci-lint fmt
@@ -20,3 +20,10 @@ test-coverage-view:
 
 test-coverage-view-browser:
 	go tool cover -html=coverage
+
+audit:
+	go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+
+audit-fix:
+	go get -u -t ./...
+	go mod tidy

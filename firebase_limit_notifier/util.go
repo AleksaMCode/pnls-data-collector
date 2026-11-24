@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/joho/godotenv"
@@ -23,6 +25,35 @@ func loadEnvVariables() {
 	CLOUDFLARE_ACCOUNT_ID = os.Getenv("CLOUDFLARE_ACCOUNT_ID")
 	R2_BUCKET_PUBLIC_URL = os.Getenv("R2_BUCKET_PUBLIC_URL")
 	R2_ENDPOINT = os.Getenv("R2_ENDPOINT")
+
+	HTTP_PORT = strings.TrimSpace(os.Getenv("HTTP_PORT"))
+	CHECK_ENDPOINT_PATH = strings.TrimSpace(os.Getenv("CHECK_ENDPOINT_PATH"))
+	if CHECK_ENDPOINT_PATH == "" {
+		CHECK_ENDPOINT_PATH = CHECK_PATH
+	}
+	CHECK_ENDPOINT_PATH = normalizePath(CHECK_ENDPOINT_PATH)
+}
+
+func validateRequiredEnv() error {
+	if HTTP_PORT == "" {
+		return fmt.Errorf("missing HTTP_PORT")
+	}
+	if CHECK_ENDPOINT_PATH == "" {
+		return fmt.Errorf("missing CHECK_ENDPOINT_PATH")
+	}
+	return nil
+}
+
+func normalizePath(path string) string {
+	trimmedPath := strings.TrimSpace(path)
+	if trimmedPath == "" {
+		return ""
+	}
+
+	if strings.HasPrefix(trimmedPath, "/") {
+		return trimmedPath
+	}
+	return "/" + trimmedPath
 }
 
 func bytesToMB(bytes int) float64 {

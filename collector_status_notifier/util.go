@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/AleksaMCode/pnls-data-collector/util-go/common"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
@@ -26,6 +29,30 @@ func loadEnvVariables() {
 	REDIS_PORT = os.Getenv("REDIS_PORT")
 	REDIS_PASSWORD = os.Getenv("REDIS_PASSWORD")
 	REDIS_DB = os.Getenv("REDIS_DB")
+
+	var err error
+	KUMA_PUSH_ENABLED, err = parseBoolEnv("KUMA_PUSH_ENABLED")
+	if err != nil {
+		logging.Fatal(err.Error())
+	}
+	KUMA_PUSH_URL = strings.TrimSpace(os.Getenv("KUMA_PUSH_URL"))
+	if err := validateKumaConfig(KUMA_PUSH_ENABLED, KUMA_PUSH_URL); err != nil {
+		logging.Fatal(err.Error())
+	}
+}
+
+// parseBoolEnv reads a boolean environment variable. An unset or empty variable is treated as false.
+func parseBoolEnv(key string) (bool, error) {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return false, nil
+	}
+
+	value, err := strconv.ParseBool(raw)
+	if err != nil {
+		return false, fmt.Errorf("%s must be a boolean (true/false), got %q", key, raw)
+	}
+	return value, nil
 }
 
 // Deprecated: Shouldn't be used anymore as this service now works all the time. See #296

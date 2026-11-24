@@ -15,8 +15,11 @@ const (
 	DATADOG_TIMEOUT = 30 * time.Second
 	LOG_FILE        = "consumer_status_notifier.log"
 	TIMEZONE        = "Europe/Paris"
+	// KUMA_PUSH_TIMEOUT is the maximum time to wait for the Uptime Kuma push call
+	KUMA_PUSH_TIMEOUT = 8 * time.Second
 )
 
+// TODO: Read used device from DB?
 const (
 	DEVICE_RPI_1 = "RPI-1"
 	DEVICE_RPI_2 = "RPI-2"
@@ -35,6 +38,8 @@ var (
 	REDIS_PORT               string
 	REDIS_PASSWORD           string
 	REDIS_DB                 string
+	KUMA_PUSH_ENABLED        bool
+	KUMA_PUSH_URL            string
 )
 
 var Devices = []string{DEVICE_RPI_1, DEVICE_RPI_2, DEVICE_RPI_3}
