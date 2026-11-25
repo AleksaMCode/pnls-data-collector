@@ -10,10 +10,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /ssid_geo_mapper_service
 
 COPY ssid_geo_mapper/requirements.txt /ssid_geo_mapper_service/requirements.txt
-RUN pip install -r requirements.txt
-
 COPY util/requirements.txt /ssid_geo_mapper_service/requirements_util.txt
-RUN pip install -r requirements_util.txt
+
+# Installed in one command so that conflicting pins between the two files fail the build.
+RUN pip install -r requirements.txt -r requirements_util.txt
 
 # pip is only needed at build time. The libraries bundled inside it are flagged by the image scan.
 RUN pip uninstall -y pip
