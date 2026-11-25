@@ -9,11 +9,13 @@ LINT_GO_TARGETS := $(addprefix lint-go-,$(GO_MODULES))
 .PHONY: fmt fmt-python fmt-go fmt-react $(FMT_GO_TARGETS)
 .PHONY: lint lint-python lint-go lint-react $(LINT_GO_TARGETS)
 .PHONY: audit-python audit-fix-python check-util-requirements-sync $(AUDIT_TARGETS) $(AUDIT_FIX_TARGETS)
+.PHONY: scan-secrets
 
 fmt: fmt-go fmt-react fmt-python
 
 fmt-python:
-	pre-commit run --all-files
+	python -m pre_commit run isort --all-files
+	python -m pre_commit run black --all-files
 
 fmt-go: $(FMT_GO_TARGETS)
 
@@ -35,6 +37,9 @@ $(LINT_GO_TARGETS): lint-go-%:
 
 lint-react:
 	$(MAKE) -C monitor_dashboard lint
+
+scan-secrets:
+	python -m pre_commit run gitleaks --all-files
 
 check-util-requirements-sync:
 	python scripts/check_util_requirements_sync.py

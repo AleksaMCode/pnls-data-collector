@@ -16,3 +16,10 @@ repos:
         name: black (python formatter)
         files: ^(aggregator|collector|firebase_housekeeping|tests|util|collector_metrics_agent|orchestrator|stats|stats_api|ssid_geo_mapper)/
         types: [python]
+
+  # Keep the version in sync with .github/workflows/secret-scan.yml.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secret scan of staged changes)
