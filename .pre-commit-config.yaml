@@ -1,6 +1,7 @@
+# Keep the isort and black versions in sync with requirements-dev.txt, which the GitHub workflows use.
 repos:
   - repo: https://github.com/pycqa/isort
-    rev: 8.0.1
+    rev: 9.0.2
     hooks:
       - id: isort
         name: isort (python imports)
@@ -9,7 +10,7 @@ repos:
         types: [python]
 
   - repo: https://github.com/psf/black
-    rev: 26.3.1
+    rev: 26.10.1
     hooks:
       - id: black
         name: black (python formatter)
