@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `Security` GitHub workflow that runs `npm audit` for `monitor-dashboard`, `govulncheck` for every Go module and a Trivy scan of the React and Go Docker images. It runs on dependency, Go source and `Dockerfile` changes and on a weekly schedule. PR #423
 - Uptime Kuma was added to the root `docker-compose.yml` for uptime monitoring of the services running on the home server and of the cloud-hosted service (e.g. `stats-api`). PR #423
 - `collector-status-notifier` can now send a push heartbeat to Uptime Kuma after every status check, enabled with `KUMA_PUSH_ENABLED` and pointed at the monitor with `KUMA_PUSH_URL`. PR #423
+- `Security` GitHub workflow now also runs `pip-audit` for every Python `requirements.txt` file, and the Python services, `util` and `tests` have `audit` and `audit-fix` Makefile targets for it. PR #426
 
 ### Changed
 
