@@ -14,6 +14,9 @@
 
 A distributed, microservice system for capturing Wi‑Fi [probe requests](https://en.wikipedia.org/wiki/IEEE_802.11#Management_frames) ([SSIDs](<https://en.wikipedia.org/wiki/Service_set_(802.11_network)>), [MACs](https://en.wikipedia.org/wiki/MAC_address), ...), with hybrid [event-driven](https://en.wikipedia.org/wiki/Event-driven_architecture) ingestion, batch [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load), real-time analytics, and centralized observability. Built for ongoing research into privacy protection in Wi-Fi networks.
 
+> [!WARNING]
+> While probe requests are essential for network discovery and connectivity establishment, they may also be exploited for malicious purposes, including the tracking and profiling of user behavior. These privacy risks have prompted the development of mitigation strategies, such as MAC address randomization, and have served as a primary motivation for the research undertaken in this project.
+
 <p align="center">
 <img
 src="./resources/pnls-dc-architecture.svg?raw=true"
@@ -25,9 +28,6 @@ class="center"
     <label><b>Fig. 1</b>: PNLS-DC <code>3.2.0</code> system overview</label>
     </p>
 </p>
-
-> [!WARNING]
-> While probe requests are essential for network discovery and connectivity establishment, they may also be exploited for malicious purposes, including the tracking and profiling of user behavior. These privacy risks have prompted the development of mitigation strategies, such as MAC address randomization, and have served as a primary motivation for the research undertaken in this project.
 
 > [!NOTE]
 >
@@ -43,7 +43,6 @@ class="center"
    - Pushes data to [Firebase Realtime Database](https://firebase.google.com/docs/database).
      - It also keeps a local copy of the data.
 
-   > [!NOTE]
    > The `collector` service started as a separate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer); it was used as a starting point when writing this service.
 
     <p align="center">
