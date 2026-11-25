@@ -12,6 +12,9 @@ RUN pip install -r requirements.txt
 COPY util/requirements.txt /stats_service/requirements_util.txt
 RUN pip install -r requirements_util.txt
 
+# pip is only needed at build time. The libraries bundled inside it are flagged by the image scan.
+RUN pip uninstall -y pip
+
 COPY stats /stats_service/stats
 COPY util /stats_service/util
 

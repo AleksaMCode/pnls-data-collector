@@ -10,6 +10,9 @@ on:
       - "**/go.mod"
       - "**/go.sum"
       - ".go-version"
+      - "**/requirements.txt"
+      - "requirements-dev.txt"
+      - "stats_api/pyproject.toml"
       - "**/Dockerfile"
       - ".github/workflows/security.yml"
   pull_request:
@@ -21,6 +24,9 @@ on:
       - "**/go.mod"
       - "**/go.sum"
       - ".go-version"
+      - "**/requirements.txt"
+      - "requirements-dev.txt"
+      - "stats_api/pyproject.toml"
       - "**/Dockerfile"
       - ".github/workflows/security.yml"
   # New advisories are published without any change to the repo.
@@ -80,8 +86,61 @@ jobs:
         working-directory: ${{ matrix.module }}
         run: make audit
 
+  pip-audit:
+    name: pip-audit (${{ matrix.service }})
+    runs-on: ubuntu-26.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - aggregator
+          - collector
+          - collector_metrics_agent
+          - firebase_housekeeping
+          - orchestrator
+          - ssid_geo_mapper
+          - stats
+          - stats_api
+          - tests
+          - util
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pip-audit
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Run pip-audit
+        working-directory: ${{ matrix.service }}
+        run: make audit
+
+  pip-audit-dev-tools:
+    name: pip-audit (requirements-dev.txt)
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pip-audit
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Run pip-audit
+        run: python -m pip_audit -r requirements-dev.txt
+
   # Builds the Docker images of this repo and scans them for OS and library vulnerabilities.
-  # TODO: The Python images are missing: aggregator, firebase_housekeeping, ssid_geo_mapper, stats and stats_api.
   trivy-image-scan:
     name: trivy (${{ matrix.image }})
     runs-on: ubuntu-26.04
@@ -107,6 +166,22 @@ jobs:
           - image: db_backup
             context: db_backup
             dockerfile: db_backup/Dockerfile
+          # Python
+          - image: aggregator
+            context: .
+            dockerfile: aggregator/Dockerfile
+          - image: firebase_housekeeping
+            context: .
+            dockerfile: firebase_housekeeping/Dockerfile
+          - image: ssid_geo_mapper
+            context: .
+            dockerfile: ssid_geo_mapper/Dockerfile
+          - image: stats
+            context: .
+            dockerfile: stats/Dockerfile
+          - image: stats_api
+            context: .
+            dockerfile: stats_api/Dockerfile
 
     steps:
       - name: Checkout repo

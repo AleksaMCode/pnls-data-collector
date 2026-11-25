@@ -12,6 +12,9 @@ RUN pip install -r requirements.txt
 COPY util/requirements.txt /firebase_housekeeping_service/requirements_util.txt
 RUN pip install -r requirements_util.txt
 
+# pip is only needed at build time. The libraries bundled inside it are flagged by the image scan.
+RUN pip uninstall -y pip
+
 COPY firebase_housekeeping /firebase_housekeeping_service/firebase_housekeeping
 COPY util /firebase_housekeeping_service/util
 
