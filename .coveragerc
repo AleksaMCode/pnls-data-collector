@@ -4,11 +4,15 @@ source = .
 relative_files = True
 omit =
     tests/*
-    scripts/*
+    */scripts/*
     orchestrator/*
     */settings.py
     .venv/*
-    node_modules/*
+    */node_modules/*
+
+[report]
+# Folders without an `__init__.py` are also searched for the files no test imports.
+include_namespace_packages = True
 
 [xml]
 output = coverage.xml
