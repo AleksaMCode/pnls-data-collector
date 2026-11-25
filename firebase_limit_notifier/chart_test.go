@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,7 +28,7 @@ func TestSaveByteArrayToFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read saved file: %v", err)
 	}
-	if string(got) != string(content) {
+	if !bytes.Equal(got, content) {
 		t.Fatalf("saved content mismatch: got %q, expected %q", string(got), string(content))
 	}
 }

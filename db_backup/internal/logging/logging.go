@@ -12,7 +12,7 @@ import (
 
 func InitSentry(sentryDSN string, serviceName string) {
 	if strings.TrimSpace(sentryDSN) == "" {
-		log.Printf("sentry disabled: SENTRY_DSN is empty")
+		log.Print("sentry disabled: SENTRY_DSN is empty")
 		return
 	}
 

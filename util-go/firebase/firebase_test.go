@@ -22,8 +22,7 @@ func TestGetFirebaseClientMissingCredentialsFatal(t *testing.T) {
 		t.Fatal("expected process to exit with non-zero status")
 	}
 
-	var exitErr *exec.ExitError
-	if !errors.As(err, &exitErr) {
+	if _, ok := errors.AsType[*exec.ExitError](err); !ok {
 		t.Fatalf("expected *exec.ExitError, got %T (%v)", err, err)
 	}
 }

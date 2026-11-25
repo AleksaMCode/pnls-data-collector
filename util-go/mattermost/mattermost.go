@@ -72,8 +72,7 @@ func exitOnDeliveryFailure(err error) {
 		return
 	}
 
-	var statusErr *webhookStatusError
-	if errors.As(err, &statusErr) {
+	if statusErr, ok := errors.AsType[*webhookStatusError](err); ok {
 		log.Print(statusErr.Error())
 		return
 	}
@@ -104,7 +103,7 @@ func postMattermostMessage(webhookURL string, serviceName string, message string
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest(http.MethodPost, webhookURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}

@@ -17,15 +17,13 @@ var r2StorageAccountBucketQuery string
 func selectOperationsQuery(hasBucket bool) string {
 	if hasBucket {
 		return r2OperationsAccountBucketQuery
-	} else {
-		return r2OperationsAccountQuery
 	}
+	return r2OperationsAccountQuery
 }
 
 func selectStorageQuery(hasBucket bool) string {
 	if hasBucket {
 		return r2StorageAccountBucketQuery
-	} else {
-		return r2StorageAccountQuery
 	}
+	return r2StorageAccountQuery
 }

@@ -8,6 +8,7 @@ on:
       - ".go-version"
       - "**/go.mod"
       - "**/go.sum"
+      - "**/.golangci.yml"
   pull_request:
     branches: [master]
     paths:
@@ -15,6 +16,7 @@ on:
       - ".go-version"
       - "**/go.mod"
       - "**/go.sum"
+      - "**/.golangci.yml"
 
 jobs:
   format-check:
@@ -35,38 +37,6 @@ jobs:
           go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: Run golangci-lint fmt check (collector_status_notifier)
-        run: |
-          cd collector_status_notifier
-          golangci-lint fmt
-          git diff --exit-code
-
-      - name: Run golangci-lint fmt check (firebase_limit_notifier)
-        run: |
-          cd firebase_limit_notifier
-          golangci-lint fmt
-          git diff --exit-code
-
-      - name: Run golangci-lint fmt check (util-go)
-        run: |
-          cd util-go
-          golangci-lint fmt
-          git diff --exit-code
-
-      - name: Run golangci-lint fmt check (db_backup)
-        run: |
-          cd db_backup
-          golangci-lint fmt
-          git diff --exit-code
-
-      - name: Run golangci-lint fmt check (cloudflare_limit_notifier)
-        run: |
-          cd cloudflare_limit_notifier
-          golangci-lint fmt
-          git diff --exit-code
-
-      - name: Run golangci-lint fmt check (home_server_limit_notifier)
-        run: |
-          cd home_server_limit_notifier
-          golangci-lint fmt
-          git diff --exit-code
+      # Reports both formatting and lint issues, for every Go module.
+      - name: Run golangci-lint format and lint check (all modules)
+        run: make -k lint-go

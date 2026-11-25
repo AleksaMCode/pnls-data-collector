@@ -15,12 +15,12 @@ func validateKumaConfig(enabled bool, pushURL string) error {
 		return nil
 	}
 	if pushURL == "" {
-		return fmt.Errorf("KUMA_PUSH_URL must be set when KUMA_PUSH_ENABLED is true")
+		return errors.New("KUMA_PUSH_URL must be set when KUMA_PUSH_ENABLED is true")
 	}
 
 	parsedURL, err := url.Parse(pushURL)
 	if err != nil || parsedURL.Host == "" || (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") {
-		return fmt.Errorf("KUMA_PUSH_URL must be a valid http(s) URL")
+		return errors.New("KUMA_PUSH_URL must be a valid http(s) URL")
 	}
 	return nil
 }
@@ -38,7 +38,7 @@ func sendKumaPush(ctx context.Context) {
 }
 
 func pushKumaHeartbeat(ctx context.Context, pushURL string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pushURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pushURL, http.NoBody)
 	if err != nil {
 		return redactPushURL(err)
 	}
@@ -59,8 +59,7 @@ func pushKumaHeartbeat(ctx context.Context, pushURL string) error {
 // redactPushURL drops the request URL from an HTTP client error and keeps only the failure cause.
 // The push URL holds the monitor's token in its path, so it must not end up in the logs.
 func redactPushURL(err error) error {
-	var urlErr *url.Error
-	if errors.As(err, &urlErr) {
+	if urlErr, ok := errors.AsType[*url.Error](err); ok {
 		return fmt.Errorf("%s request failed: %w", urlErr.Op, urlErr.Err)
 	}
 	return err

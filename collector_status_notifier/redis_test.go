@@ -36,7 +36,7 @@ func TestOfflineCacheLifecycle(t *testing.T) {
 		t.Fatalf("markDeviceOffline() first call returned error: %v", err)
 	}
 	if !isFirstOffline {
-		t.Fatalf("expected first markDeviceOffline() call to be first offline")
+		t.Fatal("expected first markDeviceOffline() call to be first offline")
 	}
 	if !firstCache.FirstDiscoveredAt.Equal(firstSeen) || !firstCache.UpdatedAt.Equal(firstSeen) {
 		t.Fatalf("unexpected first cache value: %+v", firstCache)
@@ -48,7 +48,7 @@ func TestOfflineCacheLifecycle(t *testing.T) {
 		t.Fatalf("markDeviceOffline() second call returned error: %v", err)
 	}
 	if isFirstOffline {
-		t.Fatalf("expected second markDeviceOffline() call not to be first offline")
+		t.Fatal("expected second markDeviceOffline() call not to be first offline")
 	}
 	if !secondCache.FirstDiscoveredAt.Equal(firstSeen) {
 		t.Fatalf("expected FirstDiscoveredAt to remain %s, got %s", firstSeen, secondCache.FirstDiscoveredAt)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -33,16 +34,16 @@ func loadEnvVariables() {
 
 func validateRequiredEnv() error {
 	if MATTERMOST_WEBHOOK_URL == "" {
-		return fmt.Errorf("missing MATTERMOST_WEBHOOK_URL")
+		return errors.New("missing MATTERMOST_WEBHOOK_URL")
 	}
 	if HTTP_PORT == "" {
-		return fmt.Errorf("missing HTTP_PORT")
+		return errors.New("missing HTTP_PORT")
 	}
 	if CHECK_ENDPOINT_PATH == "" {
-		return fmt.Errorf("missing CHECK_ENDPOINT_PATH")
+		return errors.New("missing CHECK_ENDPOINT_PATH")
 	}
 	if DISK_MOUNT_PATH == "" {
-		return fmt.Errorf("missing DISK_MOUNT_PATH")
+		return errors.New("missing DISK_MOUNT_PATH")
 	}
 	return nil
 }

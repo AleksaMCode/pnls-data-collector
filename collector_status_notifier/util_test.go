@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	common "github.com/AleksaMCode/pnls-data-collector/util-go/common"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/common"
 )
 
 func TestIsWorkingHoursMatchesTimezoneHourRule(t *testing.T) {

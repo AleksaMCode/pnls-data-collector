@@ -4,9 +4,10 @@ GO_MODULES := cloudflare_limit_notifier collector_status_notifier db_backup fire
 AUDIT_TARGETS := $(addprefix audit-,$(PYTHON_SERVICES))
 AUDIT_FIX_TARGETS := $(addprefix audit-fix-,$(PYTHON_SERVICES))
 FMT_GO_TARGETS := $(addprefix fmt-go-,$(GO_MODULES))
+LINT_GO_TARGETS := $(addprefix lint-go-,$(GO_MODULES))
 
 .PHONY: fmt fmt-python fmt-go fmt-react $(FMT_GO_TARGETS)
-.PHONY: lint lint-react
+.PHONY: lint lint-go lint-react $(LINT_GO_TARGETS)
 .PHONY: audit-python audit-fix-python check-util-requirements-sync $(AUDIT_TARGETS) $(AUDIT_FIX_TARGETS)
 
 fmt: fmt-go fmt-react fmt-python
@@ -22,7 +23,12 @@ $(FMT_GO_TARGETS): fmt-go-%:
 fmt-react:
 	$(MAKE) -C monitor_dashboard fmt
 
-lint: lint-react
+lint: lint-go lint-react
+
+lint-go: $(LINT_GO_TARGETS)
+
+$(LINT_GO_TARGETS): lint-go-%:
+	$(MAKE) -C $* lint
 
 lint-react:
 	$(MAKE) -C monitor_dashboard lint

@@ -49,7 +49,7 @@ func TestSendMattermostMessagePostsExpectedPayload(t *testing.T) {
 		t.Fatalf("unexpected icon_url field: %v", received["icon_url"])
 	}
 	if _, ok := received["attachments"]; ok {
-		t.Fatalf("did not expect attachments field for plain message")
+		t.Fatal("did not expect attachments field for plain message")
 	}
 }
 
@@ -91,7 +91,7 @@ func TestSendMattermostMessageWithImageIncludesAttachment(t *testing.T) {
 }
 
 func TestSendMattermostMessageLogsOnNon200(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
@@ -122,14 +122,13 @@ func TestSendMattermostMessageInvalidWebhookFatal(t *testing.T) {
 		t.Fatal("expected process to exit with non-zero status")
 	}
 
-	var exitErr *exec.ExitError
-	if !errors.As(err, &exitErr) {
+	if _, ok := errors.AsType[*exec.ExitError](err); !ok {
 		t.Fatalf("expected *exec.ExitError, got %T (%v)", err, err)
 	}
 }
 
 func TestTrySendMattermostMessageReturnsNilOnSuccess(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
@@ -143,7 +142,7 @@ func TestTrySendMattermostMessageReturnsNilOnSuccess(t *testing.T) {
 }
 
 func TestTrySendMattermostMessageReturnsErrorOnNon200(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
