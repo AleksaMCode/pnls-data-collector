@@ -29,7 +29,8 @@ def load_dag_bag():
     except ImportError:
         from airflow.models.dagbag import DagBag
 
-    return DagBag(dag_folder=str(DAGS_FOLDER), include_examples=False)
+    # Example DAGs are already off: the test package sets AIRFLOW__CORE__LOAD_EXAMPLES=False.
+    return DagBag(dag_folder=str(DAGS_FOLDER))
 
 
 class TestDagImport(unittest.TestCase):

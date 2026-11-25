@@ -28,7 +28,7 @@ BACKUP_STATUS = ("GET", "/api/workflow/backup-wf-1")
 class FakeServices:
     """Stands in for `_request_service` and records each call as (method, path)."""
 
-    def __init__(self, **overrides):
+    def __init__(self, overrides: dict | None = None):
         self.responses = {
             AGGREGATE: {"status": "ACCEPTED", "workflow_id": "agg-wf-1"},
             AGGREGATE_STATUS: {"status": "COMPLETED"},
@@ -37,7 +37,7 @@ class FakeServices:
             BACKUP_TRIGGER: {"raw_response": "backup-wf-1"},
             BACKUP_STATUS: {"status": "COMPLETED"},
         }
-        self.responses.update(overrides)
+        self.responses.update(overrides or {})
         self.calls: list[tuple[str, str]] = []
 
     def __call__(self, method, url, json_payload=None, timeout_seconds=None):
@@ -140,7 +140,7 @@ class TestDagRuns(unittest.TestCase):
 
     def test_workflow_id_is_passed_between_tasks(self):
         services = FakeServices(
-            **{
+            {
                 AGGREGATE: {"status": "ACCEPTED", "workflow_id": "agg-wf-2"},
                 ("GET", "/aggregate/agg-wf-2"): {"status": "COMPLETED"},
                 BACKUP_TRIGGER: {"workflowId": "backup-wf-2"},
@@ -158,7 +158,7 @@ class TestDagRuns(unittest.TestCase):
         # Current behaviour: a FAILED aggregation workflow finishes the sensor successfully,
         # so stats still run and only housekeeping is skipped, even on a housekeeping day.
         # Change this test if stats should not run after a failed aggregation.
-        services = FakeServices(**{AGGREGATE_STATUS: {"status": "FAILED"}})
+        services = FakeServices({AGGREGATE_STATUS: {"status": "FAILED"}})
 
         dag_run, states = self.run_dag(next(HOUSEKEEPING_DAYS), services)
 
@@ -172,7 +172,7 @@ class TestDagRuns(unittest.TestCase):
 
     def test_failed_aggregator_trigger_stops_the_run(self):
         services = FakeServices(
-            **{AGGREGATE: dag_module.AirflowException("status=503 body=down")}
+            {AGGREGATE: dag_module.AirflowException("status=503 body=down")}
         )
 
         dag_run, states = self.run_dag(next(OTHER_DAYS), services)
@@ -185,7 +185,7 @@ class TestDagRuns(unittest.TestCase):
         self.assertEqual(services.calls, [AGGREGATE])
 
     def test_failed_stats_stop_housekeeping_and_backup(self):
-        services = FakeServices(**{STATS: {"status": "failed"}})
+        services = FakeServices({STATS: {"status": "failed"}})
 
         dag_run, states = self.run_dag(next(HOUSEKEEPING_DAYS), services)
 
@@ -200,7 +200,7 @@ class TestDagRuns(unittest.TestCase):
         # Current behaviour: `done` needs no failed upstream task, so a failed housekeeping
         # call also stops the DB backup. Change this test if the backup should still run.
         services = FakeServices(
-            **{HOUSEKEEPING: dag_module.AirflowException("status=500 body=boom")}
+            {HOUSEKEEPING: dag_module.AirflowException("status=500 body=boom")}
         )
 
         dag_run, states = self.run_dag(next(HOUSEKEEPING_DAYS), services)
@@ -214,7 +214,7 @@ class TestDagRuns(unittest.TestCase):
         self.assertNotIn(BACKUP_TRIGGER, services.calls)
 
     def test_failed_backup_workflow_fails_the_run(self):
-        services = FakeServices(**{BACKUP_STATUS: {"status": "TERMINATED"}})
+        services = FakeServices({BACKUP_STATUS: {"status": "TERMINATED"}})
 
         dag_run, states = self.run_dag(next(OTHER_DAYS), services)
 
