@@ -1,5 +1,5 @@
-requests==2.32.5
-python-dotenv==1.2.1
+requests==2.33.0
+python-dotenv==1.2.2
 fastapi==0.135.1
 psycopg2-binary==2.9.11
 uvicorn==0.41.0

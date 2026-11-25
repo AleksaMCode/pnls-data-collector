@@ -1,5 +1,5 @@
 SQLAlchemy==2.0.50
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 psycopg2-binary==2.9.11
 yaspin==3.4.0
 tenacity==9.1.2

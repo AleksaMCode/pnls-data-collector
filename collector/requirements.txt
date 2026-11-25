@@ -3,5 +3,5 @@ yaspin==3.4.0
 firebase-admin==7.1.0
 pycryptodome==3.23.0
 sentry_sdk==2.48.0
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 tenacity==9.1.2

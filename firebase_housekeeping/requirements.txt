@@ -4,7 +4,7 @@ uvicorn==0.41.0
 tenacity==9.1.2
 firebase-admin==7.1.0
 yaspin==3.4.0
-pymongo==4.15.5
-python-dotenv==1.2.1
+pymongo==4.18.3
+python-dotenv==1.2.2
 SQLAlchemy==2.0.50
 tqdm==4.67.1
