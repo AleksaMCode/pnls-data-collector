@@ -183,9 +183,9 @@ func (p *Pipeline) RunUploadTask(ctx context.Context, task *conductormodel.Task)
 		)
 		return localmodel.UploadTaskOutput{}, err
 	}
-	dumpFileName, _ := optionalInput(task, "dump_file_name")
-	encFileName, _ := optionalInput(task, "encrypted_file_name")
-	compressedFileName, _ := optionalInput(task, "compressed_file_name")
+	dumpFileName := optionalInput(task, "dump_file_name")
+	encFileName := optionalInput(task, "encrypted_file_name")
+	compressedFileName := optionalInput(task, "compressed_file_name")
 
 	objectKey := fmt.Sprintf("db-backup/%s/%s-%s.sql.enc.gz", timestamp, task.WorkflowInstanceId, task.TaskId)
 	fileInfo, statErr := os.Stat(gzipPath)
@@ -309,10 +309,7 @@ func (p *Pipeline) encryptFile(inputPath string, outputPath string) error {
 	ciphertext := aesGCM.Seal(nil, nonce, plaintext, nil)
 	out := append(nonce, ciphertext...)
 
-	if err := os.WriteFile(outputPath, out, 0o600); err != nil {
-		return err
-	}
-	return nil
+	return os.WriteFile(outputPath, out, 0o600)
 }
 
 func gzipFile(inputPath string, outputPath string) error {
@@ -326,14 +323,19 @@ func gzipFile(inputPath string, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	defer outFile.Close()
 
 	gz := gzip.NewWriter(outFile)
 	if _, err := io.Copy(gz, inputFile); err != nil {
 		_ = gz.Close()
+		_ = outFile.Close()
 		return err
 	}
-	return gz.Close()
+	if err := gz.Close(); err != nil {
+		_ = outFile.Close()
+		return err
+	}
+	// The close error is returned because a failed close can mean the archive was not fully written.
+	return outFile.Close()
 }
 
 func requiredInput(task *conductormodel.Task, key string) (string, error) {
@@ -348,16 +350,16 @@ func requiredInput(task *conductormodel.Task, key string) (string, error) {
 	return s, nil
 }
 
-func optionalInput(task *conductormodel.Task, key string) (string, bool) {
+func optionalInput(task *conductormodel.Task, key string) string {
 	v, ok := task.InputData[key]
 	if !ok {
-		return "", false
+		return ""
 	}
 	s := strings.TrimSpace(fmt.Sprintf("%v", v))
-	if s == "" || s == "<nil>" {
-		return "", false
+	if s == "<nil>" {
+		return ""
 	}
-	return s, true
+	return s
 }
 
 func EncodeKeyBase64(raw []byte) string {

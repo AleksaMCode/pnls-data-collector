@@ -6,10 +6,16 @@ on:
     paths:
       - "monitor_dashboard/package.json"
       - "monitor_dashboard/package-lock.json"
+      - "package.json"
+      - "package-lock.json"
       - "**/*.go"
       - "**/go.mod"
       - "**/go.sum"
       - ".go-version"
+      - "**/requirements.txt"
+      - "requirements-dev.txt"
+      - "stats_api/pyproject.toml"
+      - "scripts/check_util_requirements_sync.py"
       - "**/Dockerfile"
       - ".github/workflows/security.yml"
   pull_request:
@@ -17,10 +23,16 @@ on:
     paths:
       - "monitor_dashboard/package.json"
       - "monitor_dashboard/package-lock.json"
+      - "package.json"
+      - "package-lock.json"
       - "**/*.go"
       - "**/go.mod"
       - "**/go.sum"
       - ".go-version"
+      - "**/requirements.txt"
+      - "requirements-dev.txt"
+      - "stats_api/pyproject.toml"
+      - "scripts/check_util_requirements_sync.py"
       - "**/Dockerfile"
       - ".github/workflows/security.yml"
   # New advisories are published without any change to the repo.
@@ -30,7 +42,7 @@ on:
 
 jobs:
   npm-audit:
-    name: npm audit (monitor-dashboard)
+    name: npm audit
     runs-on: ubuntu-26.04
 
     steps:
@@ -49,6 +61,11 @@ jobs:
       - name: Run npm audit (including dev dependencies)
         continue-on-error: true
         working-directory: monitor_dashboard
+        run: npm audit --package-lock-only
+
+      # The root package.json only holds development tools for the Markdown files.
+      - name: Run npm audit (root Markdown tools)
+        continue-on-error: true
         run: npm audit --package-lock-only
 
   govulncheck:
@@ -80,8 +97,86 @@ jobs:
         working-directory: ${{ matrix.module }}
         run: make audit
 
+  pip-audit:
+    name: pip-audit (${{ matrix.service }})
+    runs-on: ubuntu-26.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - aggregator
+          - collector
+          - collector_metrics_agent
+          - firebase_housekeeping
+          - orchestrator
+          - ssid_geo_mapper
+          - stats
+          - stats_api
+          - tests
+          - util
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pip-audit
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Check requirements.txt and pyproject.toml list the same dependencies
+        if: matrix.service == 'stats_api'
+        working-directory: ${{ matrix.service }}
+        run: make check-dependencies-sync
+
+      - name: Run pip-audit
+        if: ${{ !cancelled() }}
+        working-directory: ${{ matrix.service }}
+        run: make audit
+
+  pip-audit-dev-tools:
+    name: pip-audit (requirements-dev.txt)
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pip-audit
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Run pip-audit
+        run: python -m pip_audit -r requirements-dev.txt
+
+  util-requirements-sync:
+    name: util requirements sync
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dev tools
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Check the Python services pin shared dependencies the same as util
+        run: make check-util-requirements-sync
+
   # Builds the Docker images of this repo and scans them for OS and library vulnerabilities.
-  # TODO: The Python images are missing: aggregator, firebase_housekeeping, ssid_geo_mapper, stats and stats_api.
   trivy-image-scan:
     name: trivy (${{ matrix.image }})
     runs-on: ubuntu-26.04
@@ -107,6 +202,22 @@ jobs:
           - image: db_backup
             context: db_backup
             dockerfile: db_backup/Dockerfile
+          # Python
+          - image: aggregator
+            context: .
+            dockerfile: aggregator/Dockerfile
+          - image: firebase_housekeeping
+            context: .
+            dockerfile: firebase_housekeeping/Dockerfile
+          - image: ssid_geo_mapper
+            context: .
+            dockerfile: ssid_geo_mapper/Dockerfile
+          - image: stats
+            context: .
+            dockerfile: stats/Dockerfile
+          - image: stats_api
+            context: .
+            dockerfile: stats_api/Dockerfile
 
     steps:
       - name: Checkout repo

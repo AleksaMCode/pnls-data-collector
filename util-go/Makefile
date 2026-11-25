@@ -1,7 +1,10 @@
-.PHONY: fmt test test-coverage test-coverage-view test-coverage-view-browser audit audit-fix
+.PHONY: lint fmt test test-coverage test-coverage-view test-coverage-view-browser audit audit-fix
 
 fmt:
 	golangci-lint fmt
+
+lint:
+	golangci-lint run ./...
 
 test:
 	go test ./...

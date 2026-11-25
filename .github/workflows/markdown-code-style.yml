@@ -1,0 +1,46 @@
+name: Markdown Code Style Check
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "**/*.md"
+      - "package.json"
+      - "package-lock.json"
+      - ".markdownlint-cli2.jsonc"
+      - ".prettierrc"
+      - ".prettierignore"
+  pull_request:
+    branches: [master]
+    paths:
+      - "**/*.md"
+      - "package.json"
+      - "package-lock.json"
+      - ".markdownlint-cli2.jsonc"
+      - ".prettierrc"
+      - ".prettierignore"
+
+jobs:
+  markdown:
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: monitor_dashboard/.nvmrc
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prettier check
+        run: npm run fmt:markdown:check
+
+      - name: Run markdownlint
+        if: ${{ !cancelled() }}
+        run: npm run lint:markdown

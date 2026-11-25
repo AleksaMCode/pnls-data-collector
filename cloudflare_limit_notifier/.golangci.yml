@@ -1,5 +1,160 @@
 version: "2"
 
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: standard
+  enable:
+    - errorlint
+    - exptostd
+    - gocritic
+    - intrange
+    - misspell
+    - modernize
+    - nolintlint
+    - perfsprint
+    - revive
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - usetesting
+    - whitespace
+
+  exclusions:
+    rules:
+      - linters:
+          - unparam
+        path: (.+)_test\.go
+
+    presets:
+      # Findings that ask for comments on exported names are not reported.
+      - comments
+      - common-false-positives
+      # Unchecked errors of Close, Flush, os.Remove and the print functions are not reported.
+      - std-error-handling
+
+  settings:
+    gocritic:
+      enable-all: true
+      disabled-checks:
+        - appendAssign
+        - appendCombine
+        - assignOp
+        - commentedOutCode
+        - deferInLoop
+        - exitAfterDefer
+        - hugeParam
+        - importShadow
+        - paramTypeCombine
+        - rangeValCopy
+        # The backticks in the messages are Markdown for Mattermost, not Go quoting.
+        - sprintfQuotedString
+        - tooManyResultsChecker
+        - unnamedResult
+        - whyNoLint
+
+    govet:
+      disable:
+        - fieldalignment
+        - shadow
+      enable-all: true
+
+    modernize:
+      disable:
+        - omitzero
+        - newexpr
+
+    nolintlint:
+      require-specific: true
+
+    perfsprint:
+      int-conversion: true
+      err-error: true
+      errorf: true
+      sprintf1: true
+      strconcat: true
+
+    revive:
+      enable-all-rules: false
+      enable-default-rules: true
+      rules:
+        - name: blank-imports
+          disabled: true
+        - name: bool-literal-in-expr
+        - name: context-as-argument
+          arguments:
+            - allow-types-before: "*testing.T,testing.TB"
+        - name: context-keys-type
+          disabled: true
+        - name: dot-imports
+          disabled: true
+        - name: duplicated-imports
+        - name: early-return
+          arguments:
+            - preserve-scope
+        - name: empty-block
+          disabled: true
+        - name: error-return
+        - name: error-strings
+          disabled: true
+        - name: errorf
+        - name: exported
+          disabled: true
+        - name: identical-branches
+        - name: identical-ifelseif-branches
+        - name: identical-switch-branches
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+          arguments:
+            - preserve-scope
+        - name: inefficient-map-lookup
+        - name: modifies-parameter
+        - name: optimize-operands-order
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+          disabled: true
+        - name: redundant-import-alias
+        - name: superfluous-else
+          arguments:
+            - preserve-scope
+        - name: time-equal
+        - name: time-naming
+          disabled: true
+        - name: unconditional-recursion
+        - name: unexported-return
+          disabled: true
+        - name: unnecessary-format
+        - name: unnecessary-stmt
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: use-any
+        - name: use-fmt-print
+        - name: useless-break
+        - name: var-declaration
+        # This repo names constants and configuration variables in upper case.
+        - name: var-naming
+          disabled: true
+
+    staticcheck:
+      checks:
+        - all
+        - -SA5011
+        - -ST1003
+        - -ST1016
+
+    unused:
+      field-writes-are-uses: false
+      exported-fields-are-used: false
+
+    usetesting:
+      os-mkdir-temp: false
+
 formatters:
   enable:
     - gofumpt

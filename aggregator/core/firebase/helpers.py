@@ -68,7 +68,7 @@ def fetch_all_data(start_date: date):
     for node_key, node_value in data.items():
         device_name = extract_device_name(node_key)
         data_entries = node_value.get("data", {})
-        for entry_key, entry_value in data_entries.items():
+        for entry_value in data_entries.values():
             ts_str = entry_value.get("timestamp")
             ts = datetime.strptime(ts_str, TIMESTAMP_FORMAT).date()
 
@@ -108,7 +108,7 @@ def fetch_data(target_date: date):
             logger.error(f"Firebase exception occurred: {str(e)}")
             msg = f"Failed to fetch data from Firebase for device `{device.value}` (node {node_key})."
             logger.warning(msg)
-            raise Exception(f"{msg} Import of Firebase data failed.")
+            raise Exception(f"{msg} Import of Firebase data failed.") from e
 
         data_entries = node_value.get("data", {})
         for entry_value in tqdm(
@@ -175,7 +175,7 @@ def publish_stats_data(import_date: date | None = None):
             )
         for capture in daily_stats:
             publish_daily_stats_capture_data(capture)
-        logger.info(f"Published stats data to Firebase.")
+        logger.info("Published stats data to Firebase.")
         return stats
     except Exception as e:
         logger.error(f"Publishing stats data to Firebase failed: {str(e)}")
@@ -279,7 +279,7 @@ def delete_manufacturers():
 
 
 @yaspin("Deleting sankey data from Firebase...")
-def delete_manufacturers():
+def delete_sankey():
     ref = db.reference(f"/{FIREBASE_STATISTICS_NODE}/sankey")
     ref.delete()
     logger.info("Deleted sankey data from Firebase.")

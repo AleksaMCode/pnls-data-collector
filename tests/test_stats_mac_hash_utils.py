@@ -35,7 +35,7 @@ class TestHashMacHmacSha256(unittest.TestCase):
         pepper = "unit-test-pepper"
         expected = hmac.new(
             pepper.encode("utf-8"),
-            "aabbccddeeff".encode("utf-8"),
+            b"aabbccddeeff",
             hashlib.sha256,
         ).hexdigest()
         self.assertEqual(hash_mac_hmac_sha256(mac, pepper), expected)

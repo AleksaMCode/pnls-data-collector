@@ -16,7 +16,7 @@ func useTestWebhook(t *testing.T, webhookURL string) {
 
 func TestCheckCloudflareUsageAndNotifyHandlerRejectsNonPost(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	checkCloudflareUsageAndNotifyHandler(recorder, httptest.NewRequest(http.MethodGet, CHECK_PATH, nil))
+	checkCloudflareUsageAndNotifyHandler(recorder, httptest.NewRequest(http.MethodGet, CHECK_PATH, http.NoBody))
 
 	if recorder.Code != http.StatusMethodNotAllowed {
 		t.Errorf("status = %d, want %d", recorder.Code, http.StatusMethodNotAllowed)

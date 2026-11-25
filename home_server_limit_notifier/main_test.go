@@ -19,7 +19,7 @@ func useTestConfig(t *testing.T, webhookURL string) {
 
 func TestCheckDiskAndNotifyHandlerRejectsNonPost(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	checkDiskAndNotifyHandler(recorder, httptest.NewRequest(http.MethodGet, "/check", nil))
+	checkDiskAndNotifyHandler(recorder, httptest.NewRequest(http.MethodGet, "/check", http.NoBody))
 
 	if recorder.Code != http.StatusMethodNotAllowed {
 		t.Errorf("status = %d, want %d", recorder.Code, http.StatusMethodNotAllowed)
@@ -33,7 +33,7 @@ func TestCheckDiskAndNotifyHandlerSendsReport(t *testing.T) {
 	useTestConfig(t, mattermostServer.URL)
 
 	recorder := httptest.NewRecorder()
-	checkDiskAndNotifyHandler(recorder, httptest.NewRequest(http.MethodPost, "/check", nil))
+	checkDiskAndNotifyHandler(recorder, httptest.NewRequest(http.MethodPost, "/check", http.NoBody))
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("status = %d, want %d", recorder.Code, http.StatusOK)
@@ -52,7 +52,7 @@ func TestCheckDiskAndNotifyHandlerReportsMattermostFailure(t *testing.T) {
 	// The handler must answer with an error and keep serving requests when Mattermost refuses the connection
 	for attempt := 1; attempt <= 2; attempt++ {
 		recorder := httptest.NewRecorder()
-		checkDiskAndNotifyHandler(recorder, httptest.NewRequest(http.MethodPost, "/check", nil))
+		checkDiskAndNotifyHandler(recorder, httptest.NewRequest(http.MethodPost, "/check", http.NoBody))
 
 		if recorder.Code != http.StatusBadGateway {
 			t.Errorf("attempt %d: status = %d, want %d", attempt, recorder.Code, http.StatusBadGateway)

@@ -25,7 +25,9 @@ def read_firebase_data_from_mongo(file_name):
         memory_file = fs.open_download_stream_by_name(filename=file_name)
         fs.find()
         if memory_file:
-            downloaded_data = json.loads(memory_file.read().decode("utf-8"))
+            # The value is used once the TODO below is done.
+            raw_data = memory_file.read().decode("utf-8")
+            downloaded_data = json.loads(raw_data)  # noqa: F841
             # TODO Implement download of data to file system.
             logger.info(f"Successfully read file with filename {file_name}.")
         else:

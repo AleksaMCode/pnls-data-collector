@@ -14,21 +14,21 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function initializeUser(user) {
+      if (user) {
+        setCurrentUser({ ...user });
+        setUserLoggedIn(true);
+      } else {
+        setCurrentUser(null);
+        setUserLoggedIn(false);
+      }
+
+      setLoading(false);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, initializeUser);
     return unsubscribe;
   }, []);
-
-  async function initializeUser(user) {
-    if (user) {
-      setCurrentUser({ ...user });
-      setUserLoggedIn(true);
-    } else {
-      setCurrentUser(null);
-      setUserLoggedIn(false);
-    }
-
-    setLoading(false);
-  }
 
   const value = {
     userLoggedIn,

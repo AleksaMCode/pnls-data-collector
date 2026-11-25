@@ -88,6 +88,7 @@ func readWorkflowDef(path string) (model.WorkflowDef, error) {
 	return def, nil
 }
 
+//nolint:unused // Kept for the schedule registration that is still to be added.
 func readSchedule(path string) (model.SaveScheduleRequest, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

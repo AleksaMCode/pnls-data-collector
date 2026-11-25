@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -23,7 +24,7 @@ type datadogQueryResponse struct {
 
 func validateDatadogDeviceData(ctx context.Context) error {
 	if DATADOG_API_KEY == "" || DATADOG_APP_KEY == "" || DATADOG_HEARTBEAT_METRIC == "" || DATADOG_HOST == "" {
-		return fmt.Errorf("missing Datadog configuration")
+		return errors.New("missing Datadog configuration")
 	}
 
 	client := &http.Client{
@@ -56,10 +57,9 @@ func validateDatadogDeviceData(ctx context.Context) error {
 			)
 			processDeviceStatus(ctx, device, true, message)
 			continue
-		} else {
-			log.Printf("Device `%s` was recently updated at %s", device, lastSeen.Format(time.RFC3339))
-			processDeviceStatus(ctx, device, false, "")
 		}
+		log.Printf("Device `%s` was recently updated at %s", device, lastSeen.Format(time.RFC3339))
+		processDeviceStatus(ctx, device, false, "")
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func getDatadogLastSeen(ctx context.Context, client *http.Client, device string)
 		url.QueryEscape(query),
 	)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, http.NoBody)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("creating Datadog request for device `%s`: %w", device, err)
 	}
@@ -95,7 +95,7 @@ func getDatadogLastSeen(ctx context.Context, client *http.Client, device string)
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
 		return time.Time{}, fmt.Errorf(
-			"Datadog returned HTTP %d for device `%s`: %s",
+			"unexpected HTTP %d from Datadog for device `%s`: %s",
 			resp.StatusCode,
 			device,
 			strings.TrimSpace(string(body)),
@@ -109,7 +109,7 @@ func getDatadogLastSeen(ctx context.Context, client *http.Client, device string)
 
 	if len(parsed.Errors) > 0 {
 		return time.Time{}, fmt.Errorf(
-			"Datadog query error for device `%s`: %s",
+			"querying Datadog for device `%s`: %s",
 			device,
 			strings.Join(parsed.Errors, "; "),
 		)

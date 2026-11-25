@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"os"
 	"strings"
 
@@ -36,10 +36,10 @@ func loadEnvVariables() {
 
 func validateRequiredEnv() error {
 	if HTTP_PORT == "" {
-		return fmt.Errorf("missing HTTP_PORT")
+		return errors.New("missing HTTP_PORT")
 	}
 	if CHECK_ENDPOINT_PATH == "" {
-		return fmt.Errorf("missing CHECK_ENDPOINT_PATH")
+		return errors.New("missing CHECK_ENDPOINT_PATH")
 	}
 	return nil
 }

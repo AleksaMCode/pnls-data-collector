@@ -28,7 +28,7 @@ func main() {
 
 	http.HandleFunc(CHECK_ENDPOINT_PATH, newCheckFirebaseUsageHandler(func() error {
 		// Check Firebase usage
-		usage := checkUsage(client, ctx)
+		usage := checkUsage(ctx, client)
 		// Create a pie chart and send a Mattermost usage message
 		return createUsageChart(usage)
 	}))
@@ -61,7 +61,7 @@ func newCheckFirebaseUsageHandler(runCheck func() error) http.HandlerFunc {
 	}
 }
 
-func checkUsage(client *db.Client, ctx context.Context) float64 {
+func checkUsage(ctx context.Context, client *db.Client) float64 {
 	ref := client.NewRef(FIREBASE_BASE_PATH)
 	usage := 0.0
 

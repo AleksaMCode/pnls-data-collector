@@ -1,0 +1,30 @@
+name: Docker Code Style Check
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "**/Dockerfile"
+      - ".hadolint.yaml"
+      - ".github/workflows/docker-code-style.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "**/Dockerfile"
+      - ".hadolint.yaml"
+      - ".github/workflows/docker-code-style.yml"
+
+jobs:
+  hadolint:
+    name: hadolint
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Keep the version in sync with .pre-commit-config.yaml.
+      # Ignored rules are listed in .hadolint.yaml.
+      - name: Run Hadolint on every Dockerfile
+        run: |
+          docker run --rm             -v "$PWD:/repo:ro"             -w /repo             hadolint/hadolint:v2.15.1             hadolint $(git ls-files '*Dockerfile')

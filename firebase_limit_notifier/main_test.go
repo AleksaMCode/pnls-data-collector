@@ -19,7 +19,7 @@ func TestCheckFirebaseUsageHandlerRejectsNonPost(t *testing.T) {
 			})
 
 			recorder := httptest.NewRecorder()
-			handler(recorder, httptest.NewRequest(method, CHECK_PATH, nil))
+			handler(recorder, httptest.NewRequest(method, CHECK_PATH, http.NoBody))
 
 			if recorder.Code != http.StatusMethodNotAllowed {
 				t.Errorf("status = %d, want %d", recorder.Code, http.StatusMethodNotAllowed)
@@ -39,7 +39,7 @@ func TestCheckFirebaseUsageHandlerRunsCheckOnPost(t *testing.T) {
 	})
 
 	recorder := httptest.NewRecorder()
-	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, nil))
+	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, http.NoBody))
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("status = %d, want %d", recorder.Code, http.StatusOK)
@@ -58,7 +58,7 @@ func TestCheckFirebaseUsageHandlerReportsFailedCheck(t *testing.T) {
 	})
 
 	recorder := httptest.NewRecorder()
-	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, nil))
+	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, http.NoBody))
 
 	if recorder.Code != http.StatusBadGateway {
 		t.Errorf("status = %d, want %d", recorder.Code, http.StatusBadGateway)
@@ -66,7 +66,7 @@ func TestCheckFirebaseUsageHandlerReportsFailedCheck(t *testing.T) {
 
 	// The handler must keep serving requests after a failed check
 	recorder = httptest.NewRecorder()
-	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, nil))
+	handler(recorder, httptest.NewRequest(http.MethodPost, CHECK_PATH, http.NoBody))
 	if recorder.Code != http.StatusBadGateway {
 		t.Errorf("status after a second failed check = %d, want %d", recorder.Code, http.StatusBadGateway)
 	}

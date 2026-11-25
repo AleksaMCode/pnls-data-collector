@@ -1,4 +1,4 @@
-.PHONY: clean-install install fmt run build preview audit audit-fix
+.PHONY: clean-install install fmt lint run build preview audit audit-fix
 
 clean-install:
 	rm -rf node_modules package-lock.json
@@ -9,6 +9,9 @@ install:
 
 fmt:
 	npx prettier --write .
+
+lint:
+	npm run lint
 
 run:
 	npm run dev

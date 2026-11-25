@@ -1,6 +1,7 @@
+# Keep the isort and black versions in sync with requirements-dev.txt, which the GitHub workflows use.
 repos:
   - repo: https://github.com/pycqa/isort
-    rev: 8.0.1
+    rev: 9.0.2
     hooks:
       - id: isort
         name: isort (python imports)
@@ -9,9 +10,25 @@ repos:
         types: [python]
 
   - repo: https://github.com/psf/black
-    rev: 26.3.1
+    rev: 26.10.1
     hooks:
       - id: black
         name: black (python formatter)
         files: ^(aggregator|collector|firebase_housekeeping|tests|util|collector_metrics_agent|orchestrator|stats|stats_api|ssid_geo_mapper)/
         types: [python]
+
+  # Keep the version in sync with .github/workflows/secret-scan.yml.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secret scan of staged changes)
+
+  # Runs through Docker. Keep the version in sync with .github/workflows/docker-code-style.yml.
+  - repo: local
+    hooks:
+      - id: hadolint
+        name: hadolint (Dockerfile lint)
+        language: docker_image
+        entry: hadolint/hadolint:v2.15.1 hadolint
+        types: [dockerfile]

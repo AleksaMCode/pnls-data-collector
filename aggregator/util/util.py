@@ -61,7 +61,7 @@ def parse_data_local(file_name):
     rsa_key = load_rsa_key_from_file(RSA_KEY_PATH)
     data = []
     try:
-        with open(file_name, "r") as file:
+        with open(file_name) as file:
             for record in tqdm(file, desc="Importing records", unit="record"):
                 record = json.loads(record.strip())
                 record["ssid"] = clean_string(record["ssid"])

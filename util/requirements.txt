@@ -1,5 +1,5 @@
 pycryptodome==3.23.0
 SQLAlchemy==2.0.50
 sentry_sdk==2.48.0
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 tenacity==9.1.2

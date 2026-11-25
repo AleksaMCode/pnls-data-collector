@@ -1,0 +1,5 @@
+# Findings that were reviewed and accepted. One fingerprint per line.
+
+# Firebase web API key of the monitor dashboard, committed on 2026-01-14 and later moved to an env variable.
+# It is not a secret: it identifies the Firebase project and is shipped to every browser in the built dashboard.
+0bfde6777ce8d64e881aa5df7f24344da6ddee88:monitor_dashboard/src/firebase/firebase.js:gcp-api-key:5

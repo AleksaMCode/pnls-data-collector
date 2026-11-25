@@ -29,7 +29,7 @@ func InitSentry(sentryDSN string, serviceName string) {
 	if err != nil {
 		log.Printf("sentry init failed: %v", err)
 	}
-	defer sentry.Flush(2 * time.Second)
+	sentry.Flush(2 * time.Second)
 }
 
 func InitObservability(logFile string, sentryDSN string, serviceName string) {

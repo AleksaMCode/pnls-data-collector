@@ -134,7 +134,7 @@ func (c *cloudflareClient) fetchOperations(start time.Time, end time.Time) (floa
 	}
 
 	if len(result.Viewer.Accounts) == 0 {
-		return 0, 0, fmt.Errorf("no Cloudflare account data returned from operations dataset")
+		return 0, 0, errors.New("no Cloudflare account data returned from operations dataset")
 	}
 
 	classA := 0.0
@@ -173,7 +173,7 @@ func (c *cloudflareClient) fetchStorage(start time.Time, end time.Time) (float64
 	}
 
 	if len(result.Viewer.Accounts) == 0 {
-		return 0, fmt.Errorf("no Cloudflare account data returned from storage dataset")
+		return 0, errors.New("no Cloudflare account data returned from storage dataset")
 	}
 
 	// Storage dataset is time-series based. To match Cloudflare console "current usage",
@@ -225,7 +225,7 @@ func (c *cloudflareClient) query(query string, variables map[string]any, out any
 			if reqErr != nil {
 				return retry.Unrecoverable(reqErr)
 			}
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+			req.Header.Set("Authorization", "Bearer "+c.token)
 			req.Header.Set("Content-Type", "application/json")
 
 			resp, doErr := c.httpClient.Do(req)
@@ -283,8 +283,7 @@ func (c *cloudflareClient) query(query string, variables map[string]any, out any
 			return time.Duration(math.Pow(2, float64(n))) * time.Second
 		}),
 		retry.RetryIf(func(err error) bool {
-			var httpErr *retryableHTTPError
-			if errors.As(err, &httpErr) {
+			if httpErr, ok := errors.AsType[*retryableHTTPError](err); ok {
 				return isRetryableHTTPStatus(httpErr.statusCode)
 			}
 			return true

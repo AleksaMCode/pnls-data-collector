@@ -20,6 +20,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `Security` GitHub workflow that runs `npm audit` for `monitor-dashboard`, `govulncheck` for every Go module and a Trivy scan of the React and Go Docker images. It runs on dependency, Go source and `Dockerfile` changes and on a weekly schedule. PR #423
 - Uptime Kuma was added to the root `docker-compose.yml` for uptime monitoring of the services running on the home server and of the cloud-hosted service (e.g. `stats-api`). PR #423
 - `collector-status-notifier` can now send a push heartbeat to Uptime Kuma after every status check, enabled with `KUMA_PUSH_ENABLED` and pointed at the monitor with `KUMA_PUSH_URL`. PR #423
+- `Security` GitHub workflow now also runs `pip-audit` for every Python `requirements.txt` file, and the Python services, `util` and `tests` have `audit` and `audit-fix` Makefile targets for it. PR #426
+- `Security` GitHub workflow now also scans the Python Docker images (`aggregator`, `firebase-housekeeping`, `ssid-geo-mapper`, `stats` and `stats-api`) with Trivy. PR #426
+- `stats-api` `audit` and `audit-fix` Makefile targets now also cover `pyproject.toml`, which the FastAPI Cloud deployment uses. A new `scripts/check_dependencies_sync.py` check fails when `pyproject.toml` and `requirements.txt` list different dependencies, and it runs in the `Security` GitHub workflow. PR #426
+- New `scripts/check_util_requirements_sync.py` check that fails when a Python service pins a shared dependency differently than `util/requirements.txt`. It runs in the `Security` GitHub workflow. PR #426
+- Root `requirements-dev.txt` with the Python development tools (`black`, `isort`, `pip-audit`, `pre-commit` and `ruff`) that the GitHub workflows and the root `Makefile` use. PR #426
+- Root `Makefile` with `fmt`, `lint`, `audit-python`, `audit-fix-python`, `scan-secrets` and `check-util-requirements-sync` targets. `fmt` and `lint` also have a target per language (`-python`, `-go`, `-react` and `-markdown`), and `lint` has one for the Dockerfiles (`-docker`). PR #426
+- ESLint for `monitor-dashboard`, with a `lint` Makefile target and a step in the code style workflow. The findings that existed for the `react-hooks/set-state-in-effect` rule are recorded in `eslint-suppressions.json`, so only new ones fail. PR #426
+- `golangci-lint` linters for all Go modules (the standard set plus `revive`, `gocritic`, `modernize`, `errorlint` and others), with a `lint` Makefile target in every module. PR #426
+- Ruff linter for the Python code (`ruff.toml`), with a step in the Python code style workflow. PR #426
+- New `Secret Scan` GitHub workflow that runs Gitleaks over the full git history on every pull request, every push to `master`, on a weekly schedule and on demand. Accepted findings are listed in `.gitleaksignore`, and a Gitleaks pre-commit hook scans staged changes. PR #426
+- Prettier and markdownlint for the Markdown files, installed from a root `package.json`, with a new `Markdown Code Style Check` GitHub workflow. The `npm audit` job of the `Security` GitHub workflow also audits the root `package-lock.json`. PR #426
+- Hadolint for the Dockerfiles, with a new `Docker Code Style Check` GitHub workflow and a pre-commit hook that both run the pinned `hadolint/hadolint` Docker image. Ignored rules are listed in `.hadolint.yaml`. PR #426
 
 ### Changed
 
@@ -47,6 +59,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - All GitHub workflows now run on `ubuntu-26.04` instead of `ubuntu-latest`. PR #423
 - Go tests and Go code style workflows now also run when `.go-version`, `go.mod` or `go.sum` change. PR #423
 - Go code style workflow now pins `golangci-lint` to `v2.15.0` to match Go 1.27.4. PR #423
+- Python Docker images now install the Debian security updates at build time, remove `pip` from their final filesystem, and install the service and `util` requirements in one `pip` command so that conflicting pins fail the build. PR #426
+- Python dependencies were upgraded to clear known vulnerabilities: `python-dotenv` to `1.2.2`, `pymongo` to `4.18.3`, `requests` to `2.33.0`, and `geopy` to `2.5.0`. PR #426
+- `orchestrator` was upgraded from Airflow `3.1.3` to `3.4.0`, in the Docker images of its `docker-compose.yml` and in its requirements. The Compose services no longer mount `requirements.txt`, which was never installed in the containers. PR #426
+- Python Docker images now install the requirements and remove `pip` in one `RUN` instruction, and the `collector-status-notifier` and `firebase-limit-notifier` images download the Go modules and build in one `RUN` instruction. PR #426
+- `stats-api` now uses `logfire` `5.2.0` and pins `opentelemetry-api` to `1.45.2`. PR #426
+- `black` was upgraded to `26.10.1` and `isort` to `9.0.2`, in pre-commit and in the Python code style workflow. PR #426
+- Prettier was upgraded to `3.10.1` for `monitor-dashboard`. PR #426
+- Go code style workflow now runs one `golangci-lint run` step for all modules, which checks both formatting and linting. PR #426
+- `formatter-go.sh` and `formatter-python.sh` were replaced by the `fmt` targets of the root `Makefile`, and the deprecated `start_aggregator.sh` was removed. PR #426
 
 ### Fixed
 
@@ -63,6 +84,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `monitor-dashboard` side menu toggle is smoother: the page content now resizes once after the panel animation ends instead of redrawing every chart and data grid mid-animation, and menu labels fade instead of being mounted and unmounted. PR #419
 - `monitor-dashboard` collapsed side menu items keep their labels as accessible names for screen readers, and menu icons no longer shift position when toggling. PR #419
 - `firebase-limit-notifier`, `cloudflare-limit-notifier` and `home-server-limit-notifier` no longer terminate when the Mattermost report can't be sent; the check request now fails with `502` and the service stays available. PR #423
+- `db-backup` compress step now fails when the archive file can't be closed, instead of reporting a possibly incomplete archive as successful. PR #426
+- `monitor-dashboard` stat cards now update their trend when only the `trend` value changes. PR #426
+- `aggregator` Firebase helper that deletes the sankey data is now named `delete_sankey`; it was defined as a second `delete_manufacturers` and replaced the first one. PR #426
 
 ## [3.2.0] - 2026-08-09
 

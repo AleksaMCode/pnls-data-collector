@@ -1,12 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
-	logging "github.com/AleksaMCode/pnls-data-collector/util-go/logging"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/joho/godotenv"
 )
 
@@ -52,16 +53,16 @@ func loadEnvVariables() {
 
 func validateRequiredEnv() error {
 	if CLOUDFLARE_API_TOKEN == "" {
-		return fmt.Errorf("missing CLOUDFLARE_API_TOKEN")
+		return errors.New("missing CLOUDFLARE_API_TOKEN")
 	}
 	if CLOUDFLARE_ACCOUNT_ID == "" {
-		return fmt.Errorf("missing CLOUDFLARE_ACCOUNT_ID")
+		return errors.New("missing CLOUDFLARE_ACCOUNT_ID")
 	}
 	if HTTP_PORT == "" {
-		return fmt.Errorf("missing HTTP_PORT")
+		return errors.New("missing HTTP_PORT")
 	}
 	if CHECK_ENDPOINT_PATH == "" {
-		return fmt.Errorf("missing CHECK_ENDPOINT_PATH")
+		return errors.New("missing CHECK_ENDPOINT_PATH")
 	}
 	if GRAPHQL_RETRY_MAX_DELAY < GRAPHQL_RETRY_DELAY {
 		return fmt.Errorf(

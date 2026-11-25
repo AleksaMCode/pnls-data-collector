@@ -27,22 +27,22 @@ func main() {
 	client := firebase.GetFirebaseClient(ctx, FIREBASE_CREDENTIALS_FILE, FIREBASE_DATABASE_URL)
 
 	// Check before sleep
-	checkDevicesStatus(client, ctx)
+	checkDevicesStatus(ctx, client)
 
 	// Periodically check Datadog heartbeat data every `COLLECTOR_TIMEOUT` minutes.
 	ticker := time.NewTicker(COLLECTOR_TIMEOUT)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		checkDevicesStatus(client, ctx)
+		checkDevicesStatus(ctx, client)
 	}
 }
 
-func checkDevicesStatus(client *db.Client, ctx context.Context) {
+func checkDevicesStatus(ctx context.Context, client *db.Client) {
 	log.Println("Checking devices status via Datadog...")
 	if err := validateDatadogDeviceData(ctx); err != nil {
 		log.Printf("Datadog status check failed, falling back to Firebase status: %v", err)
-		validateFirebaseDeviceData(client, ctx)
+		validateFirebaseDeviceData(ctx, client)
 	}
 
 	// Let Uptime Kuma know that the status check loop is still running

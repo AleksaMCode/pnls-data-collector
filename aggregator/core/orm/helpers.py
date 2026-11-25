@@ -9,7 +9,7 @@ from tenacity import after_log, before_log, retry, stop_after_attempt, wait_expo
 from tqdm import tqdm
 from yaspin import yaspin
 
-from aggregator import settings, util
+from aggregator import settings
 from util.core.orm.models import Device
 from util.logger import get_logger
 

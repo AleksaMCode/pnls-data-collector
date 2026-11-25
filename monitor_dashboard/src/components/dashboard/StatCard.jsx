@@ -187,11 +187,14 @@ function StatCard({
     if (trend) {
       setComputedTrend(trend);
     } else {
-      const { trend, deltaPercent } = calculateTrend(value, prevValue);
-      setComputedTrend(trend);
+      const { trend: calculatedTrend, deltaPercent } = calculateTrend(
+        value,
+        prevValue,
+      );
+      setComputedTrend(calculatedTrend);
       setDeltaPercent(deltaPercent);
     }
-  }, [value, prevValue]);
+  }, [trend, value, prevValue]);
 
   // Live cards show growth relative to the baseline value when enabled.
   useEffect(() => {

@@ -28,12 +28,12 @@ func validateFirebaseNode(deviceKey, today string) bool {
 	return false
 }
 
-func validateFirebaseDeviceData(client *db.Client, ctx context.Context) {
+func validateFirebaseDeviceData(ctx context.Context, client *db.Client) {
 	// Collectors name the node and stamp the heartbeat in TIMEZONE wall time,
 	// so derive today's date (YYYY-MM-DD) and parse timestamps in that zone
 	// rather than the container's (UTC).
 	now := common.GetTimeNow(TIMEZONE)
-	dateFormat := strings.Split(TIMESTAMP_FORMAT, " ")[0]
+	dateFormat, _, _ := strings.Cut(TIMESTAMP_FORMAT, " ")
 	today := now.Format(dateFormat)
 	yesterday := now.AddDate(0, 0, -1).Format(dateFormat)
 

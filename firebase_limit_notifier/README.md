@@ -55,6 +55,6 @@ docker compose up --build
 
 `.env` and `firebase_credentials.json` are mounted into the container, so both must exist before starting it.
 
-> [!NOTE] 
-> 
+> [!NOTE]
+>
 > If chart generation/upload fails, the notifier still sends the usage message.

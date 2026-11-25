@@ -10,6 +10,7 @@ import (
 )
 
 func GetFirebaseClient(ctx context.Context, credentials string, dbURL string) *db.Client {
+	//nolint:staticcheck // SA1019: the replacement needs the credential type and is not adopted yet.
 	opt := option.WithCredentialsFile(credentials)
 	conf := &firebase.Config{
 		DatabaseURL: dbURL,

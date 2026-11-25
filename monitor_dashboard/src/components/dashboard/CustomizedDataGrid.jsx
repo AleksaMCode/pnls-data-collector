@@ -23,6 +23,7 @@ const EMPTY_STATUS = {};
 function getWorkingStatus(status) {
   const now = new Date();
 
+  // eslint-disable-next-line no-unused-vars -- kept for the commented-out code that uses it
   const hour = Number(
     new Intl.DateTimeFormat('en-US', {
       timeZone: 'Europe/Paris',

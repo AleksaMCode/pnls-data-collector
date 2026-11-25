@@ -21,7 +21,7 @@ services:
   #    restart: unless-stopped
 
   airflow-init:
-    image: apache/airflow:3.1.3
+    image: apache/airflow:3.4.0
     container_name: airflow-init
     #    depends_on:
     #      airflow-postgres:
@@ -47,11 +47,10 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./requirements.txt:/requirements.txt
     command: bash -c "airflow db migrate && airflow users create --username ${AIRFLOW_USERNAME} --password ${AIRFLOW_PASSWORD} --firstname PNLS --lastname Admin --role Admin --email admin@pnls.local"
 
   airflow-apiserver:
-    image: apache/airflow:3.1.3
+    image: apache/airflow:3.4.0
     container_name: airflow-apiserver
     depends_on:
       #      airflow-postgres:
@@ -76,14 +75,13 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./requirements.txt:/requirements.txt
     ports:
       - "${AIRFLOW_PORT}:8080"
     command: bash -c "airflow api-server"
     restart: unless-stopped
 
   airflow-scheduler:
-    image: apache/airflow:3.1.3
+    image: apache/airflow:3.4.0
     container_name: airflow-scheduler
     depends_on:
       #      airflow-postgres:
@@ -107,12 +105,11 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./requirements.txt:/requirements.txt
     command: bash -c "airflow scheduler"
     restart: unless-stopped
 
   airflow-dag-processor:
-    image: apache/airflow:3.1.3
+    image: apache/airflow:3.4.0
     container_name: airflow-dag-processor
     env_file:
       - ./.env
@@ -131,7 +128,6 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./requirements.txt:/requirements.txt
     command: bash -c "airflow dag-processor"
     restart: unless-stopped
 

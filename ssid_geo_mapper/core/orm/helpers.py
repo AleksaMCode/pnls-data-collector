@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from sqlalchemy import func
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_exponential
@@ -78,7 +77,7 @@ def insert_ssid_geo_batch(
     before=before_log(logger, logging.INFO),
     after=after_log(logger, logging.ERROR),
 )
-def get_unmapped_ssids(limit: int) -> List[SSID]:
+def get_unmapped_ssids(limit: int) -> list[SSID]:
     """Returns the next SSIDs to map.
 
     SSIDs that never failed come first, in id order. Previously failed SSIDs only fill what is left of the limit:

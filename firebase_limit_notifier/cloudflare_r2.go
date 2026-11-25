@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	common "github.com/AleksaMCode/pnls-data-collector/util-go/common"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/common"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
