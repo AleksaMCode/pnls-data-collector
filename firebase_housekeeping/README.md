@@ -5,9 +5,11 @@ FastAPI microservice that migrates Firebase data to MongoDB and cleans up Fireba
 ## Setup
 
 1. Copy `.env` template and fill in values:
+
    ```bash
    cp .env.template .env
    ```
+
 2. Place `firebase_credentials.json` in this directory (or use the template).
 
 ## Run with Docker

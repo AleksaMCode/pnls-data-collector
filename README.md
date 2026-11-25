@@ -10,7 +10,7 @@
 [![Code style (JS/TS): Prettier](<https://img.shields.io/badge/code%20style%20(JS/TS)-prettier-ff69b4.svg>)](https://github.com/prettier/prettier)
 ![Python tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/python-tests.yml/badge.svg?branch=master)
 ![Go tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/go-tests.yml/badge.svg?branch=master)
-![](https://img.shields.io/github/v/release/AleksaMCode/pnls-data-collector)
+![Latest release](https://img.shields.io/github/v/release/AleksaMCode/pnls-data-collector)
 
 A distributed, microservice system for capturing Wi‑Fi [probe requests](https://en.wikipedia.org/wiki/IEEE_802.11#Management_frames) ([SSIDs](<https://en.wikipedia.org/wiki/Service_set_(802.11_network)>), [MACs](https://en.wikipedia.org/wiki/MAC_address), ...), with hybrid [event-driven](https://en.wikipedia.org/wiki/Event-driven_architecture) ingestion, batch [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load), real-time analytics, and centralized observability. Built for ongoing research into privacy protection in Wi-Fi networks.
 
