@@ -23,10 +23,10 @@ audit-fix:
 test: test-unit test-integration
 
 test-unit:
-	cd $(REPO_ROOT) && python -m unittest discover -v -s orchestrator/tests/unit -t .
+	cd "$(REPO_ROOT)" && python -m unittest discover -v -s orchestrator/tests/unit -t .
 
 test-integration:
-	cd $(REPO_ROOT) && python -m unittest discover -v -s orchestrator/tests/integration -t .
+	cd "$(REPO_ROOT)" && python -m unittest discover -v -s orchestrator/tests/integration -t .
 
 # Runs the tests inside the same Airflow image that production uses. Needs only Docker.
 test-docker:
