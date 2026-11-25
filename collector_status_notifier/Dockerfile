@@ -6,8 +6,8 @@ COPY util-go /workspace/util-go
 COPY collector_status_notifier /workspace/collector_status_notifier
 
 WORKDIR /workspace/collector_status_notifier
-RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -o /workspace/bin/collector-status-notifier .
+RUN go mod download \
+    && CGO_ENABLED=0 GOOS=linux go build -o /workspace/bin/collector-status-notifier .
 
 FROM alpine:3.22
 

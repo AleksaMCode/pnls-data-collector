@@ -1,0 +1,5 @@
+# Hadolint configuration for the Dockerfiles of this repo.
+ignored:
+  # Pinning versions in `apk add` breaks builds once Alpine removes the pinned version from its mirrors.
+  # The Alpine base image tag is pinned instead.
+  - DL3018

@@ -23,3 +23,12 @@ repos:
     hooks:
       - id: gitleaks
         name: gitleaks (secret scan of staged changes)
+
+  # Runs through Docker. Keep the version in sync with .github/workflows/docker-code-style.yml.
+  - repo: local
+    hooks:
+      - id: hadolint
+        name: hadolint (Dockerfile lint)
+        language: docker_image
+        entry: hadolint/hadolint:v2.15.1 hadolint
+        types: [dockerfile]

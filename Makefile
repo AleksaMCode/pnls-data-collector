@@ -7,7 +7,7 @@ FMT_GO_TARGETS := $(addprefix fmt-go-,$(GO_MODULES))
 LINT_GO_TARGETS := $(addprefix lint-go-,$(GO_MODULES))
 
 .PHONY: fmt fmt-python fmt-go fmt-react fmt-markdown $(FMT_GO_TARGETS)
-.PHONY: lint lint-python lint-go lint-react lint-markdown $(LINT_GO_TARGETS)
+.PHONY: lint lint-python lint-go lint-react lint-markdown lint-docker $(LINT_GO_TARGETS)
 .PHONY: audit-python audit-fix-python check-util-requirements-sync $(AUDIT_TARGETS) $(AUDIT_FIX_TARGETS)
 .PHONY: scan-secrets
 
@@ -29,7 +29,7 @@ fmt-markdown:
 	npm run fmt:markdown
 	npm run lint:markdown:fix
 
-lint: lint-go lint-react lint-markdown lint-python
+lint: lint-go lint-react lint-python lint-markdown lint-docker
 
 lint-python:
 	python -m ruff check .
@@ -41,6 +41,9 @@ $(LINT_GO_TARGETS): lint-go-%:
 
 lint-react:
 	$(MAKE) -C monitor_dashboard lint
+
+lint-docker:
+	python -m pre_commit run hadolint --all-files
 
 lint-markdown:
 	npm run fmt:markdown:check

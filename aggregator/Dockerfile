@@ -13,10 +13,9 @@ COPY aggregator/requirements.txt /aggregator_service/requirements.txt
 COPY util/requirements.txt /aggregator_service/requirements_util.txt
 
 # Installed in one command so that conflicting pins between the two files fail the build.
-RUN pip install -r requirements.txt -r requirements_util.txt
-
-# pip is only needed at build time. The libraries bundled inside it are flagged by the image scan.
-RUN pip uninstall -y pip
+# pip is only needed at build time, and the libraries bundled inside it are flagged by the image scan, so it is removed in the same layer.
+RUN pip install -r requirements.txt -r requirements_util.txt \
+    && pip uninstall -y pip
 
 COPY aggregator /aggregator_service/aggregator
 COPY util /aggregator_service/util

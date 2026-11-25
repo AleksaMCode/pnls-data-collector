@@ -10,10 +10,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /stats_api_service
 
 COPY stats_api/requirements.txt /stats_api_service/requirements.txt
-RUN pip install -r requirements.txt
 
-# pip is only needed at build time. The libraries bundled inside it are flagged by the image scan.
-RUN pip uninstall -y pip
+# pip is only needed at build time, and the libraries bundled inside it are flagged by the image scan, so it is removed in the same layer.
+RUN pip install -r requirements.txt \
+    && pip uninstall -y pip
 
 # Keep stats_api as a standalone app root so imports like
 # "from core...", "from routers...", "from middleware..." work.
