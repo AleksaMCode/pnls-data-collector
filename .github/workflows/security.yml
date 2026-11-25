@@ -13,6 +13,7 @@ on:
       - "**/requirements.txt"
       - "requirements-dev.txt"
       - "stats_api/pyproject.toml"
+      - "scripts/check_util_requirements_sync.py"
       - "**/Dockerfile"
       - ".github/workflows/security.yml"
   pull_request:
@@ -27,6 +28,7 @@ on:
       - "**/requirements.txt"
       - "requirements-dev.txt"
       - "stats_api/pyproject.toml"
+      - "scripts/check_util_requirements_sync.py"
       - "**/Dockerfile"
       - ".github/workflows/security.yml"
   # New advisories are published without any change to the repo.
@@ -145,6 +147,25 @@ jobs:
 
       - name: Run pip-audit
         run: python -m pip_audit -r requirements-dev.txt
+
+  util-requirements-sync:
+    name: util requirements sync
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dev tools
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Check the Python services pin shared dependencies the same as util
+        run: make check-util-requirements-sync
 
   # Builds the Docker images of this repo and scans them for OS and library vulnerabilities.
   trivy-image-scan:
