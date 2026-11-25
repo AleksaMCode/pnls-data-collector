@@ -61,8 +61,14 @@ jobs:
           cp firebase_housekeeping/settings.py.template firebase_housekeeping/settings.py
           cp collector/settings.py.template collector/settings.py
 
-      - name: Run tests with coverage (unittest discover)
-        run: python -m coverage run -m unittest discover -v -s tests -t .
+      - name: Run unit tests with coverage
+        run: python -m coverage run -m unittest discover -v -s tests/unit -t .
+
+      # Runs even when a unit test failed, so both results show in one CI run.
+      # `--append` adds to the unit test coverage instead of replacing it.
+      - name: Run integration tests with coverage
+        if: ${{ !cancelled() }}
+        run: python -m coverage run --append -m unittest discover -v -s tests/integration -t .
 
       - name: Create coverage report
         run: |

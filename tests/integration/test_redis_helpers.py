@@ -13,7 +13,7 @@ except ImportError:
     redis is not None and RedisContainer is not None,
     "redis and testcontainers are required for Redis integration tests",
 )
-class TestRedisHelpersIntegration(unittest.TestCase):
+class TestRedisHelpers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         from aggregator.core.redis import helpers as redis_helpers

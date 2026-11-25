@@ -19,7 +19,7 @@ except ImportError:
     PostgresContainer is not None,
     "testcontainers is required for Postgres integration tests",
 )
-class TestOrmHelpersIntegration(unittest.TestCase):
+class TestOrmHelpers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._postgres = PostgresContainer("postgres:15.18")
@@ -357,7 +357,7 @@ class TestOrmHelpersIntegration(unittest.TestCase):
     PostgresContainer is not None,
     "testcontainers is required for Postgres integration tests",
 )
-class TestStatsOrmHelpersIntegration(unittest.TestCase):
+class TestStatsOrmHelpers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._postgres = PostgresContainer("postgres:15.18")
