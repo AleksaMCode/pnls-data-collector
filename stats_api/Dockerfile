@@ -11,7 +11,7 @@ WORKDIR /stats_api_service
 
 COPY stats_api/requirements.txt /stats_api_service/requirements.txt
 
-# pip is only needed at build time, and the libraries bundled inside it are flagged by the image scan, so it is removed in the same layer.
+# pip is only needed at build time, and the libraries bundled inside it are flagged by the image scan, so it is removed from the final filesystem.
 RUN pip install -r requirements.txt \
     && pip uninstall -y pip
 
