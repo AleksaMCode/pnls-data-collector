@@ -22,10 +22,13 @@ class UnsupportedRequirementError(Exception):
     pass
 
 
-def read_pins(requirements_path: Path) -> dict[str, str]:
-    """Returns the pin (version or URL, and environment marker) of every package in the file."""
+def read_pins(requirements_path: Path) -> dict[str, set[str]]:
+    """
+    Returns the pins (version or URL, and environment marker) of every package in the file.
+    A package can be listed more than once, with a different environment marker each time.
+    """
     source = requirements_path.relative_to(REPO_DIR).as_posix()
-    pins = {}
+    pins: dict[str, set[str]] = {}
     for line in requirements_path.read_text(encoding="utf-8").splitlines():
         requirement_line = COMMENT_PATTERN.sub("", line).strip()
         if not requirement_line:
@@ -41,8 +44,12 @@ def read_pins(requirements_path: Path) -> dict[str, str]:
         pin = f"@ {requirement.url}" if requirement.url else str(requirement.specifier)
         if requirement.marker:
             pin += f"; {requirement.marker}"
-        pins[canonicalize_name(requirement.name)] = pin
+        pins.setdefault(canonicalize_name(requirement.name), set()).add(pin)
     return pins
+
+
+def format_pins(package: str, pins: set[str]) -> str:
+    return ", ".join(f"{package}{pin or ' (no version)'}" for pin in sorted(pins))
 
 
 def find_service_requirements() -> list[Path]:
@@ -64,11 +71,11 @@ def main() -> int:
         return 1
 
     drifts = [
-        f"  {service}: {package}{pin or ' (no version)'}, "
-        f"util: {package}{util_pins[package] or ' (no version)'}"
+        f"  {service}: {format_pins(package, package_pins)}\n"
+        f"    util: {format_pins(package, util_pins[package])}"
         for service, pins in service_pins.items()
-        for package, pin in sorted(pins.items())
-        if package in util_pins and pin != util_pins[package]
+        for package, package_pins in sorted(pins.items())
+        if package in util_pins and package_pins != util_pins[package]
     ]
     if drifts:
         print("Dependencies pinned differently than in util/requirements.txt:")
