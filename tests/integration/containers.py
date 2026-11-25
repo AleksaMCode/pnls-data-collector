@@ -47,6 +47,7 @@ REDIS_DB_ORM_CACHE = 2
 REDIS_DB_WORKFLOW_CACHE = 3
 REDIS_DB_CELERY_BROKER = 4
 REDIS_DB_CELERY_BACKEND = 5
+REDIS_DB_PIPELINE_CACHE = 6
 
 requires_postgres = unittest.skipUnless(
     PostgresContainer is not None,

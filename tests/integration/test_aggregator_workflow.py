@@ -22,6 +22,7 @@ from tests.integration.containers import (
     requires_redis,
 )
 from tests.support.aggregator_loader import (
+    celery_eager_mode,
     import_aggregator_module,
     import_firebase_helpers,
     test_rsa_key,
@@ -270,9 +271,7 @@ class TestAggregateApi(ApiTestCase):
 
     def setUp(self):
         super().setUp()
-        patcher = mock.patch.object(celery_app.conf, "task_always_eager", True)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        self.enterContext(celery_eager_mode(celery_app))
 
     def test_full_import_through_the_api(self):
         workflow_id = self.start_aggregation()

@@ -4,8 +4,9 @@ import importlib
 import os
 import sys
 from contextlib import ExitStack, contextmanager
-from functools import cache
 from unittest import mock
+
+from tests.support.keys import test_rsa_key
 
 FIREBASE_HELPERS = "aggregator.core.firebase.helpers"
 
@@ -19,13 +20,13 @@ for _name, _value in (
 ):
     os.environ.setdefault(_name, _value)
 
-
-@cache
-def test_rsa_key():
-    """A throwaway RSA key pair, generated once per test run. Never committed to the repo."""
-    from Crypto.PublicKey import RSA
-
-    return RSA.generate(2048)
+__all__ = [
+    "celery_eager_mode",
+    "import_aggregator_module",
+    "import_firebase_helpers",
+    "no_retry_wait",
+    "test_rsa_key",
+]
 
 
 def import_firebase_helpers():
@@ -63,3 +64,18 @@ def no_retry_wait(*functions):
         for function in functions:
             stack.enter_context(mock.patch.object(function.retry, "wait", wait_none()))
         yield
+
+
+@contextmanager
+def celery_eager_mode(app):
+    """Runs queued Celery tasks at once, in this process, while the context is open.
+
+    `mock.patch.object` cannot be used: Celery's settings return defaults that are not set on
+    the object itself, so the patch would try to delete the attribute when it ends.
+    """
+    previous = app.conf.task_always_eager
+    app.conf.task_always_eager = True
+    try:
+        yield
+    finally:
+        app.conf.task_always_eager = previous
