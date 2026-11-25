@@ -1,4 +1,4 @@
-name: Prettier Code Style Check (monitor-dashboard)
+name: Prettier and ESLint Code Style Check (monitor-dashboard)
 
 on:
   push:
@@ -33,3 +33,8 @@ jobs:
         working-directory: monitor_dashboard
         run: |
           npx prettier --check "**/*.{js,jsx,ts,tsx}"
+
+      - name: Run ESLint
+        if: ${{ !cancelled() }}
+        working-directory: monitor_dashboard
+        run: npm run lint

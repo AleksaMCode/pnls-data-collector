@@ -6,6 +6,7 @@ AUDIT_FIX_TARGETS := $(addprefix audit-fix-,$(PYTHON_SERVICES))
 FMT_GO_TARGETS := $(addprefix fmt-go-,$(GO_MODULES))
 
 .PHONY: fmt fmt-python fmt-go fmt-react $(FMT_GO_TARGETS)
+.PHONY: lint lint-react
 .PHONY: audit-python audit-fix-python check-util-requirements-sync $(AUDIT_TARGETS) $(AUDIT_FIX_TARGETS)
 
 fmt: fmt-go fmt-react fmt-python
@@ -20,6 +21,11 @@ $(FMT_GO_TARGETS): fmt-go-%:
 
 fmt-react:
 	$(MAKE) -C monitor_dashboard fmt
+
+lint: lint-react
+
+lint-react:
+	$(MAKE) -C monitor_dashboard lint
 
 check-util-requirements-sync:
 	python scripts/check_util_requirements_sync.py

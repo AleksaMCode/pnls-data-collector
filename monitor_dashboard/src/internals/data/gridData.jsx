@@ -7,6 +7,7 @@ import { getLastNDays } from '../../components/dashboard/StatCard';
 import i18n from '../../i18n';
 import { getLocale } from '../../i18nLocale';
 
+// eslint-disable-next-line no-unused-vars -- kept for the commented-out code that uses it
 function getDaysInMonth(month, year) {
   const date = new Date(year, month, 0);
   const monthName = date.toLocaleDateString('en-US', {

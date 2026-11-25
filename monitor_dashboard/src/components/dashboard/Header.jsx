@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 /**
  * @deprecated At the moment there is no need to use this helper function as devices are always live.
  */
+// eslint-disable-next-line no-unused-vars -- kept for the commented-out code that uses it
 function isWorkingHours() {
   const now = new Date();
 

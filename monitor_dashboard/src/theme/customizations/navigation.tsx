@@ -9,7 +9,6 @@ import { tabClasses } from '@mui/material/Tab';
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
 import { brand, gray } from '../themePrimitives';
 
-/* eslint-disable import/prefer-default-export */
 export const navigationCustomizations: Components<Theme> = {
   MuiMenuItem: {
     styleOverrides: {
@@ -58,6 +57,7 @@ export const navigationCustomizations: Components<Theme> = {
   },
   MuiSelect: {
     defaultProps: {
+      // eslint-disable-next-line react/display-name -- inline icon override of the theme
       IconComponent: React.forwardRef<SVGSVGElement, SvgIconProps>(
         (props, ref) => (
           <UnfoldMoreRoundedIcon fontSize="small" {...props} ref={ref} />

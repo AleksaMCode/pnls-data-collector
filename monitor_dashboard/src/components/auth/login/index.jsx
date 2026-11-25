@@ -72,7 +72,7 @@ export default function Login() {
       setErrorMessage('');
       try {
         await firebaseSignInWithEmailAndPassword(email, password);
-      } catch (err) {
+      } catch {
         setErrorMessage(t('login.signInFailed'));
         setIsSigningIn(false);
       }
