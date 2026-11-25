@@ -25,12 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `stats-api` `audit` and `audit-fix` Makefile targets now also cover `pyproject.toml`, which the FastAPI Cloud deployment uses. A new `scripts/check_dependencies_sync.py` check fails when `pyproject.toml` and `requirements.txt` list different dependencies, and it runs in the `Security` GitHub workflow. PR #426
 - New `scripts/check_util_requirements_sync.py` check that fails when a Python service pins a shared dependency differently than `util/requirements.txt`. It runs in the `Security` GitHub workflow. PR #426
 - Root `requirements-dev.txt` with the Python development tools (`black`, `isort`, `pip-audit` and `ruff`) that the GitHub workflows install. PR #426
-- Root `Makefile` with `fmt`, `lint`, `audit-python`, `audit-fix-python`, `scan-secrets` and `check-util-requirements-sync` targets. `fmt` and `lint` also have a target per language (`-python`, `-go`, `-react` and `-markdown`). PR #426
+- Root `Makefile` with `fmt`, `lint`, `audit-python`, `audit-fix-python`, `scan-secrets` and `check-util-requirements-sync` targets. `fmt` and `lint` also have a target per language (`-python`, `-go`, `-react` and `-markdown`), and `lint` has one for the Dockerfiles (`-docker`). PR #426
 - ESLint for `monitor-dashboard`, with a `lint` Makefile target and a step in the code style workflow. The findings that existed for the `react-hooks/set-state-in-effect` rule are recorded in `eslint-suppressions.json`, so only new ones fail. PR #426
 - `golangci-lint` linters for all Go modules (the standard set plus `revive`, `gocritic`, `modernize`, `errorlint` and others), with a `lint` Makefile target in every module. PR #426
 - Ruff linter for the Python code (`ruff.toml`), with a step in the Python code style workflow. PR #426
 - New `Secret Scan` GitHub workflow that runs Gitleaks over the full git history on every pull request, every push to `master`, on a weekly schedule and on demand. Accepted findings are listed in `.gitleaksignore`, and a Gitleaks pre-commit hook scans staged changes. PR #426
-- Prettier and markdownlint for the Markdown files, installed from a root `package.json`, with a new `Markdown Code Style Check` GitHub workflow. PR #426
+- Prettier and markdownlint for the Markdown files, installed from a root `package.json`, with a new `Markdown Code Style Check` GitHub workflow. The `npm audit` job of the `Security` GitHub workflow also audits the root `package-lock.json`. PR #426
+- Hadolint for the Dockerfiles, with a new `Docker Code Style Check` GitHub workflow and a pre-commit hook that both run the pinned `hadolint/hadolint` Docker image. Ignored rules are listed in `.hadolint.yaml`. PR #426
 
 ### Changed
 
@@ -60,6 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Go code style workflow now pins `golangci-lint` to `v2.15.0` to match Go 1.27.4. PR #423
 - Python Docker images now install the Debian security updates at build time, no longer contain `pip`, and install the service and `util` requirements in one `pip` command so that conflicting pins fail the build. PR #426
 - Python dependencies were upgraded to clear known vulnerabilities: `python-dotenv` to `1.2.2`, `pymongo` to `4.18.3`, `requests` to `2.33.0`, `geopy` to `2.5.0`, and `apache-airflow` to `3.4.0` in the `orchestrator` requirements. PR #426
+- Python Docker images now install the requirements and remove `pip` in one `RUN` instruction, so `pip` is no longer stored in an image layer, and the `collector-status-notifier` and `firebase-limit-notifier` images download the Go modules and build in one `RUN` instruction. PR #426
 - `stats-api` now uses `logfire` `5.2.0` and pins `opentelemetry-api` to `1.45.2`. PR #426
 - `black` was upgraded to `26.10.1` and `isort` to `9.0.2`, in pre-commit and in the Python code style workflow. PR #426
 - Prettier was upgraded to `3.10.1` for `monitor-dashboard`. PR #426
