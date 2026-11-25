@@ -55,9 +55,11 @@ scan-secrets:
 check-util-requirements-sync:
 	python scripts/check_util_requirements_sync.py
 
-audit-python: $(AUDIT_TARGETS)
+audit-python:
+	$(MAKE) --keep-going $(AUDIT_TARGETS)
 
-audit-fix-python: $(AUDIT_FIX_TARGETS)
+audit-fix-python:
+	$(MAKE) --keep-going $(AUDIT_FIX_TARGETS)
 
 $(AUDIT_TARGETS): audit-%:
 	$(MAKE) -C $* audit
