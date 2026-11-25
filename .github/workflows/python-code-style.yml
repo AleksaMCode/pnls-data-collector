@@ -7,12 +7,14 @@ on:
       - '**/*.py'
       - 'requirements-dev.txt'
       - 'ruff.toml'
+      - '.python-version'
   push:
     branches: [ master ]
     paths:
       - '**/*.py'
       - 'requirements-dev.txt'
       - 'ruff.toml'
+      - '.python-version'
 
 jobs:
   format-check:
@@ -25,7 +27,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13"
+          python-version-file: .python-version
 
       - name: Install formatting tools
         run: |
