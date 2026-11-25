@@ -13,6 +13,8 @@ on:
       - ".go-version"
       - "**/go.mod"
       - "**/go.sum"
+      - "codecov.yml"
+      - ".github/workflows/go-tests.yml"
   pull_request:
     branches: [master]
     paths:
@@ -25,6 +27,8 @@ on:
       - ".go-version"
       - "**/go.mod"
       - "**/go.sum"
+      - "codecov.yml"
+      - ".github/workflows/go-tests.yml"
 
 jobs:
   test:
@@ -50,34 +54,42 @@ jobs:
         run: |
           cd collector_status_notifier
           go mod download
-          go test -v
+          go test -v -coverprofile=coverage.out -covermode=atomic
 
       - name: Run firebase_limit_notifier tests
         run: |
           cd firebase_limit_notifier
           go mod download
-          go test -v -tags=integration
+          go test -v -tags=integration -coverprofile=coverage.out -covermode=atomic
 
       - name: Run util-go tests
         run: |
           cd util-go
           go mod download
-          go test -v ./...
+          go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Run db_backup tests
         run: |
           cd db_backup
           go mod download
-          go test -v -tags=integration ./...
+          go test -v -tags=integration -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Run cloudflare_limit_notifier tests
         run: |
           cd cloudflare_limit_notifier
           go mod download
-          go test -v ./...
+          go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Run home_server_limit_notifier tests
         run: |
           cd home_server_limit_notifier
           go mod download
-          go test -v ./...
+          go test -v -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: collector_status_notifier/coverage.out,firebase_limit_notifier/coverage.out,util-go/coverage.out,db_backup/coverage.out,cloudflare_limit_notifier/coverage.out,home_server_limit_notifier/coverage.out
+          flags: go
+          disable_search: true

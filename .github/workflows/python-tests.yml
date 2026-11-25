@@ -11,6 +11,12 @@ on:
       - "tests/**/*.py"
       - "util/**/*.py"
       - "ssid_geo_mapper/**/*.py"
+      - "firebase_housekeeping/**/*.py"
+      - "collector_metrics_agent/**/*.py"
+      - "tests/requirements.txt"
+      - ".coveragerc"
+      - "codecov.yml"
+      - ".github/workflows/python-tests.yml"
   push:
     branches: [master]
     paths:
@@ -21,6 +27,12 @@ on:
       - "tests/**/*.py"
       - "util/**/*.py"
       - "ssid_geo_mapper/**/*.py"
+      - "firebase_housekeeping/**/*.py"
+      - "collector_metrics_agent/**/*.py"
+      - "tests/requirements.txt"
+      - ".coveragerc"
+      - "codecov.yml"
+      - ".github/workflows/python-tests.yml"
 
 jobs:
   test:
@@ -50,5 +62,18 @@ jobs:
           cp firebase_housekeeping/settings.py.template firebase_housekeeping/settings.py
           cp collector/settings.py.template collector/settings.py
 
-      - name: Run tests (unittest discover)
-        run: python -m unittest discover -v -s tests -t .
+      - name: Run tests with coverage (unittest discover)
+        run: python -m coverage run -m unittest discover -v -s tests -t .
+
+      - name: Create coverage report
+        run: |
+          python -m coverage report
+          python -m coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          flags: python
+          disable_search: true
