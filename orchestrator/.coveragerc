@@ -1,0 +1,8 @@
+# Coverage of the orchestrator DAG, measured by its own test job.
+# The repository's main .coveragerc omits orchestrator/*, because those tests need Airflow.
+[run]
+source = orchestrator/dags
+relative_files = True
+
+[xml]
+output = coverage-orchestrator.xml

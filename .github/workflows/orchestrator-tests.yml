@@ -1,0 +1,66 @@
+name: PNLS-DC Orchestrator Tests
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "orchestrator/**"
+      - ".github/workflows/orchestrator-tests.yml"
+      - ".python-version"
+  push:
+    branches: [master]
+    paths:
+      - "orchestrator/**"
+      - ".github/workflows/orchestrator-tests.yml"
+      - ".python-version"
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+
+    env:
+      # Keep in sync with orchestrator/requirements.txt.
+      AIRFLOW_VERSION: "3.4.0"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: .python-version
+
+      # The constraints file pins every Airflow dependency to the versions Airflow was released and tested with.
+      # Its URL names the Python version as major.minor, read here from the interpreter set up above.
+      - name: Install Airflow with its constraints
+        run: |
+          PYTHON_VERSION="$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+          python -m pip install --upgrade pip
+          python -m pip install -r orchestrator/requirements.txt \
+            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
+      - name: Install test dependencies
+        run: python -m pip install -r orchestrator/requirements-test.txt
+
+      - name: Run unit tests with coverage
+        run: python -m coverage run --rcfile=orchestrator/.coveragerc -m unittest discover -v -s orchestrator/tests/unit -t .
+
+      # Runs even when a unit test failed, so both results show in one CI run.
+      # `--append` adds to the unit test coverage instead of replacing it.
+      - name: Run integration tests with coverage
+        if: ${{ !cancelled() }}
+        run: python -m coverage run --rcfile=orchestrator/.coveragerc --append -m unittest discover -v -s orchestrator/tests/integration -t .
+
+      - name: Create coverage report
+        run: |
+          python -m coverage report --rcfile=orchestrator/.coveragerc
+          python -m coverage xml --rcfile=orchestrator/.coveragerc
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage-orchestrator.xml
+          flags: orchestrator
+          disable_search: true
