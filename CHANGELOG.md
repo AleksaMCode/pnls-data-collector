@@ -59,10 +59,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - All GitHub workflows now run on `ubuntu-26.04` instead of `ubuntu-latest`. PR #423
 - Go tests and Go code style workflows now also run when `.go-version`, `go.mod` or `go.sum` change. PR #423
 - Go code style workflow now pins `golangci-lint` to `v2.15.0` to match Go 1.27.4. PR #423
-- Python Docker images now install the Debian security updates at build time, no longer contain `pip`, and install the service and `util` requirements in one `pip` command so that conflicting pins fail the build. PR #426
+- Python Docker images now install the Debian security updates at build time, remove `pip` from their final filesystem, and install the service and `util` requirements in one `pip` command so that conflicting pins fail the build. PR #426
 - Python dependencies were upgraded to clear known vulnerabilities: `python-dotenv` to `1.2.2`, `pymongo` to `4.18.3`, `requests` to `2.33.0`, and `geopy` to `2.5.0`. PR #426
 - `orchestrator` was upgraded from Airflow `3.1.3` to `3.4.0`, in the Docker images of its `docker-compose.yml` and in its requirements. The Compose services no longer mount `requirements.txt`, which was never installed in the containers. PR #426
-- Python Docker images now install the requirements and remove `pip` in one `RUN` instruction, so `pip` is no longer stored in an image layer, and the `collector-status-notifier` and `firebase-limit-notifier` images download the Go modules and build in one `RUN` instruction. PR #426
+- Python Docker images now install the requirements and remove `pip` in one `RUN` instruction, and the `collector-status-notifier` and `firebase-limit-notifier` images download the Go modules and build in one `RUN` instruction. PR #426
 - `stats-api` now uses `logfire` `5.2.0` and pins `opentelemetry-api` to `1.45.2`. PR #426
 - `black` was upgraded to `26.10.1` and `isort` to `9.0.2`, in pre-commit and in the Python code style workflow. PR #426
 - Prettier was upgraded to `3.10.1` for `monitor-dashboard`. PR #426
