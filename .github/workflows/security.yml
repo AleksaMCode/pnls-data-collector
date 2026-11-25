@@ -117,7 +117,13 @@ jobs:
       - name: Install pip-audit
         run: python -m pip install -r requirements-dev.txt
 
+      - name: Check requirements.txt and pyproject.toml list the same dependencies
+        if: matrix.service == 'stats_api'
+        working-directory: ${{ matrix.service }}
+        run: make check-dependencies-sync
+
       - name: Run pip-audit
+        if: ${{ !cancelled() }}
         working-directory: ${{ matrix.service }}
         run: make audit
 
