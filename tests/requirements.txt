@@ -10,3 +10,4 @@ scapy==2.7.0
 yaspin==3.4.0
 tqdm==4.67.1
 httpx==0.28.1
+coverage==7.17.5

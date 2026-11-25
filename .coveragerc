@@ -1,0 +1,14 @@
+[run]
+# The repository root is the source, so that the Python files no test imports are reported as uncovered and the paths in the report start with the service folder.
+source = .
+relative_files = True
+omit =
+    tests/*
+    scripts/*
+    orchestrator/*
+    */settings.py
+    .venv/*
+    node_modules/*
+
+[xml]
+output = coverage.xml

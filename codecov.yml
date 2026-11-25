@@ -1,0 +1,29 @@
+coverage:
+  status:
+    # Fails a pull request only when the total coverage drops by more than 5%.
+    project:
+      default:
+        target: auto
+        threshold: 5%
+    # Coverage of the changed lines is reported, but it never fails a pull request.
+    patch:
+      default:
+        informational: true
+
+# The Go and Python tests run in separate workflows, each only when its own files change.
+# The coverage of the language that did not run is carried over from the previous commit.
+flag_management:
+  default_rules:
+    carryforward: true
+
+# The Go coverage profiles name the files by module path, which is mapped here to the folder in the repository.
+fixes:
+  - "climnot/::cloudflare_limit_notifier/"
+  - "collstatnot/::collector_status_notifier/"
+  - "fblimnot/::firebase_limit_notifier/"
+  - "hslimnot/::home_server_limit_notifier/"
+  - "github.com/AleksaMCode/pnls-data-collector/util-go/::util-go/"
+
+comment:
+  layout: "condensed_header, diff, flags, condensed_files"
+  require_changes: true
