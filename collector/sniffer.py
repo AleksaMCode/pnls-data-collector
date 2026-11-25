@@ -74,7 +74,7 @@ def start():
             capture_traffic()
         except (HTTPException, HTTPError) as e:
             logger.error(f"HTTP Exception: {str(e)}")
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             logger.warning("Sniffer stopped forcefully.")
             # 130 - Script terminated by Control-C
             sys.exit(130)

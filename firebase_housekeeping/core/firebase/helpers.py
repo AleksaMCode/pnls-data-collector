@@ -39,13 +39,13 @@ def delete_all_by_nodes():
     ref = db.reference("/")
     top_level_nodes = ref.get(shallow=True)
     if not top_level_nodes:
-        logger.info(f"No data found in Firebase.")
+        logger.info("No data found in Firebase.")
     else:
         for key in top_level_nodes.keys():
             if key != FIREBASE_STATISTICS_NODE:
                 logger.info(f"Deleting node: {key}")
                 ref.child(key).delete()
-        logger.info(f"Deleted all data from Firebase.")
+        logger.info("Deleted all data from Firebase.")
 
 
 @yaspin("Deleting Firebase data by smallest nodes...")
@@ -58,7 +58,7 @@ def delete_all_by_smallest_nodes():
     top_level_nodes = root_ref.get(shallow=True)
 
     if not top_level_nodes:
-        logger.info(f"No data found in Firebase.")
+        logger.info("No data found in Firebase.")
         return
 
     deleted_nodes = 0
@@ -103,7 +103,7 @@ def delete_all_by_entry_nodes():
     top_level_nodes = root_ref.get(shallow=True)
 
     if not top_level_nodes:
-        logger.info(f"No data found in Firebase.")
+        logger.info("No data found in Firebase.")
         return
 
     deleted_nodes = 0
@@ -174,7 +174,7 @@ def download_all() -> dict:
     device_data = defaultdict(list)
 
     if not top_level_nodes:
-        logger.info(f"No data found in Firebase.")
+        logger.info("No data found in Firebase.")
     else:
         for key in top_level_nodes.keys():
             if key != FIREBASE_STATISTICS_NODE:
@@ -191,6 +191,6 @@ def download_all() -> dict:
                     node_data = ref.child(key).get()
                     # data = node_data.get("data", {})
                     device_data[device_member.value].append(node_data)
-        logger.info(f"Downloaded all data from Firebase.")
+        logger.info("Downloaded all data from Firebase.")
 
     return device_data

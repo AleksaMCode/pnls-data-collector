@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 # Published coordinates are rounded to 2 decimals (about 1 km). The reduced points are exact WiGLE coordinates,
 # so for an SSID with a single location they would otherwise publish a precise position (e.g. a home address)

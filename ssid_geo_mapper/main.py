@@ -99,7 +99,8 @@ async def ssid_mapping():
 
         if index > 0:
             # Proactively pace outgoing Wigle lookups to avoid hitting rate limits.
-            time.sleep(
+            # Blocking on purpose: it keeps a second mapping run from starting in parallel.
+            time.sleep(  # noqa: ASYNC251
                 WIGLE_BASE_DELAY_SECONDS
                 + random.uniform(0.0, WIGLE_DELAY_JITTER_SECONDS)
             )

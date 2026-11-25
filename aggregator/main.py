@@ -115,15 +115,17 @@ async def get_aggregate_workflow_status(workflow_id: str):
             payload = json.loads(status_payload)
             status = payload["status"]
             return {"workflow_id": workflow_id, "status": status}
-        except (json.JSONDecodeError, KeyError):
+        except (json.JSONDecodeError, KeyError) as e:
             raise HTTPException(
                 status_code=500, detail="Invalid workflow status format in Redis."
-            )
+            ) from e
 
     try:
         workflow_uuid = UUID(workflow_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid workflow ID format.")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400, detail="Invalid workflow ID format."
+        ) from e
 
     workflow_status = get_import_workflow_status(workflow_uuid)
     if workflow_status is None:

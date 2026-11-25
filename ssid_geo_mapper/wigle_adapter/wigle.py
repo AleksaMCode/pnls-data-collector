@@ -1,6 +1,5 @@
 import os
 from http import HTTPStatus
-from typing import Tuple
 
 import httpx
 from dotenv import load_dotenv
@@ -37,7 +36,7 @@ class Wigle:
 
     def lookup_SSID(
         self, ssid
-    ) -> Tuple[list[dict[str, str | float]], list[dict[str, str | float]]]:
+    ) -> tuple[list[dict[str, str | float]], list[dict[str, str | float]]]:
         """Looks up a single SSID with exactly one WiGLE request (no retries).
 
         Raises:
@@ -106,12 +105,12 @@ class Wigle:
     def _location_formatter(self, locations: list[dict[str, str | float]], ssid: str):
         return [
             {
-                "ssid": l["ssid"],
-                "lat": l["trilat"],
-                "long": l["trilong"],
-                "alpha2": l["country"],
+                "ssid": location["ssid"],
+                "lat": location["trilat"],
+                "long": location["trilong"],
+                "alpha2": location["country"],
             }
-            for l in filter(lambda x: x["ssid"] == ssid, locations)
+            for location in filter(lambda x: x["ssid"] == ssid, locations)
         ]
 
     def _location_duplicate_reducer(self, locations: list[dict[str, str | float]]):

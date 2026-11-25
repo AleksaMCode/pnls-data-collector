@@ -7,7 +7,7 @@ FMT_GO_TARGETS := $(addprefix fmt-go-,$(GO_MODULES))
 LINT_GO_TARGETS := $(addprefix lint-go-,$(GO_MODULES))
 
 .PHONY: fmt fmt-python fmt-go fmt-react $(FMT_GO_TARGETS)
-.PHONY: lint lint-go lint-react $(LINT_GO_TARGETS)
+.PHONY: lint lint-python lint-go lint-react $(LINT_GO_TARGETS)
 .PHONY: audit-python audit-fix-python check-util-requirements-sync $(AUDIT_TARGETS) $(AUDIT_FIX_TARGETS)
 
 fmt: fmt-go fmt-react fmt-python
@@ -23,7 +23,10 @@ $(FMT_GO_TARGETS): fmt-go-%:
 fmt-react:
 	$(MAKE) -C monitor_dashboard fmt
 
-lint: lint-go lint-react
+lint: lint-go lint-react lint-python
+
+lint-python:
+	python -m ruff check .
 
 lint-go: $(LINT_GO_TARGETS)
 

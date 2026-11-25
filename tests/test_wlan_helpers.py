@@ -10,7 +10,7 @@ fake_logger_module = types.ModuleType("util.logger")
 fake_logger_module.get_logger = logging.getLogger
 sys.modules["util.logger"] = fake_logger_module
 
-from collector.wlan.helpers import (
+from collector.wlan.helpers import (  # noqa: E402
     extract_channel_from_packet,
     extract_rssi_dbm_from_packet,
 )
