@@ -41,7 +41,9 @@ class TestDagImport(unittest.TestCase):
         self.assertEqual(set(dag_bag.dag_ids), {"pnls_orchestrator"})
 
     def test_dag_bag_contains_all_tasks(self):
-        parsed_dag = load_dag_bag().get_dag("pnls_orchestrator")
+        # `dags` holds what DagBag parsed from the folder. `get_dag()` would also query the
+        # metadata database, which the unit tests do not create.
+        parsed_dag = load_dag_bag().dags["pnls_orchestrator"]
 
         self.assertEqual(set(parsed_dag.task_dict), set(EXPECTED_DOWNSTREAM))
 
