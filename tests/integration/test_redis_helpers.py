@@ -1,18 +1,10 @@
 import time
 import unittest
 
-try:
-    import redis
-    from testcontainers.redis import RedisContainer
-except ImportError:
-    redis = None
-    RedisContainer = None
+from tests.integration.containers import redis_client, requires_redis
 
 
-@unittest.skipUnless(
-    redis is not None and RedisContainer is not None,
-    "redis and testcontainers are required for Redis integration tests",
-)
+@requires_redis
 class TestRedisHelpers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -21,19 +13,8 @@ class TestRedisHelpers(unittest.TestCase):
         cls._redis_helpers = redis_helpers
         cls._original_client = redis_helpers.client
 
-        cls._redis_container = RedisContainer("redis:8.8.0")
-        cls._redis_container.start()
-
-        host = cls._redis_container.get_container_host_ip()
-        port = int(cls._redis_container.get_exposed_port(6379))
-
-        cls._test_client = redis.Redis(
-            host=host,
-            port=port,
-            db=1,
-            decode_responses=True,
-        )
-        cls._test_client.ping()
+        # Logical database 1 of the shared Redis container, flushed before every test.
+        cls._test_client = redis_client(db=1)
 
         # Route helper calls to integration-test Redis client.
         redis_helpers.client = cls._test_client
@@ -41,7 +22,7 @@ class TestRedisHelpers(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls._redis_helpers.client = cls._original_client
-        cls._redis_container.stop()
+        cls._test_client.close()
 
     def setUp(self):
         self._test_client.flushdb()

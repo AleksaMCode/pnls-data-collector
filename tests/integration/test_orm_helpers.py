@@ -1,41 +1,42 @@
 import importlib
-import os
 import unittest
 import uuid
 from datetime import datetime, timedelta
-from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-try:
-    from testcontainers.postgres import PostgresContainer
-except ImportError:
-    PostgresContainer = None
-
-
-@unittest.skipUnless(
-    PostgresContainer is not None,
-    "testcontainers is required for Postgres integration tests",
+from tests.integration.containers import (
+    create_postgres_database,
+    redis_client,
+    requires_postgres,
+    requires_redis,
+    set_db_env,
 )
+
+# Redis database 1 is used by test_redis_helpers.py.
+ORM_CACHE_REDIS_DB = 2
+
+
+@requires_postgres
+@requires_redis
 class TestOrmHelpers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls._postgres = PostgresContainer("postgres:15.18")
-        cls._postgres.start()
-
-        connection_url = cls._postgres.get_connection_url()
-        parsed = urlparse(connection_url)
-
-        os.environ["DB_USER"] = parsed.username or ""
-        os.environ["DB_PASS"] = parsed.password or ""
-        os.environ["DB_URL"] = parsed.hostname or ""
-        os.environ["DB_PORT"] = str(parsed.port or "")
-        os.environ["DB_NAME"] = parsed.path.lstrip("/")
+        connection_url = create_postgres_database("aggregator_orm")
+        set_db_env(connection_url)
 
         cls.models = importlib.import_module("aggregator.core.orm.models")
         cls.helpers = importlib.import_module("aggregator.core.orm.helpers")
+
+        # get_or_create_ssid_id and get_or_create_mac_id look up IDs in the Redis cache first.
+        # Without this, they use the Redis from settings.py, whose cached IDs survive between
+        # test runs and no longer match the rows in this database.
+        cls.redis_helpers = importlib.import_module("aggregator.core.redis.helpers")
+        cls._original_redis_client = cls.redis_helpers.client
+        cls.cache_client = redis_client(db=ORM_CACHE_REDIS_DB)
+        cls.redis_helpers.client = cls.cache_client
 
         cls.engine = create_engine(connection_url, pool_pre_ping=True)
         cls.models.ImportsWorkflow.__table__.create(cls.engine, checkfirst=True)
@@ -57,18 +58,14 @@ class TestOrmHelpers(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.models.MAC.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.SSID.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.IEEEMacOui.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.IEEEMacOuiOrg.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.Country.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.DailyCapturedPerDevice.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.ImportsInfo.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.ImportsWorkflow.__table__.drop(cls.engine, checkfirst=True)
+        cls.redis_helpers.client = cls._original_redis_client
+        cls.cache_client.close()
+        # The class has its own database, which goes away with the shared container.
         cls.engine.dispose()
-        cls._postgres.stop()
 
     def setUp(self):
+        # The cached IDs must not outlive the rows that setUp deletes.
+        self.cache_client.flushdb()
         with self.session_factory() as db:
             db.query(self.models.MAC).delete()
             db.query(self.models.SSID).delete()
@@ -353,24 +350,12 @@ class TestOrmHelpers(unittest.TestCase):
         self.assertEqual(resolved_id, persisted.id)
 
 
-@unittest.skipUnless(
-    PostgresContainer is not None,
-    "testcontainers is required for Postgres integration tests",
-)
+@requires_postgres
 class TestStatsOrmHelpers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls._postgres = PostgresContainer("postgres:15.18")
-        cls._postgres.start()
-
-        connection_url = cls._postgres.get_connection_url()
-        parsed = urlparse(connection_url)
-
-        os.environ["DB_USER"] = parsed.username or ""
-        os.environ["DB_PASS"] = parsed.password or ""
-        os.environ["DB_URL"] = parsed.hostname or ""
-        os.environ["DB_PORT"] = str(parsed.port or "")
-        os.environ["DB_NAME"] = parsed.path.lstrip("/")
+        connection_url = create_postgres_database("stats_orm")
+        set_db_env(connection_url)
 
         cls.models = importlib.import_module("stats.core.orm.models")
         cls.helpers = importlib.import_module("stats.core.orm.helpers")
@@ -390,11 +375,8 @@ class TestStatsOrmHelpers(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.models.DailyCapturedPerDevice.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.ImportsInfo.__table__.drop(cls.engine, checkfirst=True)
-        cls.models.ImportsWorkflow.__table__.drop(cls.engine, checkfirst=True)
+        # The class has its own database, which goes away with the shared container.
         cls.engine.dispose()
-        cls._postgres.stop()
 
     def setUp(self):
         with self.session_factory() as db:

@@ -38,7 +38,10 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:latest
+    # Pinned to the major version the data directory was created with. Postgres cannot start on the data of an
+    # older major version, so `latest` could break the database on the next pull. Upgrading needs pg_upgrade or a
+    # dump and restore. Keep in sync with POSTGRES_IMAGE in tests/integration/containers.py.
+    image: postgres:16
     container_name: postgres
     networks:
       - pnls
