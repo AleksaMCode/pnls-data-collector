@@ -5,6 +5,8 @@ relative_files = True
 omit =
     tests/*
     */scripts/*
+    # One-off maintenance scripts run by hand inside a service, not part of the running service.
+    */tools/*
     orchestrator/*
     */settings.py
     .venv/*
