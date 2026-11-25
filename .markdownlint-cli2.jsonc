@@ -1,0 +1,16 @@
+{
+  // Files ignored by git (node_modules, virtual environments) are not linted.
+  "gitignore": true,
+  "globs": ["**/*.md"],
+  "config": {
+    // Long lines are fine: the files are not hard-wrapped.
+    "MD013": false,
+    // Inline HTML is used for the centred figures and their captions.
+    "MD033": false,
+    // GitHub alert blocks (> [!NOTE]) are written back to back and with a list right after the marker.
+    "MD028": false,
+    "MD032": false,
+    // The changelog repeats "Added", "Changed" and "Fixed" under every version.
+    "MD024": { "siblings_only": true }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "pnls-data-collector-tools",
+  "private": true,
+  "description": "Repo-wide Markdown tools. The dashboard has its own package.json in monitor_dashboard.",
+  "scripts": {
+    "fmt:markdown": "prettier --write \"**/*.md\"",
+    "fmt:markdown:check": "prettier --check \"**/*.md\"",
+    "lint:markdown": "markdownlint-cli2"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "0.24.2",
+    "prettier": "3.10.1"
+  },
+  "overrides": {
+    "katex": "^0.19.1"
+  }
+}

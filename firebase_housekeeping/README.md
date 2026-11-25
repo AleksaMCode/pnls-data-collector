@@ -25,7 +25,7 @@ docker compose up -d
 ```
 
 > [!NOTE]
-> 
+>
 > The API listens on port `9090` (or `SERVER_PORT` from `.env`).
 
 ## Bi-monthly cron trigger

@@ -6,12 +6,12 @@ AUDIT_FIX_TARGETS := $(addprefix audit-fix-,$(PYTHON_SERVICES))
 FMT_GO_TARGETS := $(addprefix fmt-go-,$(GO_MODULES))
 LINT_GO_TARGETS := $(addprefix lint-go-,$(GO_MODULES))
 
-.PHONY: fmt fmt-python fmt-go fmt-react $(FMT_GO_TARGETS)
-.PHONY: lint lint-python lint-go lint-react $(LINT_GO_TARGETS)
+.PHONY: fmt fmt-python fmt-go fmt-react fmt-markdown $(FMT_GO_TARGETS)
+.PHONY: lint lint-python lint-go lint-react lint-markdown $(LINT_GO_TARGETS)
 .PHONY: audit-python audit-fix-python check-util-requirements-sync $(AUDIT_TARGETS) $(AUDIT_FIX_TARGETS)
 .PHONY: scan-secrets
 
-fmt: fmt-go fmt-react fmt-python
+fmt: fmt-go fmt-react fmt-markdown fmt-python
 
 fmt-python:
 	python -m pre_commit run isort --all-files
@@ -25,7 +25,10 @@ $(FMT_GO_TARGETS): fmt-go-%:
 fmt-react:
 	$(MAKE) -C monitor_dashboard fmt
 
-lint: lint-go lint-react lint-python
+fmt-markdown:
+	npm run fmt:markdown
+
+lint: lint-go lint-react lint-markdown lint-python
 
 lint-python:
 	python -m ruff check .
@@ -37,6 +40,10 @@ $(LINT_GO_TARGETS): lint-go-%:
 
 lint-react:
 	$(MAKE) -C monitor_dashboard lint
+
+lint-markdown:
+	npm run fmt:markdown:check
+	npm run lint:markdown
 
 scan-secrets:
 	python -m pre_commit run gitleaks --all-files

@@ -292,3 +292,6 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Node (repo-wide Markdown tools)
+node_modules/

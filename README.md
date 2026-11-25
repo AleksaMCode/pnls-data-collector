@@ -3,17 +3,16 @@
 ![Deploy](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/deploy.yml/badge.svg?branch=master)
 [![License: GPL-2.0](https://img.shields.io/badge/license-GPLv2.0-red.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Python 3.13.7](https://img.shields.io/badge/python-3.13.7-blue.svg)](https://www.python.org/downloads/release/python-3137/)
-[![Code style (Python): black](https://img.shields.io/badge/code%20style%20(python)-black-000000.svg)](https://github.com/psf/black)
+[![Code style (Python): black](<https://img.shields.io/badge/code%20style%20(python)-black-000000.svg>)](https://github.com/psf/black)
 [![Go 1.27.4](https://img.shields.io/badge/go-1.27.4-00ADD8.svg)](https://go.dev/dl/)
-[![Code style (Go): golangci-lint](https://img.shields.io/badge/code%20style%20(go)-golangci--lint-00ADD8.svg)](https://golangci-lint.run/)
+[![Code style (Go): golangci-lint](<https://img.shields.io/badge/code%20style%20(go)-golangci--lint-00ADD8.svg>)](https://golangci-lint.run/)
 [![Node 26.13.0](https://img.shields.io/badge/node-26.13.0-3C873A.svg)](https://nodejs.org/en/blog/release/v26.13.0)
-[![Code style (JS/TS): Prettier](https://img.shields.io/badge/code%20style%20(JS/TS)-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
+[![Code style (JS/TS): Prettier](<https://img.shields.io/badge/code%20style%20(JS/TS)-prettier-ff69b4.svg>)](https://github.com/prettier/prettier)
 ![Python tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/python-tests.yml/badge.svg?branch=master)
 ![Go tests](https://github.com/AleksaMCode/pnls-data-collector/actions/workflows/go-tests.yml/badge.svg?branch=master)
 ![](https://img.shields.io/github/v/release/AleksaMCode/pnls-data-collector)
 
-
-A distributed, microservice system for capturing Wi‑Fi [probe requests](https://en.wikipedia.org/wiki/IEEE_802.11#Management_frames) ([SSIDs](https://en.wikipedia.org/wiki/Service_set_(802.11_network)), [MACs](https://en.wikipedia.org/wiki/MAC_address), ...), with hybrid [event-driven](https://en.wikipedia.org/wiki/Event-driven_architecture) ingestion, batch [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load), real-time analytics, and centralized observability. Built for ongoing research into privacy protection in Wi-Fi networks.
+A distributed, microservice system for capturing Wi‑Fi [probe requests](https://en.wikipedia.org/wiki/IEEE_802.11#Management_frames) ([SSIDs](<https://en.wikipedia.org/wiki/Service_set_(802.11_network)>), [MACs](https://en.wikipedia.org/wiki/MAC_address), ...), with hybrid [event-driven](https://en.wikipedia.org/wiki/Event-driven_architecture) ingestion, batch [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load), real-time analytics, and centralized observability. Built for ongoing research into privacy protection in Wi-Fi networks.
 
 <p align="center">
 <img
@@ -31,10 +30,10 @@ class="center"
 > While probe requests are essential for network discovery and connectivity establishment, they may also be exploited for malicious purposes, including the tracking and profiling of user behavior. These privacy risks have prompted the development of mitigation strategies, such as MAC address randomization, and have served as a primary motivation for the research undertaken in this project.
 
 > [!NOTE]
+>
 > - The majority of this research is carried out as part of a collaboration with the Computer Security Team at [CERN](https://home.cern/). All collector devices are currently deployed at CERN’s Meyrin site, where data collection activities are taking place.
 > - The [project's board](https://github.com/users/AleksaMCode/projects/3) can be used to track current research and project progress.
 > - The initial scope of work [presentation](https://drive.google.com/file/d/1pYm6buyRmGwN5MY7c8_tj93C0iddurI3/view) can be found here.
-
 
 ## Architecture Overview
 
@@ -44,20 +43,20 @@ class="center"
    - Pushes data to [Firebase Realtime Database](https://firebase.google.com/docs/database).
      - It also keeps a local copy of the data.
 
-> [!NOTE] 
-> The `collector` service started as a separate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer); it was used as a starting point when writing this service.
+   > [!NOTE]
+   > The `collector` service started as a separate project [PNLS](https://github.com/AleksaMCode/Preferred-Network-List-Sniffer); it was used as a starting point when writing this service.
 
-<p align="center">
-<img
-src="./resources/collector-devices.jpg?raw=true"
-alt="PNLS-DC system overview"
-width="90%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 2</b>: <code>collector</code> devices (RPi 4 with a colling case) with an <a href="https://alfa-network.eu/awus036acs">AWUS036ACS</a> antenas</label>
+    <p align="center">
+    <img
+    src="./resources/collector-devices.jpg?raw=true"
+    alt="PNLS-DC system overview"
+    width="90%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 2</b>: <code>collector</code> devices (RPi 4 with a colling case) with an <a href="https://alfa-network.eu/awus036acs">AWUS036ACS</a> antenas</label>
+        </p>
     </p>
-</p>
 
 2. **Firebase Realtime Database**
    - Event-driven ingestion from edge devices.
@@ -68,31 +67,31 @@ class="center"
    - Daily batch ETL to PostgreSQL.
      - `aggregator` runs every day just after $12$ AM, starting the process of extracting data from Firebase, decrypting, transforming, and finally loading it into PostgreSQL. It also sends a [Mattermost](https://github.com/mattermost/mattermost) summary.
 
-<p align="center">
-<img
-src="./resources/aggregator-mattermost.png?raw=true"
-alt="Aggregator Mattermost message"
-width="50%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 3</b>: Example <code>aggregator</code> Mattermost message</label>
+    <p align="center">
+    <img
+    src="./resources/aggregator-mattermost.png?raw=true"
+    alt="Aggregator Mattermost message"
+    width="50%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 3</b>: Example <code>aggregator</code> Mattermost message</label>
+        </p>
     </p>
-</p>
 
    - `stats` writes daily statistics to [Supabase](https://github.com/supabase/supabase) Postgres DB. This data is then read by the `monitor-dashboard` using the `stats-api`.
 
-<p align="center">
-<img
-src="./resources/stats-api-swagger.png?raw=true"
-alt="`stats-api` Swaggger Docs"
-width="90%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 4</b>: Example <code>stats-api</code> (<code>3.0.0</code>) Swagger Docs</label>
+    <p align="center">
+    <img
+    src="./resources/stats-api-swagger.png?raw=true"
+    alt="`stats-api` Swaggger Docs"
+    width="90%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 4</b>: Example <code>stats-api</code> (<code>3.0.0</code>) Swagger Docs</label>
+        </p>
     </p>
-</p>
 
    - Firebase cleanup every $5$ days (`firebase_housekeeping`).
      - Starting at after `aggreagator`, it migrates data to MongoDB as backup, and deletes old Firebase nodes in order to stay within the [free 1 GB limit](https://firebase.google.com/pricing).
@@ -104,32 +103,32 @@ class="center"
    - Weekly Firebase usage reporting (`firebase_limit_notifier`).
      - Computes Firebase usage, generates a pie chart (uploaded to [Cloudflare R2](https://www.cloudflare.com/products/r2/)), and sends a Mattermost report.
 
-<p align="center">
-<img
-src="./resources/firebase-limit-notifier-mattermost.png?raw=true"
-alt="Firebase limit notifier Mattermost message"
-width="50%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 5</b>: Example <code>firebase_limit_notifier</code> Mattermost message</label>
+    <p align="center">
+    <img
+    src="./resources/firebase-limit-notifier-mattermost.png?raw=true"
+    alt="Firebase limit notifier Mattermost message"
+    width="50%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 5</b>: Example <code>firebase_limit_notifier</code> Mattermost message</label>
+        </p>
     </p>
-</p>
 
    - Weekly Cloudflare usage reporting (`cloudflare_limit_notifier`).
      - It computes the current R2 usage (storage usage and class A and B operations) in order to stay within the [free limits](https://developers.cloudflare.com/r2/pricing/#free-tier).
 
-<p align="center">
-<img
-src="./resources/cloudflare-limit-notifier-mattermost.png?raw=true"
-alt="Cloudflare limit notifier Mattermost message"
-width="50%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 6</b>: Example <code>cloudflare_limit_notifier</code> Mattermost message</label>
+    <p align="center">
+    <img
+    src="./resources/cloudflare-limit-notifier-mattermost.png?raw=true"
+    alt="Cloudflare limit notifier Mattermost message"
+    width="50%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 6</b>: Example <code>cloudflare_limit_notifier</code> Mattermost message</label>
+        </p>
     </p>
-</p>
 
 4. **Warehousing and analytics**
    - PostgreSQL for structured analytics data.
@@ -139,7 +138,7 @@ class="center"
    - MongoDB used by archive flow.
 
 5. **Database Backup Service (`db_backup`)**
-   - Provides a PostgreSQL backup workflow orchestrated by [Netflix Conductor](https://en.wikipedia.org/wiki/Conductor_(software)).
+   - Provides a PostgreSQL backup workflow orchestrated by [Netflix Conductor](<https://en.wikipedia.org/wiki/Conductor_(software)>).
    - This workflow is triggered every day as the last part of the aggregation workflow triggered by the Apache Airflow `orchestrator`.
    - Pipeline tasks:
      1. `pg_dump_task` - dump PostgreSQL to `backup.sql`
@@ -154,17 +153,17 @@ class="center"
    - Real-time and daily aggregated analytics views.
    - Deployed to [Firebase Hosting](https://firebase.google.com/docs/hosting).
 
-<p align="center">
-<img
-src="./resources/pnls-dc-ui.png?raw=true"
-alt="Part of the monitoring dashboard"
-width="90%"
-class="center"
-/>
-<p align="center">
-    <label><b>Fig. 7</b>: Part of the monitoring dashboard <code>1.0.0</code></label>
+    <p align="center">
+    <img
+    src="./resources/pnls-dc-ui.png?raw=true"
+    alt="Part of the monitoring dashboard"
+    width="90%"
+    class="center"
+    />
+    <p align="center">
+        <label><b>Fig. 7</b>: Part of the monitoring dashboard <code>1.0.0</code></label>
+        </p>
     </p>
-</p>
 
 7. **Observability**
    - [Sentry](https://docs.sentry.io/product/explore/logs/) for centralized error tracking.
@@ -203,7 +202,6 @@ class="center"
         </p>
     </p>
 
-
 ## Key Characteristics
 
 - Microservice-based, independently deployable components (ETL, monitoring, usage check, cleanup, etc.).
@@ -222,5 +220,5 @@ class="center"
 - Python and Go services can run as standalone processes or containers.
 - `db_backup/docker-compose.yml` runs Conductor + backup worker stack.
 - `orchestrator` runs the aggregation workflow with Firebase cleanup, stats service and it triggers `db-backup`.
- 
+
 [^1]: Current capture window is 24/7.

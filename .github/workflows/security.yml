@@ -6,6 +6,8 @@ on:
     paths:
       - "monitor_dashboard/package.json"
       - "monitor_dashboard/package-lock.json"
+      - "package.json"
+      - "package-lock.json"
       - "**/*.go"
       - "**/go.mod"
       - "**/go.sum"
@@ -21,6 +23,8 @@ on:
     paths:
       - "monitor_dashboard/package.json"
       - "monitor_dashboard/package-lock.json"
+      - "package.json"
+      - "package-lock.json"
       - "**/*.go"
       - "**/go.mod"
       - "**/go.sum"
@@ -38,7 +42,7 @@ on:
 
 jobs:
   npm-audit:
-    name: npm audit (monitor-dashboard)
+    name: npm audit
     runs-on: ubuntu-26.04
 
     steps:
@@ -57,6 +61,11 @@ jobs:
       - name: Run npm audit (including dev dependencies)
         continue-on-error: true
         working-directory: monitor_dashboard
+        run: npm audit --package-lock-only
+
+      # The root package.json only holds development tools for the Markdown files.
+      - name: Run npm audit (root Markdown tools)
+        continue-on-error: true
         run: npm audit --package-lock-only
 
   govulncheck:
