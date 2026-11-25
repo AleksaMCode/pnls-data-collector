@@ -27,6 +27,7 @@ fmt-react:
 
 fmt-markdown:
 	npm run fmt:markdown
+	npm run lint:markdown:fix
 
 lint: lint-go lint-react lint-markdown lint-python
 

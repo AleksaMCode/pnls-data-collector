@@ -5,7 +5,8 @@
   "scripts": {
     "fmt:markdown": "prettier --write \"**/*.md\"",
     "fmt:markdown:check": "prettier --check \"**/*.md\"",
-    "lint:markdown": "markdownlint-cli2"
+    "lint:markdown": "markdownlint-cli2",
+    "lint:markdown:fix": "markdownlint-cli2 --fix"
   },
   "devDependencies": {
     "markdownlint-cli2": "0.24.2",
