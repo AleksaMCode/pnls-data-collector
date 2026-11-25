@@ -8,15 +8,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from tests.integration.containers import (
+    REDIS_DB_ORM_CACHE,
     create_postgres_database,
     redis_client,
     requires_postgres,
     requires_redis,
     set_db_env,
 )
-
-# Redis database 1 is used by test_redis_helpers.py.
-ORM_CACHE_REDIS_DB = 2
 
 
 @requires_postgres
@@ -35,7 +33,7 @@ class TestOrmHelpers(unittest.TestCase):
         # test runs and no longer match the rows in this database.
         cls.redis_helpers = importlib.import_module("aggregator.core.redis.helpers")
         cls._original_redis_client = cls.redis_helpers.client
-        cls.cache_client = redis_client(db=ORM_CACHE_REDIS_DB)
+        cls.cache_client = redis_client(db=REDIS_DB_ORM_CACHE)
         cls.redis_helpers.client = cls.cache_client
 
         cls.engine = create_engine(connection_url, pool_pre_ping=True)

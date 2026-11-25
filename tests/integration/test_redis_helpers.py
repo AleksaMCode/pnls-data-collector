@@ -1,7 +1,11 @@
 import time
 import unittest
 
-from tests.integration.containers import redis_client, requires_redis
+from tests.integration.containers import (
+    REDIS_DB_REDIS_HELPERS,
+    redis_client,
+    requires_redis,
+)
 
 
 @requires_redis
@@ -14,7 +18,7 @@ class TestRedisHelpers(unittest.TestCase):
         cls._original_client = redis_helpers.client
 
         # Logical database 1 of the shared Redis container, flushed before every test.
-        cls._test_client = redis_client(db=1)
+        cls._test_client = redis_client(db=REDIS_DB_REDIS_HELPERS)
 
         # Route helper calls to integration-test Redis client.
         redis_helpers.client = cls._test_client
@@ -69,6 +73,25 @@ class TestRedisHelpers(unittest.TestCase):
             )
             <= 3600
         )
+
+    def test_mac_ids_are_found_whatever_the_letter_case(self):
+        self._redis_helpers.set_cached_mac_id("AA:BB:CC:DD:EE:FF", 42)
+
+        self.assertEqual(self._redis_helpers.get_cached_mac_id("aa:bb:cc:dd:ee:ff"), 42)
+        self.assertEqual(self._test_client.get("mac:id:aa:bb:cc:dd:ee:ff"), "42")
+
+    def test_ssid_ids_keep_their_letter_case(self):
+        self._redis_helpers.set_cached_ssid_id("CERN", 1)
+
+        self.assertEqual(self._redis_helpers.get_cached_ssid_id("CERN"), 1)
+        self.assertIsNone(self._redis_helpers.get_cached_ssid_id("cern"))
+
+    def test_value_can_be_overwritten(self):
+        self._redis_helpers.set_key_value("workflow:3", "STARTED", ttl=60)
+        self._redis_helpers.set_key_value("workflow:3", "COMPLETED")
+
+        self.assertEqual(self._redis_helpers.get_key_value("workflow:3"), "COMPLETED")
+        self.assertEqual(self._test_client.ttl("workflow:3"), -1)
 
     def test_get_cached_ids_return_none_for_missing_keys(self):
         self.assertIsNone(self._redis_helpers.get_cached_ssid_id("missing-ssid"))

@@ -11,3 +11,7 @@ yaspin==3.4.0
 tqdm==4.67.1
 httpx==0.28.1
 coverage==7.17.5
+firebase-admin==7.1.0
+fastapi==0.135.1
+celery==5.6.3
+geopy==2.5.0
