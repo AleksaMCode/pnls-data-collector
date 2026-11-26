@@ -27,17 +27,6 @@ func readLogFile(t *testing.T, path string) string {
 	return string(content)
 }
 
-// captureLog sends the standard logger to a buffer until the test ends.
-func captureLog(t *testing.T) *strings.Builder {
-	t.Helper()
-
-	var buffer strings.Builder
-	original := log.Writer()
-	log.SetOutput(&buffer)
-	t.Cleanup(func() { log.SetOutput(original) })
-	return &buffer
-}
-
 // useFakeSentry sets up Sentry for the test with a fake server, and turns Sentry off when the test ends.
 func useFakeSentry(t *testing.T, serviceName string) *testutil.FakeSentry {
 	t.Helper()
@@ -119,7 +108,7 @@ func TestInitSentryTagsEventsWithTheServiceName(t *testing.T) {
 }
 
 func TestInitSentryWithAnInvalidDSNIsLoggedAndCarriesOn(t *testing.T) {
-	logs := captureLog(t)
+	logs := testutil.CaptureLog(t)
 	t.Cleanup(func() { _ = sentry.Init(sentry.ClientOptions{}) })
 
 	InitSentry("not a dsn", "Firebase limit notifier")
@@ -131,7 +120,7 @@ func TestInitSentryWithAnInvalidDSNIsLoggedAndCarriesOn(t *testing.T) {
 
 func TestInitSentryWithoutDSNTurnsSentryOff(t *testing.T) {
 	fake := useFakeSentry(t, "Home Server limit notifier")
-	logs := captureLog(t)
+	logs := testutil.CaptureLog(t)
 
 	InitSentry("", "Home Server limit notifier")
 	sentry.CaptureMessage("not sent")

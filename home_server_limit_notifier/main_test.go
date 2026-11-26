@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
@@ -12,45 +11,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil"
 )
-
-// fakeWebhook is a Mattermost incoming webhook that answers with the given status and keeps the messages it gets.
-type fakeWebhook struct {
-	server   *httptest.Server
-	mu       sync.Mutex
-	status   int
-	messages []map[string]any
-}
-
-func newFakeWebhook(t *testing.T, status int) *fakeWebhook {
-	t.Helper()
-
-	webhook := &fakeWebhook{status: status}
-	webhook.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var message map[string]any
-		if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
-			t.Errorf("the webhook got a body that isn't JSON: %v", err)
-		}
-		webhook.mu.Lock()
-		webhook.messages = append(webhook.messages, message)
-		webhook.mu.Unlock()
-		w.WriteHeader(webhook.status)
-	}))
-	t.Cleanup(webhook.server.Close)
-	return webhook
-}
-
-func (w *fakeWebhook) received() []map[string]any {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return append([]map[string]any(nil), w.messages...)
-}
 
 // useTestConfig points the handler at a readable path and the given Mattermost webhook for the duration of a test.
 func useTestConfig(t *testing.T, webhookURL string) {
@@ -80,8 +46,8 @@ func postCheck(t *testing.T) *httptest.ResponseRecorder {
 }
 
 func TestCheckDiskAndNotifyHandlerRejectsOtherMethods(t *testing.T) {
-	webhook := newFakeWebhook(t, http.StatusOK)
-	useTestConfig(t, webhook.server.URL)
+	webhook := testutil.NewFakeWebhook(t)
+	useTestConfig(t, webhook.URL())
 
 	for _, method := range []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodDelete} {
 		recorder := httptest.NewRecorder()
@@ -91,7 +57,7 @@ func TestCheckDiskAndNotifyHandlerRejectsOtherMethods(t *testing.T) {
 			t.Errorf("%s: status = %d, want %d", method, recorder.Code, http.StatusMethodNotAllowed)
 		}
 	}
-	if messages := webhook.received(); len(messages) != 0 {
+	if messages := webhook.Messages(); len(messages) != 0 {
 		t.Errorf("expected no report for the rejected requests, got %v", messages)
 	}
 }
@@ -108,8 +74,8 @@ func TestCheckDiskAndNotifyHandlerNamesTheAllowedMethod(t *testing.T) {
 }
 
 func TestCheckDiskAndNotifyHandlerSendsReport(t *testing.T) {
-	webhook := newFakeWebhook(t, http.StatusOK)
-	useTestConfig(t, webhook.server.URL)
+	webhook := testutil.NewFakeWebhook(t)
+	useTestConfig(t, webhook.URL())
 
 	recorder := postCheck(t)
 
@@ -120,7 +86,7 @@ func TestCheckDiskAndNotifyHandlerSendsReport(t *testing.T) {
 		t.Errorf("unexpected body %q", body)
 	}
 
-	messages := webhook.received()
+	messages := webhook.Messages()
 	if len(messages) != 1 {
 		t.Fatalf("reports sent = %d, want 1", len(messages))
 	}
@@ -139,8 +105,8 @@ func TestCheckDiskAndNotifyHandlerSendsReport(t *testing.T) {
 }
 
 func TestCheckDiskAndNotifyHandlerDiskFailure(t *testing.T) {
-	webhook := newFakeWebhook(t, http.StatusOK)
-	useTestConfig(t, webhook.server.URL)
+	webhook := testutil.NewFakeWebhook(t)
+	useTestConfig(t, webhook.URL())
 	DISK_MOUNT_PATH = filepath.Join(t.TempDir(), "unmounted")
 
 	recorder := postCheck(t)
@@ -151,16 +117,13 @@ func TestCheckDiskAndNotifyHandlerDiskFailure(t *testing.T) {
 	if body := strings.TrimSpace(recorder.Body.String()); body != "Failed to check disk usage" {
 		t.Errorf("unexpected body %q", body)
 	}
-	if messages := webhook.received(); len(messages) != 0 {
+	if messages := webhook.Messages(); len(messages) != 0 {
 		t.Errorf("expected no report when the disk can't be read, got %v", messages)
 	}
 }
 
 func TestCheckDiskAndNotifyHandlerReportsMattermostFailure(t *testing.T) {
-	mattermostServer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
-	refusedURL := mattermostServer.URL
-	mattermostServer.Close()
-	useTestConfig(t, refusedURL)
+	useTestConfig(t, testutil.RefusedURL())
 
 	// The handler must answer with an error and keep serving requests when Mattermost refuses the connection
 	for attempt := 1; attempt <= 2; attempt++ {
@@ -173,8 +136,9 @@ func TestCheckDiskAndNotifyHandlerReportsMattermostFailure(t *testing.T) {
 }
 
 func TestCheckDiskAndNotifyHandlerMattermostErrorReply(t *testing.T) {
-	webhook := newFakeWebhook(t, http.StatusInternalServerError)
-	useTestConfig(t, webhook.server.URL)
+	webhook := testutil.NewFakeWebhook(t)
+	webhook.Answer(http.StatusInternalServerError, "")
+	useTestConfig(t, webhook.URL())
 
 	recorder := postCheck(t)
 
@@ -187,8 +151,8 @@ func TestCheckDiskAndNotifyHandlerMattermostErrorReply(t *testing.T) {
 }
 
 func TestCheckDiskAndNotifyHandlerDiskFailureIsReportedToSentry(t *testing.T) {
-	webhook := newFakeWebhook(t, http.StatusOK)
-	useTestConfig(t, webhook.server.URL)
+	webhook := testutil.NewFakeWebhook(t)
+	useTestConfig(t, webhook.URL())
 	DISK_MOUNT_PATH = filepath.Join(t.TempDir(), "unmounted")
 	sentry := useFakeSentry(t)
 
@@ -202,8 +166,9 @@ func TestCheckDiskAndNotifyHandlerDiskFailureIsReportedToSentry(t *testing.T) {
 }
 
 func TestCheckDiskAndNotifyHandlerMattermostFailureIsReportedToSentry(t *testing.T) {
-	webhook := newFakeWebhook(t, http.StatusInternalServerError)
-	useTestConfig(t, webhook.server.URL)
+	webhook := testutil.NewFakeWebhook(t)
+	webhook.Answer(http.StatusInternalServerError, "")
+	useTestConfig(t, webhook.URL())
 	sentry := useFakeSentry(t)
 
 	postCheck(t)
@@ -290,11 +255,11 @@ func TestMainServesTheCheck(t *testing.T) {
 		return
 	}
 
-	webhook := newFakeWebhook(t, http.StatusOK)
+	webhook := testutil.NewFakeWebhook(t)
 	port := freePort(t)
 	// The path is written without its leading slash, as normalizePath adds it.
 	envDir := writeServiceEnv(t, map[string]string{
-		"MATTERMOST_WEBHOOK_URL": webhook.server.URL,
+		"MATTERMOST_WEBHOOK_URL": webhook.URL(),
 		"HTTP_PORT":              port,
 		"CHECK_ENDPOINT_PATH":    "home/check",
 	})
@@ -307,7 +272,7 @@ func TestMainServesTheCheck(t *testing.T) {
 	if !strings.Contains(result.Output(), SERVICE_NAME+" listening on :") {
 		t.Errorf("expected the start to be logged, got:\n%s", result.Output())
 	}
-	if messages := webhook.received(); len(messages) != 1 {
+	if messages := webhook.Messages(); len(messages) != 1 {
 		t.Errorf("reports sent = %d, want 1", len(messages))
 	}
 }

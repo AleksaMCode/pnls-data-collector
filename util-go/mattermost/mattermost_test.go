@@ -1,14 +1,10 @@
 package mattermost
 
 import (
-	"encoding/json"
-	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -18,86 +14,12 @@ import (
 
 const iconBaseURL = "https://raw.githubusercontent.com/AleksaMCode/pnls-data-collector/master/resources/bot_icons/"
 
-// fakeWebhook is a Mattermost incoming webhook that records the messages it receives.
-type fakeWebhook struct {
-	server   *httptest.Server
-	mu       sync.Mutex
-	messages []map[string]any
-	headers  []http.Header
-	status   int
-	reply    string
-}
-
-func newFakeWebhook(t *testing.T) *fakeWebhook {
-	t.Helper()
-
-	fake := &fakeWebhook{status: http.StatusOK, reply: "ok"}
-	fake.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			t.Errorf("failed to read the request body: %v", err)
-		}
-		var message map[string]any
-		if err := json.Unmarshal(body, &message); err != nil {
-			t.Errorf("expected a JSON body, got %q: %v", body, err)
-		}
-
-		fake.mu.Lock()
-		defer fake.mu.Unlock()
-		if r.Method != http.MethodPost {
-			t.Errorf("expected a POST request, got %s", r.Method)
-		}
-		fake.messages = append(fake.messages, message)
-		fake.headers = append(fake.headers, r.Header.Clone())
-		w.WriteHeader(fake.status)
-		_, _ = w.Write([]byte(fake.reply))
-	}))
-	t.Cleanup(fake.server.Close)
-	return fake
-}
-
-func (f *fakeWebhook) answer(status int, reply string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.status = status
-	f.reply = reply
-}
-
-// onlyMessage returns the one message the webhook received.
-func (f *fakeWebhook) onlyMessage(t *testing.T) map[string]any {
-	t.Helper()
-
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if len(f.messages) != 1 {
-		t.Fatalf("expected one message, got %d: %v", len(f.messages), f.messages)
-	}
-	return f.messages[0]
-}
-
-// refusedURL is the URL of a server that was closed, so connections to it are refused.
-func refusedURL() string {
-	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
-	server.Close()
-	return server.URL
-}
-
-func captureLog(t *testing.T) *strings.Builder {
-	t.Helper()
-
-	var buffer strings.Builder
-	original := log.Writer()
-	log.SetOutput(&buffer)
-	t.Cleanup(func() { log.SetOutput(original) })
-	return &buffer
-}
-
 func TestSendMattermostMessagePostsExpectedPayload(t *testing.T) {
-	webhook := newFakeWebhook(t)
+	webhook := testutil.NewFakeWebhook(t)
 
-	SendMattermostMessage(webhook.server.URL, "Collector status notifier", "RPI-1 is offline.")
+	SendMattermostMessage(webhook.URL(), "Collector status notifier", "RPI-1 is offline.")
 
-	message := webhook.onlyMessage(t)
+	message := webhook.OnlyMessage(t)
 	want := map[string]any{
 		"text":     "RPI-1 is offline.",
 		"username": "Collector status notifier",
@@ -111,7 +33,7 @@ func TestSendMattermostMessagePostsExpectedPayload(t *testing.T) {
 			t.Errorf("expected %s %q, got %v", field, value, message[field])
 		}
 	}
-	if got := webhook.headers[0].Get("Content-Type"); got != "application/json" {
+	if got := webhook.Headers()[0].Get("Content-Type"); got != "application/json" {
 		t.Errorf("expected Content-Type application/json, got %q", got)
 	}
 }
@@ -125,13 +47,13 @@ func TestEachServiceHasItsOwnIcon(t *testing.T) {
 		"Unknown service":            "status_notifier.png",
 	} {
 		t.Run(serviceName, func(t *testing.T) {
-			webhook := newFakeWebhook(t)
+			webhook := testutil.NewFakeWebhook(t)
 
-			if err := TrySendMattermostMessage(webhook.server.URL, serviceName, "hello"); err != nil {
+			if err := TrySendMattermostMessage(webhook.URL(), serviceName, "hello"); err != nil {
 				t.Fatalf("expected no error, got %v", err)
 			}
 
-			message := webhook.onlyMessage(t)
+			message := webhook.OnlyMessage(t)
 			if message["username"] != serviceName || message["icon_url"] != iconBaseURL+icon {
 				t.Fatalf("expected %q with the icon %s, got %v", serviceName, icon, message)
 			}
@@ -140,25 +62,25 @@ func TestEachServiceHasItsOwnIcon(t *testing.T) {
 }
 
 func TestMultiLineAndNonASCIITextIsSentAsIs(t *testing.T) {
-	webhook := newFakeWebhook(t)
+	webhook := testutil.NewFakeWebhook(t)
 	text := "### Firebase usage\n| Device | Usage |\n|---|---|\n| RPI-1 | 42 % ✓ |"
 
-	SendMattermostMessage(webhook.server.URL, "Firebase limit notifier", text)
+	SendMattermostMessage(webhook.URL(), "Firebase limit notifier", text)
 
-	if got := webhook.onlyMessage(t)["text"]; got != text {
+	if got := webhook.OnlyMessage(t)["text"]; got != text {
 		t.Fatalf("expected %q, got %q", text, got)
 	}
 }
 
 func TestSendMattermostMessageWithImageIncludesAttachment(t *testing.T) {
-	webhook := newFakeWebhook(t)
+	webhook := testutil.NewFakeWebhook(t)
 	imageURL := "https://charts.example.com/firebase-usage-2026-06-14.png"
 
-	SendMattermostMessageWithImage(webhook.server.URL, "Firebase limit notifier", "Usage update.", imageURL)
+	SendMattermostMessageWithImage(webhook.URL(), "Firebase limit notifier", "Usage update.", imageURL)
 
-	attachments, ok := webhook.onlyMessage(t)["attachments"].([]any)
+	attachments, ok := webhook.OnlyMessage(t)["attachments"].([]any)
 	if !ok || len(attachments) != 1 {
-		t.Fatalf("expected one attachment, got %v", webhook.onlyMessage(t)["attachments"])
+		t.Fatalf("expected one attachment, got %v", webhook.OnlyMessage(t)["attachments"])
 	}
 	want := map[string]any{
 		"title":     "Cloudflare R2 bucket hosted chart",
@@ -178,22 +100,22 @@ func TestSendMattermostMessageWithImageIncludesAttachment(t *testing.T) {
 }
 
 func TestMessageWithoutImageURLHasNoAttachment(t *testing.T) {
-	webhook := newFakeWebhook(t)
+	webhook := testutil.NewFakeWebhook(t)
 
-	if err := TrySendMattermostMessageWithImage(webhook.server.URL, "svc", "hello", ""); err != nil {
+	if err := TrySendMattermostMessageWithImage(webhook.URL(), "svc", "hello", ""); err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if attachments, ok := webhook.onlyMessage(t)["attachments"]; ok {
+	if attachments, ok := webhook.OnlyMessage(t)["attachments"]; ok {
 		t.Fatalf("did not expect attachments, got %v", attachments)
 	}
 }
 
 func TestSuccessIsLogged(t *testing.T) {
-	webhook := newFakeWebhook(t)
-	logs := captureLog(t)
+	webhook := testutil.NewFakeWebhook(t)
+	logs := testutil.CaptureLog(t)
 
-	SendMattermostMessage(webhook.server.URL, "svc", "hello")
+	SendMattermostMessage(webhook.URL(), "svc", "hello")
 
 	if !strings.Contains(logs.String(), "Successfully sent message to Mattermost!") {
 		t.Fatalf("expected the success to be logged, got:\n%s", logs.String())
@@ -201,11 +123,11 @@ func TestSuccessIsLogged(t *testing.T) {
 }
 
 func TestSendMattermostMessageLogsOnNon200(t *testing.T) {
-	webhook := newFakeWebhook(t)
-	webhook.answer(http.StatusInternalServerError, "")
-	logs := captureLog(t)
+	webhook := testutil.NewFakeWebhook(t)
+	webhook.Answer(http.StatusInternalServerError, "")
+	logs := testutil.CaptureLog(t)
 
-	SendMattermostMessage(webhook.server.URL, "svc", "hello")
+	SendMattermostMessage(webhook.URL(), "svc", "hello")
 
 	if !strings.Contains(logs.String(), "Mattermost webhook response: 500 Internal Server Error") {
 		t.Fatalf("expected the status to be logged, got:\n%s", logs.String())
@@ -237,7 +159,7 @@ func TestSendMattermostMessageUnreachableWebhookFatal(t *testing.T) {
 		return
 	}
 
-	result := testutil.RunInChild(t, "UTIL_GO_TEST_WEBHOOK="+refusedURL())
+	result := testutil.RunInChild(t, "UTIL_GO_TEST_WEBHOOK="+testutil.RefusedURL())
 
 	if result.ExitCode != 1 {
 		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
@@ -248,22 +170,22 @@ func TestSendMattermostMessageUnreachableWebhookFatal(t *testing.T) {
 }
 
 func TestTrySendMattermostMessageReturnsNilOnSuccess(t *testing.T) {
-	webhook := newFakeWebhook(t)
+	webhook := testutil.NewFakeWebhook(t)
 
-	if err := TrySendMattermostMessage(webhook.server.URL, "svc", "hello"); err != nil {
+	if err := TrySendMattermostMessage(webhook.URL(), "svc", "hello"); err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	err := TrySendMattermostMessageWithImage(webhook.server.URL, "svc", "hello", "https://example.com/a.png")
+	err := TrySendMattermostMessageWithImage(webhook.URL(), "svc", "hello", "https://example.com/a.png")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 }
 
 func TestTrySendMattermostMessageReturnsErrorOnNon200(t *testing.T) {
-	webhook := newFakeWebhook(t)
-	webhook.answer(http.StatusInternalServerError, "")
+	webhook := testutil.NewFakeWebhook(t)
+	webhook.Answer(http.StatusInternalServerError, "")
 
-	err := TrySendMattermostMessage(webhook.server.URL, "svc", "hello")
+	err := TrySendMattermostMessage(webhook.URL(), "svc", "hello")
 
 	if err == nil || err.Error() != "Mattermost webhook response: 500 Internal Server Error" {
 		t.Fatalf("expected the status in the error, got %v", err)
@@ -279,7 +201,7 @@ func TestTrySendMattermostMessageReturnsErrorOnInvalidWebhook(t *testing.T) {
 }
 
 func TestTrySendMattermostMessageReturnsErrorWhenConnectionIsRefused(t *testing.T) {
-	err := TrySendMattermostMessageWithImage(refusedURL(), "svc", "hello", "")
+	err := TrySendMattermostMessageWithImage(testutil.RefusedURL(), "svc", "hello", "")
 
 	if err == nil || !strings.Contains(err.Error(), "failed to send message to Mattermost") {
 		t.Fatalf("expected an error for a refused connection, got %v", err)
@@ -287,10 +209,10 @@ func TestTrySendMattermostMessageReturnsErrorWhenConnectionIsRefused(t *testing.
 }
 
 func TestErrorIncludesWhatMattermostReplied(t *testing.T) {
-	webhook := newFakeWebhook(t)
-	webhook.answer(http.StatusBadRequest, "Unable to parse incoming data")
+	webhook := testutil.NewFakeWebhook(t)
+	webhook.Answer(http.StatusBadRequest, "Unable to parse incoming data")
 
-	err := TrySendMattermostMessage(webhook.server.URL, "svc", "hello")
+	err := TrySendMattermostMessage(webhook.URL(), "svc", "hello")
 
 	testutil.ExpectFailure(t, "only the status is kept, the reply body is dropped.", func(t testutil.TB) {
 		if err == nil || !strings.Contains(err.Error(), "Unable to parse incoming data") {
@@ -333,7 +255,7 @@ func TestDeliveryFailureIsReportedToSentry(t *testing.T) {
 	}
 
 	sentry := testutil.NewFakeSentry(t)
-	testutil.RunInChild(t, testutil.SentryDSNEnv+"="+sentry.DSN(), "UTIL_GO_TEST_WEBHOOK="+refusedURL())
+	testutil.RunInChild(t, testutil.SentryDSNEnv+"="+sentry.DSN(), "UTIL_GO_TEST_WEBHOOK="+testutil.RefusedURL())
 
 	testutil.ExpectFailure(t, "a failed delivery exits with log.Fatal, which skips Sentry.", func(t testutil.TB) {
 		if events := sentry.WaitForEvents(1, time.Second); len(events) != 1 || events[0].Level != "fatal" {

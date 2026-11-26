@@ -202,7 +202,7 @@ jobs:
             context: .
             dockerfile: firebase_limit_notifier/Dockerfile
           - image: db_backup
-            context: db_backup
+            context: .
             dockerfile: db_backup/Dockerfile
           # Python
           - image: aggregator

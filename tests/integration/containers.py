@@ -48,6 +48,7 @@ SUPABASE_POSTGRES_IMAGE = "postgres:17.6"
 MONGO_IMAGE = "mongo:8.2.3"
 
 FIREBASE_EMULATOR_DIR = Path(__file__).resolve().parent / "firebase_emulator"
+# The Go integration tests build the same image under the same name (see util-go/testutil/containers/firebase.go).
 FIREBASE_EMULATOR_IMAGE = "pnls-firebase-database-emulator:test"
 FIREBASE_EMULATOR_PORT = 9000
 FIREBASE_AUTH_EMULATOR_PORT = 9099

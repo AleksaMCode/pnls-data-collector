@@ -15,6 +15,8 @@ on:
       - "**/go.sum"
       - "codecov.yml"
       - ".github/workflows/go-tests.yml"
+      # The Go integration tests build the Firebase emulator image from this folder.
+      - "tests/integration/firebase_emulator/**"
   pull_request:
     branches: [master]
     paths:
@@ -29,6 +31,8 @@ on:
       - "**/go.sum"
       - "codecov.yml"
       - ".github/workflows/go-tests.yml"
+      # The Go integration tests build the Firebase emulator image from this folder.
+      - "tests/integration/firebase_emulator/**"
 
 jobs:
   test:
@@ -66,7 +70,7 @@ jobs:
         run: |
           cd util-go
           go mod download
-          go test -v -coverprofile=coverage.out -covermode=atomic ./...
+          go test -v -tags=integration -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Run db_backup tests
         run: |
