@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AleksaMCode/pnls-data-collector/util-go/objectstore"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil"
 )
 
@@ -18,39 +19,39 @@ func useUnreachableR2(t *testing.T) {
 	R2_BUCKET_NAME, R2_BUCKET_PUBLIC_URL = "pnls-charts", "https://pub-charts.r2.dev"
 }
 
-func TestGetR2EndpointUsesTheAccount(t *testing.T) {
+func TestR2StoreConfigUsesTheAccount(t *testing.T) {
 	restoreConfig(t)
 	R2_ENDPOINT, CLOUDFLARE_ACCOUNT_ID = "", "0123abcd"
+	R2_ACCESS_KEY, R2_SECRET_KEY = "access-key", "secret-key"
+	R2_BUCKET_NAME, R2_BUCKET_PUBLIC_URL = "pnls-charts", "https://pub-charts.r2.dev"
 
-	if got := getR2Endpoint(); got != "https://0123abcd.r2.cloudflarestorage.com" {
-		t.Fatalf("getR2Endpoint() = %q", got)
+	want := objectstore.Config{
+		Endpoint:  "https://0123abcd.r2.cloudflarestorage.com",
+		AccessKey: "access-key",
+		SecretKey: "secret-key",
+		Region:    objectstore.R2Region,
+		Bucket:    "pnls-charts",
+		PublicURL: "https://pub-charts.r2.dev",
+	}
+	if got := r2StoreConfig(); got != want {
+		t.Fatalf("r2StoreConfig() = %+v, want %+v", got, want)
 	}
 }
 
-func TestGetR2EndpointPrefersTheCustomEndpoint(t *testing.T) {
+func TestR2StoreConfigPrefersTheCustomEndpoint(t *testing.T) {
 	restoreConfig(t)
 	R2_ENDPOINT, CLOUDFLARE_ACCOUNT_ID = "http://localhost:9000", "0123abcd"
 
-	if got := getR2Endpoint(); got != "http://localhost:9000" {
-		t.Fatalf("getR2Endpoint() = %q", got)
+	got := r2StoreConfig()
+
+	if got.Endpoint != "http://localhost:9000" || !got.UsePathStyle {
+		t.Fatalf("expected the custom endpoint with path-style requests, got %+v", got)
 	}
 }
 
-func TestNewR2ClientUsesPathStyleOnlyForACustomEndpoint(t *testing.T) {
-	restoreConfig(t)
-
-	R2_ENDPOINT = ""
-	if newR2Client().Options().UsePathStyle {
-		t.Error("expected virtual-hosted requests for Cloudflare R2")
-	}
-
-	R2_ENDPOINT = "http://localhost:9000"
-	options := newR2Client().Options()
-	if !options.UsePathStyle {
-		t.Error("expected path-style requests for a custom endpoint")
-	}
-	if options.Region != "auto" {
-		t.Errorf("Region = %q, want auto", options.Region)
+func TestChartsArePublicPNGs(t *testing.T) {
+	if chartUploadOptions.ContentType != "image/png" || chartUploadOptions.ACL != "public-read" {
+		t.Fatalf("unexpected upload options %+v", chartUploadOptions)
 	}
 }
 
@@ -65,7 +66,16 @@ func TestUploadImageToR2ReturnsTheError(t *testing.T) {
 	if publicURL != "" {
 		t.Errorf("expected no link with the error, got %q", publicURL)
 	}
-	if !strings.Contains(err.Error(), "PutObject") {
+	if !strings.Contains(err.Error(), "failed to upload firebase-limit/firebase-usage-") {
 		t.Errorf("expected the failed upload in the error, got %v", err)
+	}
+}
+
+func TestUploadImageToR2WithoutBucketReturnsTheError(t *testing.T) {
+	useUnreachableR2(t)
+	R2_BUCKET_NAME = ""
+
+	if _, err := uploadImageToR2([]byte("png")); err == nil || !strings.Contains(err.Error(), "bucket is empty") {
+		t.Fatalf("expected the missing bucket as an error, got %v", err)
 	}
 }

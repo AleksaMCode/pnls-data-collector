@@ -55,7 +55,9 @@ func StartSilo(t *testing.T) *Silo {
 }
 
 // S3Client returns a client for the server with the test keys, to set up buckets and check what a test uploaded.
-func (s *Silo) S3Client() *s3.Client {
+func (s *Silo) S3Client(t *testing.T) *s3.Client {
+	t.Helper()
+
 	return s3.New(s3.Options{
 		BaseEndpoint: aws.String(s.Endpoint),
 		Region:       "auto",
@@ -69,7 +71,7 @@ func (s *Silo) CreateBucket(t *testing.T, prefix string) string {
 	t.Helper()
 
 	name := prefix + "-" + randomSuffix(t)
-	if _, err := s.S3Client().CreateBucket(t.Context(), &s3.CreateBucketInput{Bucket: &name}); err != nil {
+	if _, err := s.S3Client(t).CreateBucket(t.Context(), &s3.CreateBucketInput{Bucket: &name}); err != nil {
 		t.Fatalf("failed to create the bucket %s: %v", name, err)
 	}
 	return name
@@ -79,7 +81,7 @@ func (s *Silo) CreateBucket(t *testing.T, prefix string) string {
 func (s *Silo) GetObject(t *testing.T, bucket, key string) (content []byte, contentType string) {
 	t.Helper()
 
-	object, err := s.S3Client().GetObject(t.Context(), &s3.GetObjectInput{Bucket: &bucket, Key: &key})
+	object, err := s.S3Client(t).GetObject(t.Context(), &s3.GetObjectInput{Bucket: &bucket, Key: &key})
 	if err != nil {
 		t.Fatalf("failed to get %s/%s: %v", bucket, key, err)
 	}
@@ -96,7 +98,7 @@ func (s *Silo) GetObject(t *testing.T, bucket, key string) (content []byte, cont
 func (s *Silo) ListKeys(t *testing.T, bucket string) []string {
 	t.Helper()
 
-	output, err := s.S3Client().ListObjectsV2(t.Context(), &s3.ListObjectsV2Input{Bucket: &bucket})
+	output, err := s.S3Client(t).ListObjectsV2(t.Context(), &s3.ListObjectsV2Input{Bucket: &bucket})
 	if err != nil {
 		t.Fatalf("failed to list %s: %v", bucket, err)
 	}

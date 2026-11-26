@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+
+	"github.com/AleksaMCode/pnls-data-collector/util-go/objectstore"
 )
 
 const (
@@ -160,4 +162,14 @@ func getEnvInt(k string, fallback int) int {
 		return fallback
 	}
 	return n
+}
+
+// ObjectStore is the R2 bucket the backups are uploaded to.
+func (c Config) ObjectStore() objectstore.Config {
+	store := objectstore.R2Config(c.CloudflareAccountID, c.R2Endpoint)
+	store.AccessKey = c.R2AccessKey
+	store.SecretKey = c.R2SecretKey
+	store.Bucket = c.R2BucketName
+	store.PublicURL = c.R2BucketPublicURL
+	return store
 }

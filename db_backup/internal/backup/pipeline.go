@@ -7,7 +7,6 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"db_backup/internal/config"
-	"db_backup/internal/storage"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -22,6 +21,8 @@ import (
 	localmodel "db_backup/internal/model"
 
 	conductormodel "github.com/conductor-sdk/conductor-go/sdk/model"
+
+	"github.com/AleksaMCode/pnls-data-collector/util-go/objectstore"
 )
 
 const (
@@ -32,12 +33,15 @@ const (
 	TaskCleanupName  = "cleanup_local_files_task"
 )
 
+// backupUploadOptions are the settings of the uploaded backups, which are gzip files.
+var backupUploadOptions = objectstore.UploadOptions{ContentType: "application/gzip"}
+
 type Pipeline struct {
 	cfg      config.Config
-	uploader storage.ObjectUploader
+	uploader objectstore.Uploader
 }
 
-func NewPipeline(cfg config.Config, uploader storage.ObjectUploader) *Pipeline {
+func NewPipeline(cfg config.Config, uploader objectstore.Uploader) *Pipeline {
 	return &Pipeline{
 		cfg:      cfg,
 		uploader: uploader,
@@ -212,7 +216,7 @@ func (p *Pipeline) RunUploadTask(ctx context.Context, task *conductormodel.Task)
 	uploadCtx, cancel := context.WithTimeout(ctx, p.cfg.UploadTimeout)
 	defer cancel()
 
-	objectPath, err := p.uploader.UploadFile(uploadCtx, objectKey, gzipPath)
+	objectPath, err := p.uploader.UploadFile(uploadCtx, objectKey, gzipPath, backupUploadOptions)
 	if err != nil {
 		log.Printf(
 			"upload_to_r2_task upload failed: workflow_id=%s task_id=%s object_key=%s path=%s timeout=%s err=%v",

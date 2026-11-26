@@ -10,7 +10,6 @@ import (
 	"crypto/cipher"
 	"db_backup/internal/conductor"
 	"db_backup/internal/config"
-	"db_backup/internal/storage"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -31,6 +30,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
+	"github.com/AleksaMCode/pnls-data-collector/util-go/objectstore"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil/containers"
 )
 
@@ -141,11 +141,11 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 		t.Fatalf("register workflow/task/schedule: %v", err)
 	}
 
-	uploader, err := storage.NewR2Uploader(cfg)
+	store, err := objectstore.New(ctx, cfg.ObjectStore())
 	if err != nil {
 		t.Fatalf("new R2 uploader: %v", err)
 	}
-	pipeline := NewPipeline(cfg, uploader)
+	pipeline := NewPipeline(cfg, store)
 
 	taskRunner := worker.NewTaskRunnerWithApiClient(apiClient)
 	if err := taskRunner.StartWorker(TaskPgDumpName, func(tk *_jsii.Task) (interface{}, error) {

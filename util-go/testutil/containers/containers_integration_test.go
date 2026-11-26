@@ -17,7 +17,7 @@ func TestSiloStoresObjectsInTheTestsBucket(t *testing.T) {
 	silo := StartSilo(t)
 	bucket := silo.CreateBucket(t, "containers-test")
 
-	_, err := silo.S3Client().PutObject(t.Context(), &s3.PutObjectInput{
+	_, err := silo.S3Client(t).PutObject(t.Context(), &s3.PutObjectInput{
 		Bucket:      &bucket,
 		Key:         aws.String("charts/usage.png"),
 		Body:        bytes.NewReader([]byte("png")),
