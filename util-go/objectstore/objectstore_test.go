@@ -172,8 +172,9 @@ type fakeS3 struct {
 	requests []recordedPut
 }
 
+// recordedPut is compared as a whole, which the unused linter doesn't count as a use of its fields.
 type recordedPut struct {
-	method, path, contentType, acl, body string
+	method, path, contentType, acl, body string //nolint:unused // Compared with ==.
 }
 
 func newFakeS3Store(t *testing.T, status int) (*Store, *fakeS3) {

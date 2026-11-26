@@ -83,3 +83,28 @@ func TestFirebaseDatabasesAreSeparate(t *testing.T) {
 		t.Fatalf("expected the second database to be empty, got %v", stats)
 	}
 }
+
+func TestPostgresRunsSQLInTheTestsDatabase(t *testing.T) {
+	server := StartPostgres(t)
+	database := server.CreateDatabase(t, "containers_test")
+
+	server.Exec(t, database, "CREATE TABLE people (name TEXT); INSERT INTO people VALUES ('Alice'), ('Bob');")
+
+	// psql exits with an error, which fails the test, unless the rows are in this database.
+	server.Exec(t, database, `DO $$ BEGIN
+		IF (SELECT count(*) FROM people) <> 2 THEN RAISE EXCEPTION 'expected two rows'; END IF;
+	END $$;`)
+}
+
+func TestPostgresIsSharedButDatabasesAreNot(t *testing.T) {
+	first, second := StartPostgres(t), StartPostgres(t)
+	if first != second {
+		t.Fatal("expected one Postgres server for the test binary")
+	}
+	if first.Host == "" || first.Port == "" {
+		t.Fatalf("expected the server's address, got %+v", first)
+	}
+	if a, b := first.CreateDatabase(t, "same"), first.CreateDatabase(t, "same"); a == b {
+		t.Fatalf("expected two databases, got %s twice", a)
+	}
+}

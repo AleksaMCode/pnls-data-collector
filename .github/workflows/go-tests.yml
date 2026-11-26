@@ -8,6 +8,9 @@ on:
       - "firebase_limit_notifier/**/*.go"
       - "util-go/**/*.go"
       - "db_backup/**/*.go"
+      # The db_backup tests check the workflow definitions and back up the seed.
+      - "db_backup/workflows/**"
+      - "db_backup/testdata/**"
       - "cloudflare_limit_notifier/**/*.go"
       - "home_server_limit_notifier/**/*.go"
       - ".go-version"
@@ -24,6 +27,9 @@ on:
       - "firebase_limit_notifier/**/*.go"
       - "util-go/**/*.go"
       - "db_backup/**/*.go"
+      # The db_backup tests check the workflow definitions and back up the seed.
+      - "db_backup/workflows/**"
+      - "db_backup/testdata/**"
       - "cloudflare_limit_notifier/**/*.go"
       - "home_server_limit_notifier/**/*.go"
       - ".go-version"
@@ -51,6 +57,7 @@ jobs:
             collector_status_notifier/go.sum
             firebase_limit_notifier/go.sum
             util-go/go.sum
+            db_backup/go.sum
             cloudflare_limit_notifier/go.sum
             home_server_limit_notifier/go.sum
 
@@ -72,11 +79,18 @@ jobs:
           go mod download
           go test -v -tags=integration -coverprofile=coverage.out -covermode=atomic ./...
 
+      # The db_backup integration tests run pg_dump on the runner, as the worker writes the dump to its own disk.
+      - name: Install pg_dump
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
       - name: Run db_backup tests
         run: |
           cd db_backup
           go mod download
-          go test -v -tags=integration -coverprofile=coverage.out -covermode=atomic ./...
+          # The integration tests also cover config and conductor, so every package counts for every test binary.
+          go test -v -tags=integration -coverpkg=./... -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Run cloudflare_limit_notifier tests
         run: |
