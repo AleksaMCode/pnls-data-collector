@@ -37,10 +37,13 @@ except ImportError:
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AGGREGATOR_MIGRATIONS = REPO_ROOT / "aggregator" / "migrations"
+SUPABASE_MIGRATIONS = REPO_ROOT / "stats" / "supabase" / "migrations"
 
 # Keep in sync with the postgres and redis images in aggregator/docker-compose.yml.
 POSTGRES_IMAGE = "postgres:16"
 REDIS_IMAGE = "redis:8.8.0"
+# The stats service publishes to Supabase, which runs Postgres 17.6 (see stats/supabase/config.toml).
+SUPABASE_POSTGRES_IMAGE = "postgres:17.6"
 # Keep in sync with the mongodb image in firebase_housekeeping/docker-compose.yml.
 MONGO_IMAGE = "mongo:8.2.3"
 
@@ -88,6 +91,12 @@ def postgres_container() -> "PostgresContainer":
 
 
 @cache
+def supabase_postgres_container() -> "PostgresContainer":
+    """A second Postgres server, on Supabase's version, only started by the tests that need it."""
+    return _start(PostgresContainer(SUPABASE_POSTGRES_IMAGE))
+
+
+@cache
 def redis_container() -> "RedisContainer":
     return _start(RedisContainer(REDIS_IMAGE))
 
@@ -114,12 +123,12 @@ def create_mongo_database(prefix: str) -> "pymongo.database.Database":
     return mongo_client()[f"{prefix}_{uuid.uuid4().hex[:8]}"]
 
 
-def create_postgres_database(prefix: str) -> str:
-    """Creates an empty database in the shared Postgres container and returns its URL."""
+def create_postgres_database(prefix: str, container=None) -> str:
+    """Creates an empty database in a shared Postgres container (the default one if not given)."""
     from sqlalchemy import create_engine, text
     from sqlalchemy.engine import make_url
 
-    server_url = postgres_container().get_connection_url()
+    server_url = (container or postgres_container()).get_connection_url()
     database_name = f"{prefix}_{uuid.uuid4().hex[:8]}"
 
     # CREATE DATABASE cannot run inside a transaction.
@@ -137,8 +146,10 @@ def create_postgres_database(prefix: str) -> str:
     )
 
 
-def apply_migrations(connection_url: str, migrations_dir: Path) -> None:
-    """Runs every `*.up.sql` file of a service in name order, as the production database got them."""
+def apply_migrations(
+    connection_url: str, migrations_dir: Path, pattern: str = "*.up.sql"
+) -> None:
+    """Runs every migration file of a service in name order, as the production database got them."""
     from sqlalchemy import create_engine
 
     engine = create_engine(connection_url)
@@ -146,7 +157,7 @@ def apply_migrations(connection_url: str, migrations_dir: Path) -> None:
         connection = engine.raw_connection()
         try:
             with connection.cursor() as cursor:
-                for migration in sorted(migrations_dir.glob("*.up.sql")):
+                for migration in sorted(migrations_dir.glob(pattern)):
                     cursor.execute(migration.read_text(encoding="utf-8"))
             connection.commit()
         finally:
@@ -172,6 +183,16 @@ def create_aggregator_database(prefix: str) -> str:
     finally:
         engine.dispose()
 
+    return connection_url
+
+
+def create_supabase_database(prefix: str) -> str:
+    """Creates a database with the stats service's Supabase schema, on Supabase's Postgres version."""
+    connection_url = create_postgres_database(
+        prefix, container=supabase_postgres_container()
+    )
+    # Supabase CLI migrations are plain `<timestamp>_<name>.sql` files.
+    apply_migrations(connection_url, SUPABASE_MIGRATIONS, pattern="*.sql")
     return connection_url
 
 
