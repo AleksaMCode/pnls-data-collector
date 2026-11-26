@@ -1,11 +1,8 @@
 """Integration and end-to-end tests of Firebase housekeeping on the Firebase emulator and a real MongoDB."""
 
 import json
-import socket
-import threading
 import unittest
 from datetime import UTC, datetime
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest import mock
 
 from tests.integration.containers import (
@@ -16,6 +13,7 @@ from tests.integration.containers import (
     requires_mongo,
 )
 from tests.support.aggregator_loader import no_retry_wait
+from tests.support.fake_http import FakeMattermost, start_in_background, unused_port
 from tests.support.housekeeping_loader import import_housekeeping_module
 
 firebase_helpers = import_housekeeping_module(
@@ -67,37 +65,6 @@ class FixedClock(datetime):
     @classmethod
     def today(cls):
         return datetime(2026, 6, 15, 5, 0)
-
-
-class FakeMattermost(ThreadingHTTPServer):
-    """Records the webhook messages and answers 200, like a Mattermost incoming webhook."""
-
-    def __init__(self):
-        super().__init__(("127.0.0.1", 0), FakeMattermostHandler)
-        self.messages = []
-
-    @property
-    def url(self) -> str:
-        return f"http://127.0.0.1:{self.server_port}/hooks/housekeeping"
-
-
-class FakeMattermostHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        length = int(self.headers.get("Content-Length", 0))
-        self.server.messages.append(json.loads(self.rfile.read(length)))
-        self.send_response(200)
-        self.send_header("Content-Length", "2")
-        self.end_headers()
-        self.wfile.write(b"ok")
-
-    def log_message(self, format, *args):
-        pass
-
-
-def unused_port() -> int:
-    with socket.socket() as probe:
-        probe.bind(("127.0.0.1", 0))
-        return probe.getsockname()[1]
 
 
 class HousekeepingTestCase(unittest.TestCase):
@@ -259,9 +226,7 @@ class TestHousekeepingEndToEnd(FirebaseTestCase, MongoTestCase):
 
         cls.requests = requests
         cls.mattermost = FakeMattermost()
-        threading.Thread(target=cls.mattermost.serve_forever, daemon=True).start()
-        cls.addClassCleanup(cls.mattermost.server_close)
-        cls.addClassCleanup(cls.mattermost.shutdown)
+        start_in_background(cls.mattermost, cls)
         cls.client = TestClient(main.app, raise_server_exceptions=False)
 
     def setUp(self):
