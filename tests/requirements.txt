@@ -14,4 +14,6 @@ coverage==7.17.5
 firebase-admin==7.1.0
 fastapi==0.135.1
 celery==5.6.3
+# kombu's Redis transport (used by Celery) imports packaging, but not every kombu release declares it.
+packaging==25.0
 geopy==2.5.0
