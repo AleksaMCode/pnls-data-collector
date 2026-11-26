@@ -11,10 +11,12 @@ from urllib.parse import urlparse
 try:
     from testcontainers.core.container import DockerContainer
     from testcontainers.core.waiting_utils import wait_for_logs
+    from testcontainers.mongodb import MongoDbContainer
     from testcontainers.postgres import PostgresContainer
     from testcontainers.redis import RedisContainer
 except ImportError:
     DockerContainer = None
+    MongoDbContainer = None
     PostgresContainer = None
     RedisContainer = None
 
@@ -22,6 +24,11 @@ try:
     import redis
 except ImportError:
     redis = None
+
+try:
+    import pymongo
+except ImportError:
+    pymongo = None
 
 try:
     import firebase_admin
@@ -34,6 +41,8 @@ AGGREGATOR_MIGRATIONS = REPO_ROOT / "aggregator" / "migrations"
 # Keep in sync with the postgres and redis images in aggregator/docker-compose.yml.
 POSTGRES_IMAGE = "postgres:16"
 REDIS_IMAGE = "redis:8.8.0"
+# Keep in sync with the mongodb image in firebase_housekeeping/docker-compose.yml.
+MONGO_IMAGE = "mongo:8.2.3"
 
 FIREBASE_EMULATOR_DIR = Path(__file__).resolve().parent / "firebase_emulator"
 FIREBASE_EMULATOR_IMAGE = "pnls-firebase-database-emulator:test"
@@ -57,6 +66,10 @@ requires_redis = unittest.skipUnless(
     redis is not None and RedisContainer is not None,
     "redis and testcontainers are required for Redis integration tests",
 )
+requires_mongo = unittest.skipUnless(
+    pymongo is not None and MongoDbContainer is not None,
+    "pymongo and testcontainers are required for MongoDB integration tests",
+)
 requires_firebase = unittest.skipUnless(
     firebase_admin is not None and DockerContainer is not None,
     "firebase-admin and testcontainers are required for Firebase integration tests",
@@ -77,6 +90,28 @@ def postgres_container() -> "PostgresContainer":
 @cache
 def redis_container() -> "RedisContainer":
     return _start(RedisContainer(REDIS_IMAGE))
+
+
+@cache
+def mongo_container() -> "MongoDbContainer":
+    # Explicit credentials: the defaults come from MONGO_* variables, which a local .env may set.
+    return _start(
+        MongoDbContainer(MONGO_IMAGE, username="test", password="test", dbname="test")
+    )
+
+
+@cache
+def mongo_client() -> "pymongo.MongoClient":
+    """Returns the one client of the shared MongoDB container, closed when the test run ends."""
+    client = mongo_container().get_connection_client()
+    # Registered after the container, so it is closed before the container stops.
+    atexit.register(client.close)
+    return client
+
+
+def create_mongo_database(prefix: str) -> "pymongo.database.Database":
+    """Returns a new, empty database in the shared MongoDB container (created on first write)."""
+    return mongo_client()[f"{prefix}_{uuid.uuid4().hex[:8]}"]
 
 
 def create_postgres_database(prefix: str) -> str:
