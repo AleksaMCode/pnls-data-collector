@@ -50,6 +50,8 @@ MONGO_IMAGE = "mongo:8.2.3"
 FIREBASE_EMULATOR_DIR = Path(__file__).resolve().parent / "firebase_emulator"
 FIREBASE_EMULATOR_IMAGE = "pnls-firebase-database-emulator:test"
 FIREBASE_EMULATOR_PORT = 9000
+FIREBASE_AUTH_EMULATOR_PORT = 9099
+FIREBASE_TEST_PROJECT_ID = "demo-pnls"
 # Matches the `demo-` project the emulator starts with (see firebase_emulator/Dockerfile).
 FIREBASE_TEST_DATABASE_URL = "https://demo-pnls-default-rtdb.firebaseio.com"
 
@@ -60,6 +62,7 @@ REDIS_DB_WORKFLOW_CACHE = 3
 REDIS_DB_CELERY_BROKER = 4
 REDIS_DB_CELERY_BACKEND = 5
 REDIS_DB_PIPELINE_CACHE = 6
+REDIS_DB_STATS_API_CACHE = 7
 
 requires_postgres = unittest.skipUnless(
     PostgresContainer is not None,
@@ -236,7 +239,7 @@ def firebase_emulator_container() -> "DockerContainer":
         path=str(FIREBASE_EMULATOR_DIR), tag=FIREBASE_EMULATOR_IMAGE, rm=True
     )
     container = DockerContainer(FIREBASE_EMULATOR_IMAGE).with_exposed_ports(
-        FIREBASE_EMULATOR_PORT
+        FIREBASE_EMULATOR_PORT, FIREBASE_AUTH_EMULATOR_PORT
     )
     _start(container)
     wait_for_logs(container, "All emulators ready", timeout=180)
@@ -247,12 +250,15 @@ def connect_firebase_emulator() -> None:
     """Points firebase-admin's default app at the emulator, replacing any app set up before.
 
     The Admin SDK sends every `db.reference()` call to the host in FIREBASE_DATABASE_EMULATOR_HOST
-    and signs in with a fixed emulator token, so no real credentials are used.
+    and signs in with a fixed emulator token, so no real credentials are used. With
+    FIREBASE_AUTH_EMULATOR_HOST set, `auth.verify_id_token()` accepts the Authentication emulator's
+    tokens: it checks their claims (project, expiry), but not their signature.
     """
     container = firebase_emulator_container()
     host = container.get_container_host_ip()
     port = container.get_exposed_port(FIREBASE_EMULATOR_PORT)
     os.environ["FIREBASE_DATABASE_EMULATOR_HOST"] = f"{host}:{port}"
+    os.environ["FIREBASE_AUTH_EMULATOR_HOST"] = firebase_auth_emulator_host()
 
     try:
         firebase_admin.delete_app(firebase_admin.get_app())
@@ -261,9 +267,36 @@ def connect_firebase_emulator() -> None:
 
     firebase_admin.initialize_app(
         credential=_EmulatorCredential(),
-        options={"databaseURL": FIREBASE_TEST_DATABASE_URL},
+        options={
+            "databaseURL": FIREBASE_TEST_DATABASE_URL,
+            # ID tokens are checked against the project they were issued for.
+            "projectId": FIREBASE_TEST_PROJECT_ID,
+        },
     )
     assert_firebase_is_emulator()
+
+
+def firebase_auth_emulator_host() -> str:
+    """Returns `host:port` of the Authentication emulator, in the shared emulator container."""
+    container = firebase_emulator_container()
+    host = container.get_container_host_ip()
+    return f"{host}:{container.get_exposed_port(FIREBASE_AUTH_EMULATOR_PORT)}"
+
+
+def create_firebase_test_user(email: str, password: str) -> str:
+    """Signs up a user in the Authentication emulator and returns their ID token."""
+    import httpx
+
+    response = httpx.post(
+        f"http://{firebase_auth_emulator_host()}"
+        "/identitytoolkit.googleapis.com/v1/accounts:signUp",
+        # The emulator accepts any API key.
+        params={"key": "test-api-key"},
+        json={"email": email, "password": password, "returnSecureToken": True},
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()["idToken"]
 
 
 def assert_firebase_is_emulator() -> None:

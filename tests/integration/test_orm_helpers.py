@@ -369,10 +369,13 @@ class TestStatsOrmHelpers(unittest.TestCase):
             autocommit=False,
             expire_on_commit=False,
         )
+        cls._original_session = cls.helpers._session
         cls.helpers._session = cls.session_factory
 
     @classmethod
     def tearDownClass(cls):
+        # Put back for the tests that run after this class in the same process.
+        cls.helpers._session = cls._original_session
         # The class has its own database, which goes away with the shared container.
         cls.engine.dispose()
 
