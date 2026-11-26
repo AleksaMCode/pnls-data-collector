@@ -21,11 +21,17 @@ def start_in_background(server: ThreadingHTTPServer, test_class) -> None:
 
 
 class FakeMattermost(ThreadingHTTPServer):
-    """Records the webhook messages and answers 200, like a Mattermost incoming webhook."""
+    """Records the webhook messages and answers 200, like a Mattermost incoming webhook.
+
+    Set `status` and `reply` to answer with an error instead.
+    """
 
     def __init__(self):
         super().__init__(("127.0.0.1", 0), _FakeMattermostHandler)
         self.messages = []
+        self.headers = []
+        self.status = 200
+        self.reply = b"ok"
 
     @property
     def url(self) -> str:
@@ -36,10 +42,11 @@ class _FakeMattermostHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         self.server.messages.append(json.loads(self.rfile.read(length)))
-        self.send_response(200)
-        self.send_header("Content-Length", "2")
+        self.server.headers.append(dict(self.headers))
+        self.send_response(self.server.status)
+        self.send_header("Content-Length", str(len(self.server.reply)))
         self.end_headers()
-        self.wfile.write(b"ok")
+        self.wfile.write(self.server.reply)
 
     def log_message(self, format, *args):
         pass
