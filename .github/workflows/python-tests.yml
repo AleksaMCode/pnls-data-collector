@@ -68,6 +68,7 @@ jobs:
           cp aggregator/settings.py.template aggregator/settings.py
           cp firebase_housekeeping/settings.py.template firebase_housekeeping/settings.py
           cp collector/settings.py.template collector/settings.py
+          cp collector_metrics_agent/settings.py.template collector_metrics_agent/settings.py
 
       - name: Run unit tests with coverage
         run: python -m coverage run -m unittest discover -v -s tests/unit -t .
