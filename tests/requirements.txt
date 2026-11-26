@@ -21,5 +21,7 @@ datadog==0.52.1
 psutil==7.2.2
 pymongo==4.18.3
 fastapi-cache2==0.2.2
+# fastapi-cache2 imports starlette.templating, which needs jinja2 (stats_api gets it from fastapi[standard]).
+jinja2==3.1.6
 logfire[fastapi,redis,sqlalchemy]==5.2.0
 opentelemetry-api==1.45.2
