@@ -23,32 +23,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	conductorclient "github.com/conductor-sdk/conductor-go/sdk/client"
 	_jsii "github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/worker"
 	workflowexecutor "github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 	tc "github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/minio"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil/containers"
 )
 
 const defaultConductorIntegrationImage = "conductoross/conductor-standalone:3.15.0"
 
 func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			panicMsg := fmt.Sprint(r)
-			if strings.Contains(strings.ToLower(panicMsg), "rootless docker is not supported on windows") {
-				t.Skipf("skipping integration test due to unsupported Docker mode on Windows: %s", panicMsg)
-			}
-			panic(r)
-		}
-	}()
+	// Started first: it skips the test when Docker isn't available, and fails it in CI.
+	silo := containers.StartSilo(t)
+	bucketName := silo.CreateBucket(t, "db-backup-it")
 
 	ctx := context.Background()
 	moduleRoot := moduleRootPath(t)
@@ -93,41 +84,6 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 	}
 	pgDumpBin := resolvePgDumpBinaryForTest(t, pgContainer.GetContainerID())
 
-	minioContainer, err := minio.Run(
-		ctx,
-		"pgsty/silo:RELEASE.2026-11-12T00-00-00Z",
-		minio.WithUsername("minioadmin"),
-		minio.WithPassword("minioadmin"),
-		tc.WithWaitStrategy(wait.ForHTTP("/minio/health/live").WithPort("9000/tcp")),
-	)
-	if err != nil {
-		t.Fatalf("start minio container: %v", err)
-	}
-	t.Cleanup(func() {
-		_ = minioContainer.Terminate(context.Background())
-	})
-
-	minioEndpoint, err := minioContainer.ConnectionString(ctx)
-	if err != nil {
-		t.Fatalf("minio connection string: %v", err)
-	}
-	minioEndpoint = ensureHTTPURL(minioEndpoint)
-	if _, err := url.ParseRequestURI(minioEndpoint); err != nil {
-		t.Fatalf("invalid minio endpoint %q: %v", minioEndpoint, err)
-	}
-
-	minioS3Client, err := newS3ClientForMinio(minioEndpoint, "minioadmin", "minioadmin")
-	if err != nil {
-		t.Fatalf("minio s3 client: %v", err)
-	}
-	bucketName := "db-backup-it"
-	_, err = minioS3Client.CreateBucket(ctx, &s3.CreateBucketInput{
-		Bucket: aws.String(bucketName),
-	})
-	if err != nil {
-		t.Fatalf("create minio bucket: %v", err)
-	}
-
 	conductorCtr, err := tc.Run(
 		ctx,
 		defaultConductorIntegrationImage,
@@ -162,11 +118,11 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 		DBUser:              pgUser,
 		DBPassword:          pgPass,
 		DBName:              pgDBName,
-		R2AccessKey:         "minioadmin",
-		R2SecretKey:         "minioadmin",
+		R2AccessKey:         containers.SiloAccessKey,
+		R2SecretKey:         containers.SiloSecretKey,
 		R2BucketName:        bucketName,
-		R2BucketPublicURL:   minioEndpoint,
-		R2Endpoint:          minioEndpoint,
+		R2BucketPublicURL:   silo.Endpoint,
+		R2Endpoint:          silo.Endpoint,
 		CloudflareAccountID: "local",
 		EncryptionKeyRaw:    base64.StdEncoding.EncodeToString([]byte("12345678901234567890123456789012")),
 		UploadTimeout:       30 * time.Second,
@@ -258,19 +214,7 @@ func TestWorkflowIntegration_PostgresToMinioR2(t *testing.T) {
 		t.Fatalf("workflow output object_key missing: %#v", finalWf.Output)
 	}
 
-	obj, err := minioS3Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
-	})
-	if err != nil {
-		t.Fatalf("get object from minio: %v", err)
-	}
-	defer obj.Body.Close()
-
-	uploadedBytes, err := io.ReadAll(obj.Body)
-	if err != nil {
-		t.Fatalf("read uploaded object: %v", err)
-	}
+	uploadedBytes, _ := silo.GetObject(t, bucketName, objectKey)
 
 	decompressed, err := ungzipBytes(uploadedBytes)
 	if err != nil {
@@ -327,28 +271,6 @@ func moduleRootPath(t *testing.T) string {
 		t.Fatal("cannot resolve caller path")
 	}
 	return filepath.Clean(filepath.Join(filepath.Dir(filename), "..", ".."))
-}
-
-func ensureHTTPURL(raw string) string {
-	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
-		return raw
-	}
-	return "http://" + raw
-}
-
-func newS3ClientForMinio(endpoint, accessKey, secretKey string) (*s3.Client, error) {
-	awsCfg, err := awsconfig.LoadDefaultConfig(
-		context.Background(),
-		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
-		awsconfig.WithRegion("us-east-1"),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return s3.NewFromConfig(awsCfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
-		o.UsePathStyle = true
-	}), nil
 }
 
 func ungzipBytes(data []byte) ([]byte, error) {
