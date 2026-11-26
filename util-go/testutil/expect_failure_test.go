@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	"github.com/AleksaMCode/pnls-data-collector/util-go/internal/testsupport"
 )
 
 func requireNoError(t TB, err error) {
@@ -55,12 +53,12 @@ func TestExpectFailureCleanupRunsWithTheTest(t *testing.T) {
 }
 
 func TestExpectFailureFailsOnceTheBugIsFixed(t *testing.T) {
-	if testsupport.InChild(t) {
+	if InChild(t) {
 		ExpectFailure(t, "the fixed bug", func(TB) {})
 		return
 	}
 
-	result := testsupport.RunInChild(t)
+	result := RunInChild(t)
 
 	if result.ExitCode == 0 {
 		t.Fatalf("expected the test to fail when the check passes, it passed:\n%s", result.Output())

@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AleksaMCode/pnls-data-collector/util-go/internal/testsupport"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil"
 )
@@ -217,12 +216,12 @@ func TestSendMattermostMessageLogsOnNon200(t *testing.T) {
 }
 
 func TestSendMattermostMessageInvalidWebhookFatal(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		SendMattermostMessage("://bad-url", "svc", "hello")
 		return
 	}
 
-	result := testsupport.RunInChild(t)
+	result := testutil.RunInChild(t)
 
 	if result.ExitCode != 1 {
 		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
@@ -233,12 +232,12 @@ func TestSendMattermostMessageInvalidWebhookFatal(t *testing.T) {
 }
 
 func TestSendMattermostMessageUnreachableWebhookFatal(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		SendMattermostMessageWithImage(os.Getenv("UTIL_GO_TEST_WEBHOOK"), "svc", "hello", "https://example.com/a.png")
 		return
 	}
 
-	result := testsupport.RunInChild(t, "UTIL_GO_TEST_WEBHOOK="+refusedURL())
+	result := testutil.RunInChild(t, "UTIL_GO_TEST_WEBHOOK="+refusedURL())
 
 	if result.ExitCode != 1 {
 		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
@@ -327,14 +326,14 @@ func TestRequestTimesOut(t *testing.T) {
 }
 
 func TestDeliveryFailureIsReportedToSentry(t *testing.T) {
-	if testsupport.InChild(t) {
-		logging.InitSentry(os.Getenv(testsupport.SentryDSNEnv), "Collector status notifier")
+	if testutil.InChild(t) {
+		logging.InitSentry(os.Getenv(testutil.SentryDSNEnv), "Collector status notifier")
 		SendMattermostMessage(os.Getenv("UTIL_GO_TEST_WEBHOOK"), "Collector status notifier", "RPI-1 is offline.")
 		return
 	}
 
-	sentry := testsupport.NewFakeSentry(t)
-	testsupport.RunInChild(t, testsupport.SentryDSNEnv+"="+sentry.DSN(), "UTIL_GO_TEST_WEBHOOK="+refusedURL())
+	sentry := testutil.NewFakeSentry(t)
+	testutil.RunInChild(t, testutil.SentryDSNEnv+"="+sentry.DSN(), "UTIL_GO_TEST_WEBHOOK="+refusedURL())
 
 	testutil.ExpectFailure(t, "a failed delivery exits with log.Fatal, which skips Sentry.", func(t testutil.TB) {
 		if events := sentry.WaitForEvents(1, time.Second); len(events) != 1 || events[0].Level != "fatal" {

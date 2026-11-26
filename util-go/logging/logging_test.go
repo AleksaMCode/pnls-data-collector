@@ -10,7 +10,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 
-	"github.com/AleksaMCode/pnls-data-collector/util-go/internal/testsupport"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil"
 )
 
 // logFileEnv passes the log file to the child process. The log file stays open until the process ends, so the tests
@@ -39,24 +39,24 @@ func captureLog(t *testing.T) *strings.Builder {
 }
 
 // useFakeSentry sets up Sentry for the test with a fake server, and turns Sentry off when the test ends.
-func useFakeSentry(t *testing.T, serviceName string) *testsupport.FakeSentry {
+func useFakeSentry(t *testing.T, serviceName string) *testutil.FakeSentry {
 	t.Helper()
 
-	fake := testsupport.NewFakeSentry(t)
+	fake := testutil.NewFakeSentry(t)
 	InitSentry(fake.DSN(), serviceName)
 	t.Cleanup(func() { _ = sentry.Init(sentry.ClientOptions{}) })
 	return fake
 }
 
 func TestInitLoggingWritesToStdoutAndTheFile(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		InitLogging(os.Getenv(logFileEnv))
 		log.Print("Checking the collectors.")
 		return
 	}
 
 	logFile := filepath.Join(t.TempDir(), "collector_status_notifier.log")
-	result := testsupport.RunInChild(t, logFileEnv+"="+logFile)
+	result := testutil.RunInChild(t, logFileEnv+"="+logFile)
 
 	if !strings.Contains(result.Stdout, "Checking the collectors.") {
 		t.Errorf("expected the record on stdout, got:\n%s", result.Stdout)
@@ -70,14 +70,14 @@ func TestInitLoggingWritesToStdoutAndTheFile(t *testing.T) {
 }
 
 func TestInitLoggingCreatesTheLogFolder(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		InitLogging(os.Getenv(logFileEnv))
 		log.Print("Started.")
 		return
 	}
 
 	logFile := filepath.Join(t.TempDir(), "logs", "notifier", "service.log")
-	testsupport.RunInChild(t, logFileEnv+"="+logFile)
+	testutil.RunInChild(t, logFileEnv+"="+logFile)
 
 	if content := readLogFile(t, logFile); !strings.Contains(content, "Started.") {
 		t.Fatalf("expected the record in the log file, got:\n%s", content)
@@ -85,7 +85,7 @@ func TestInitLoggingCreatesTheLogFolder(t *testing.T) {
 }
 
 func TestInitLoggingAppendsToAnExistingFile(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		InitLogging(os.Getenv(logFileEnv))
 		log.Print("Second run.")
 		return
@@ -95,7 +95,7 @@ func TestInitLoggingAppendsToAnExistingFile(t *testing.T) {
 	if err := os.WriteFile(logFile, []byte("First run.\n"), 0o600); err != nil {
 		t.Fatalf("failed to write the log file: %v", err)
 	}
-	testsupport.RunInChild(t, logFileEnv+"="+logFile)
+	testutil.RunInChild(t, logFileEnv+"="+logFile)
 
 	content := readLogFile(t, logFile)
 	if !strings.HasPrefix(content, "First run.\n") || !strings.Contains(content, "Second run.") {
@@ -146,16 +146,16 @@ func TestInitSentryWithoutDSNTurnsSentryOff(t *testing.T) {
 }
 
 func TestFatalLogsReportsToSentryAndExits(t *testing.T) {
-	if testsupport.InChild(t) {
-		InitObservability(os.Getenv(logFileEnv), os.Getenv(testsupport.SentryDSNEnv), "Firebase limit notifier")
+	if testutil.InChild(t) {
+		InitObservability(os.Getenv(logFileEnv), os.Getenv(testutil.SentryDSNEnv), "Firebase limit notifier")
 		Fatal("Firebase usage could not be read.")
 		log.Print("Still running.")
 		return
 	}
 
-	fake := testsupport.NewFakeSentry(t)
+	fake := testutil.NewFakeSentry(t)
 	logFile := filepath.Join(t.TempDir(), "firebase_limit_notifier.log")
-	result := testsupport.RunInChild(t, logFileEnv+"="+logFile, testsupport.SentryDSNEnv+"="+fake.DSN())
+	result := testutil.RunInChild(t, logFileEnv+"="+logFile, testutil.SentryDSNEnv+"="+fake.DSN())
 
 	if result.ExitCode != 1 {
 		t.Errorf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
@@ -172,7 +172,7 @@ func TestFatalLogsReportsToSentryAndExits(t *testing.T) {
 	if len(events) != 1 {
 		t.Fatalf("expected one event in Sentry before the exit, got %+v", events)
 	}
-	want := testsupport.SentryEvent{
+	want := testutil.SentryEvent{
 		Message:    "Firebase usage could not be read.",
 		Level:      "fatal",
 		ServerName: "Firebase limit notifier",
@@ -184,12 +184,12 @@ func TestFatalLogsReportsToSentryAndExits(t *testing.T) {
 
 func TestFatalBeforeSetupOnlyLogs(t *testing.T) {
 	// As when the .env file can't be loaded: the services load it before they set up logging and Sentry.
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		Fatal("Error loading .env file")
 		return
 	}
 
-	result := testsupport.RunInChild(t)
+	result := testutil.RunInChild(t)
 
 	if result.ExitCode != 1 {
 		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())

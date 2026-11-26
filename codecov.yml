@@ -26,7 +26,6 @@ fixes:
 
 # Helpers that only the tests use.
 ignore:
-  - "util-go/internal/testsupport"
   - "util-go/testutil"
 
 comment:

@@ -1,4 +1,4 @@
-package testsupport
+package testutil
 
 import (
 	"bufio"

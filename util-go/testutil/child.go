@@ -1,5 +1,4 @@
-// Package testsupport holds helpers shared by the tests of the util-go packages.
-package testsupport
+package testutil
 
 import (
 	"bytes"

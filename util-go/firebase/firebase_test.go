@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AleksaMCode/pnls-data-collector/util-go/internal/testsupport"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil"
 )
@@ -124,12 +123,12 @@ func TestGetFirebaseClientReadsFromTheGivenDatabase(t *testing.T) {
 }
 
 func TestGetFirebaseClientMissingCredentialsFatal(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		GetFirebaseClient(context.Background(), "definitely-missing-creds.json", "https://example.firebaseio.com")
 		return
 	}
 
-	result := testsupport.RunInChild(t)
+	result := testutil.RunInChild(t)
 
 	if result.ExitCode != 1 {
 		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
@@ -142,13 +141,13 @@ func TestGetFirebaseClientMissingCredentialsFatal(t *testing.T) {
 }
 
 func TestGetFirebaseClientInvalidDatabaseURLFatal(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		credentials := writeServiceAccount(t, "https://oauth2.googleapis.com/token")
 		GetFirebaseClient(context.Background(), credentials, "not a database url")
 		return
 	}
 
-	result := testsupport.RunInChild(t)
+	result := testutil.RunInChild(t)
 
 	if result.ExitCode != 1 {
 		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
@@ -159,14 +158,14 @@ func TestGetFirebaseClientInvalidDatabaseURLFatal(t *testing.T) {
 }
 
 func TestGetFirebaseClientFailureIsReportedToSentry(t *testing.T) {
-	if testsupport.InChild(t) {
-		logging.InitSentry(os.Getenv(testsupport.SentryDSNEnv), "Collector status notifier")
+	if testutil.InChild(t) {
+		logging.InitSentry(os.Getenv(testutil.SentryDSNEnv), "Collector status notifier")
 		GetFirebaseClient(context.Background(), "definitely-missing-creds.json", "https://example.firebaseio.com")
 		return
 	}
 
-	sentry := testsupport.NewFakeSentry(t)
-	testsupport.RunInChild(t, testsupport.SentryDSNEnv+"="+sentry.DSN())
+	sentry := testutil.NewFakeSentry(t)
+	testutil.RunInChild(t, testutil.SentryDSNEnv+"="+sentry.DSN())
 
 	testutil.ExpectFailure(t, "GetFirebaseClient exits with log.Fatalf, which skips Sentry.", func(t testutil.TB) {
 		if events := sentry.WaitForEvents(1, time.Second); len(events) != 1 || events[0].Level != "fatal" {

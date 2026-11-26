@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AleksaMCode/pnls-data-collector/util-go/internal/testsupport"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
 	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil"
 )
@@ -53,12 +52,12 @@ func TestGetTimeNowWithoutTimezoneIsUTC(t *testing.T) {
 }
 
 func TestGetTimeNowInvalidTimezoneFatal(t *testing.T) {
-	if testsupport.InChild(t) {
+	if testutil.InChild(t) {
 		GetTimeNow("Invalid/Timezone")
 		return
 	}
 
-	result := testsupport.RunInChild(t)
+	result := testutil.RunInChild(t)
 
 	if result.ExitCode != 1 {
 		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
@@ -69,14 +68,14 @@ func TestGetTimeNowInvalidTimezoneFatal(t *testing.T) {
 }
 
 func TestGetTimeNowInvalidTimezoneIsReportedToSentry(t *testing.T) {
-	if testsupport.InChild(t) {
-		logging.InitSentry(os.Getenv(testsupport.SentryDSNEnv), "Collector status notifier")
+	if testutil.InChild(t) {
+		logging.InitSentry(os.Getenv(testutil.SentryDSNEnv), "Collector status notifier")
 		GetTimeNow("Invalid/Timezone")
 		return
 	}
 
-	sentry := testsupport.NewFakeSentry(t)
-	testsupport.RunInChild(t, testsupport.SentryDSNEnv+"="+sentry.DSN())
+	sentry := testutil.NewFakeSentry(t)
+	testutil.RunInChild(t, testutil.SentryDSNEnv+"="+sentry.DSN())
 
 	testutil.ExpectFailure(t, "GetTimeNow exits with log.Fatalf, which skips Sentry.", func(t testutil.TB) {
 		if events := sentry.WaitForEvents(1, time.Second); len(events) != 1 || events[0].Level != "fatal" {
