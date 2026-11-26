@@ -1,19 +1,16 @@
 package common
 
 import (
-	"errors"
+	"math"
 	"os"
-	"os/exec"
+	"strings"
 	"testing"
 	"time"
-)
 
-func almostEqual(a float64, b float64, tolerance float64) bool {
-	if a > b {
-		return a-b < tolerance
-	}
-	return b-a < tolerance
-}
+	"github.com/AleksaMCode/pnls-data-collector/util-go/internal/testsupport"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/testutil"
+)
 
 func TestGetTimeNowReturnsRequestedTimezone(t *testing.T) {
 	now := GetTimeNow("Europe/Paris")
@@ -28,23 +25,64 @@ func TestGetTimeNowReturnsRequestedTimezone(t *testing.T) {
 	}
 }
 
+func TestGetTimeNowIsTheCurrentMoment(t *testing.T) {
+	before := time.Now()
+	now := GetTimeNow("Europe/Paris")
+	after := time.Now()
+
+	if now.Before(before) || now.After(after) {
+		t.Fatalf("expected a time between %v and %v, got %v", before, after, now)
+	}
+}
+
+func TestGetTimeNowWallTimeIsInTheRequestedTimezone(t *testing.T) {
+	now := GetTimeNow("Europe/Paris")
+
+	// Paris is UTC+1 in winter and UTC+2 in summer.
+	_, offset := now.Zone()
+	if offset != 3600 && offset != 7200 {
+		t.Fatalf("expected an offset of 1 or 2 hours, got %d seconds", offset)
+	}
+}
+
+func TestGetTimeNowWithoutTimezoneIsUTC(t *testing.T) {
+	// Documents the current behavior: time.LoadLocation("") is UTC, not an error.
+	if got := GetTimeNow("").Location(); got != time.UTC {
+		t.Fatalf("expected UTC, got %v", got)
+	}
+}
+
 func TestGetTimeNowInvalidTimezoneFatal(t *testing.T) {
-	if os.Getenv("TEST_INVALID_TZ_FATAL") == "1" {
+	if testsupport.InChild(t) {
 		GetTimeNow("Invalid/Timezone")
 		return
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestGetTimeNowInvalidTimezoneFatal")
-	cmd.Env = append(os.Environ(), "TEST_INVALID_TZ_FATAL=1")
+	result := testsupport.RunInChild(t)
 
-	err := cmd.Run()
-	if err == nil {
-		t.Fatal("expected process to exit with non-zero status")
+	if result.ExitCode != 1 {
+		t.Fatalf("expected exit code 1, got %d:\n%s", result.ExitCode, result.Output())
+	}
+	if !strings.Contains(result.Output(), "Error loading timezone: unknown time zone Invalid/Timezone") {
+		t.Fatalf("expected the timezone error to be logged, got:\n%s", result.Output())
+	}
+}
+
+func TestGetTimeNowInvalidTimezoneIsReportedToSentry(t *testing.T) {
+	if testsupport.InChild(t) {
+		logging.InitSentry(os.Getenv(testsupport.SentryDSNEnv), "Collector status notifier")
+		GetTimeNow("Invalid/Timezone")
+		return
 	}
 
-	if _, ok := errors.AsType[*exec.ExitError](err); !ok {
-		t.Fatalf("expected *exec.ExitError, got %T (%v)", err, err)
-	}
+	sentry := testsupport.NewFakeSentry(t)
+	testsupport.RunInChild(t, testsupport.SentryDSNEnv+"="+sentry.DSN())
+
+	testutil.ExpectFailure(t, "GetTimeNow exits with log.Fatalf, which skips Sentry.", func(t testutil.TB) {
+		if events := sentry.WaitForEvents(1, time.Second); len(events) != 1 || events[0].Level != "fatal" {
+			t.Fatalf("expected one fatal event in Sentry, got %+v", events)
+		}
+	})
 }
 
 func TestGetPercentage(t *testing.T) {
@@ -59,12 +97,16 @@ func TestGetPercentage(t *testing.T) {
 		{"zero part", 0, 100, 0},
 		{"decimal", 2.5, 10, 25},
 		{"zero whole", 1, 0, 0},
+		{"zero of zero", 0, 0, 0},
+		{"over the limit", 12, 10, 120},
+		{"negative part", -5, 10, -50},
+		{"small fraction", 1, 3, 100.0 / 3},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := GetPercentage(tt.part, tt.whole)
-			if !almostEqual(result, tt.expected, 0.000001) {
+			if math.Abs(result-tt.expected) > 1e-9 {
 				t.Errorf("expected %f, got %f", tt.expected, result)
 			}
 		})

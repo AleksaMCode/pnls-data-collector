@@ -24,6 +24,11 @@ fixes:
   - "hslimnot/::home_server_limit_notifier/"
   - "github.com/AleksaMCode/pnls-data-collector/util-go/::util-go/"
 
+# Helpers that only the tests use.
+ignore:
+  - "util-go/internal/testsupport"
+  - "util-go/testutil"
+
 comment:
   layout: "condensed_header, diff, flags, condensed_files"
   require_changes: true
