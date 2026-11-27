@@ -26,6 +26,8 @@ export default tseslint.config(
     rules: {
       // Formatting is handled by Prettier, so no stylistic rules are enabled here.
       'react/prop-types': 'off',
+      // Only console info, warn and error are allowed.
+      'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
       // The findings that existed when this rule was enabled are listed in eslint-suppressions.json.
       'react-hooks/set-state-in-effect': 'error',
     },

@@ -91,7 +91,7 @@ function runSqlFile(container, file) {
 async function seed(container) {
   const untilMidnight = msUntilParisMidnight();
   if (untilMidnight < DAY_CHANGE_MARGIN_MS) {
-    console.log(
+    console.info(
       `Paris midnight is ${Math.ceil(untilMidnight / 60_000)} min away; waiting for it before seeding.`,
     );
     await new Promise((resolve) => setTimeout(resolve, untilMidnight + 5000));
