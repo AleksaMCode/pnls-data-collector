@@ -4,5 +4,8 @@ Dockerfile
 .dockerignore
 build 
 coverage
+test-results
+playwright-report
+e2e/.dist
 *.sh
 *.json

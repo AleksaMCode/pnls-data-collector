@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
+  connectDatabaseEmulator,
   getDatabase,
   get,
   ref,
@@ -23,11 +24,37 @@ const firebaseConfig = {
 
 const ONLINE_WINDOW_MS = 11 * 60 * 1000; // 11 minutes
 
+// Set only by the end-to-end tests, as "host:port", to use the Firebase emulators instead of the real
+// project. Production builds leave them unset.
+const authEmulatorHost = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST;
+const databaseEmulatorHost = import.meta.env
+  .VITE_FIREBASE_DATABASE_EMULATOR_HOST;
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+if (authEmulatorHost) {
+  connectAuthEmulator(auth, `http://${authEmulatorHost}`, {
+    disableWarnings: true,
+  });
+}
+
+let database;
+
 function getFirebaseDb() {
-  return getDatabase(app);
+  if (!database) {
+    database = getDatabase(app);
+    if (databaseEmulatorHost) {
+      // The emulator must be connected before the first read, and only once.
+      const separator = databaseEmulatorHost.lastIndexOf(':');
+      connectDatabaseEmulator(
+        database,
+        databaseEmulatorHost.slice(0, separator),
+        Number(databaseEmulatorHost.slice(separator + 1)),
+      );
+    }
+  }
+  return database;
 }
 
 function getLastNDates(n) {

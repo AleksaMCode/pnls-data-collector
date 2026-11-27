@@ -1,3 +1,4 @@
+# Keep the Node version in sync with .nvmrc at the repository root.
 FROM node:26.13-alpine
 
 # The npm bundled in the base image ships libraries with known vulnerabilities (undici, brace-expansion).

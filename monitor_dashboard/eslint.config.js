@@ -42,7 +42,24 @@ export default tseslint.config(
     },
   },
   {
-    files: ['vite.config.js', 'eslint.config.js'],
-    languageOptions: { globals: globals.node },
+    files: [
+      'vite.config.js',
+      'eslint.config.js',
+      'vitest.config.js',
+      'playwright.config.js',
+      'e2e/**',
+      'test/**',
+      'src/**/*.test.{js,jsx}',
+    ],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+  {
+    // Playwright fixtures declare their dependencies with an empty object pattern, and hand their
+    // value to the test with a function named `use`, which is not a React hook.
+    files: ['e2e/**'],
+    rules: {
+      'no-empty-pattern': 'off',
+      'react-hooks/rules-of-hooks': 'off',
+    },
   },
 );

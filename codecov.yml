@@ -10,8 +10,8 @@ coverage:
       default:
         informational: true
 
-# The Go and Python tests run in separate workflows, each only when its own files change.
-# The coverage of the language that did not run is carried over from the previous commit.
+# The Go, Python and monitor dashboard tests run in separate workflows, each only when its own files change.
+# The coverage of the ones that did not run is carried over from the previous commit.
 flag_management:
   default_rules:
     carryforward: true

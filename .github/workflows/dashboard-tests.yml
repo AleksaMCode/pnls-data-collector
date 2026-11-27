@@ -1,0 +1,99 @@
+name: PNLS-DC Monitor Dashboard Tests
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/**"
+      - ".github/workflows/dashboard-tests.yml"
+      - ".nvmrc"
+      - "codecov.yml"
+      # The emulator and end-to-end tests build the Firebase emulator image from this folder.
+      - "tests/integration/firebase_emulator/**"
+      # The end-to-end tests run the stats API's image on the Supabase migrations.
+      - "stats_api/**"
+      - "stats/supabase/migrations/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - "monitor_dashboard/**"
+      - ".github/workflows/dashboard-tests.yml"
+      - ".nvmrc"
+      - "codecov.yml"
+      - "tests/integration/firebase_emulator/**"
+      - "stats_api/**"
+      - "stats/supabase/migrations/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+
+    defaults:
+      run:
+        working-directory: monitor_dashboard
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+          cache-dependency-path: monitor_dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Unit, integration and Firebase emulator tests; the emulator tests start a Docker container.
+      - name: Run tests with coverage
+        id: tests
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        if: ${{ !cancelled() && (steps.tests.outcome == 'success' || steps.tests.outcome == 'failure') }}
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: monitor_dashboard/coverage/lcov.info
+          flags: dashboard
+          disable_search: true
+
+  e2e:
+    runs-on: ubuntu-26.04
+
+    defaults:
+      run:
+        working-directory: monitor_dashboard
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+          cache-dependency-path: monitor_dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Builds the dashboard and starts the stats API, Postgres, Redis and the Firebase emulators.
+      - name: Run end-to-end tests
+        run: npm run test:e2e
+
+      - name: Upload the Playwright report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            monitor_dashboard/playwright-report
+            monitor_dashboard/test-results
+          retention-days: 7

@@ -10,6 +10,7 @@ on:
       - ".markdownlint-cli2.jsonc"
       - ".prettierrc"
       - ".prettierignore"
+      - ".nvmrc"
   pull_request:
     branches: [master]
     paths:
@@ -19,6 +20,7 @@ on:
       - ".markdownlint-cli2.jsonc"
       - ".prettierrc"
       - ".prettierignore"
+      - ".nvmrc"
 
 jobs:
   markdown:
@@ -31,7 +33,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: monitor_dashboard/.nvmrc
+          node-version-file: .nvmrc
           cache: "npm"
           cache-dependency-path: package-lock.json
 

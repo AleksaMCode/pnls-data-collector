@@ -15,6 +15,7 @@ TEST_GO_INTEGRATION_TARGETS := $(addprefix test-go-integration-,$(GO_INTEGRATION
 .PHONY: lint lint-python lint-go lint-react lint-markdown lint-docker $(LINT_GO_TARGETS)
 .PHONY: test test-python test-python-unit test-python-integration test-orchestrator
 .PHONY: test-go test-go-unit test-go-integration $(TEST_GO_UNIT_TARGETS) $(TEST_GO_INTEGRATION_TARGETS)
+.PHONY: test-react test-react-unit test-react-integration test-react-emulator test-react-e2e
 .PHONY: audit-python audit-fix-python check-util-requirements-sync $(AUDIT_TARGETS) $(AUDIT_FIX_TARGETS)
 .PHONY: scan-secrets
 
@@ -56,10 +57,11 @@ lint-markdown:
 	npm run fmt:markdown:check
 	npm run lint:markdown
 
-# `test`, `test-python` and `test-go` run the same tests as CI, integration tests included, so they need Docker.
-# The `-unit` targets skip the integration tests and need no Docker.
+# `test`, `test-python`, `test-go` and `test-react` run the same tests as CI, integration tests included, so they
+# need Docker. The `-unit` targets skip the integration tests and need no Docker.
 # The orchestrator tests are not part of `test`: they need Airflow installed (see orchestrator/Makefile).
-test: test-python test-go
+# Nor are the dashboard's end-to-end tests: they need Chromium (see `test-react-e2e`).
+test: test-python test-go test-react
 
 test-python:
 	$(MAKE) -C tests test
@@ -91,6 +93,25 @@ $(TEST_GO_UNIT_TARGETS): test-go-unit-%:
 
 $(TEST_GO_INTEGRATION_TARGETS): test-go-integration-%:
 	$(MAKE) -C $* test-integration
+
+# The monitor dashboard's tests (see monitor_dashboard/Makefile). Unit and integration tests run in jsdom and need
+# no Docker; the emulator tests start the Firebase emulators in Docker.
+test-react:
+	$(MAKE) -C monitor_dashboard test test-emulator
+
+test-react-unit:
+	$(MAKE) -C monitor_dashboard test-unit
+
+test-react-integration:
+	$(MAKE) -C monitor_dashboard test-integration
+
+test-react-emulator:
+	$(MAKE) -C monitor_dashboard test-emulator
+
+# The built dashboard in Chromium against the stats API, Postgres, Redis and the Firebase emulators, all in Docker.
+# Install Chromium once with `cd monitor_dashboard && npx playwright install chromium`.
+test-react-e2e:
+	$(MAKE) -C monitor_dashboard test-e2e
 
 scan-secrets:
 	python -m pre_commit run gitleaks --all-files
