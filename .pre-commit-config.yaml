@@ -32,3 +32,5 @@ repos:
         language: docker_image
         entry: hadolint/hadolint:v2.15.1 hadolint
         types: [dockerfile]
+        # Dockerfile.dockerignore files are ignore lists, which pre-commit also types as Dockerfiles.
+        exclude: \.dockerignore$

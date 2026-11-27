@@ -2,12 +2,19 @@
 # (see tests/integration/containers.py).
 # Google publishes no Docker image for the emulator: it is the firebase-tools npm package and needs Java.
 # Node is copied from the official Node image, so no unpinned apt packages are installed.
-FROM node:22-bookworm-slim AS node
+# Keep its version in sync with .nvmrc at the repository root.
+FROM node:26.13-bookworm-slim AS node
+
+# Node needs libatomic, which the Java image lacks. It's collected here because its folder depends on
+# the CPU architecture.
+RUN mkdir /node-libs && cp -P /usr/lib/*-linux-gnu/libatomic.so.1* /node-libs/
 
 FROM eclipse-temurin:21-jre-noble
 
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node /node-libs/ /usr/local/lib/
+RUN ldconfig
 
 # Bump to a newer firebase-tools release when needed; the emulator API used by the tests is stable.
 ARG FIREBASE_TOOLS_VERSION=14.0.0

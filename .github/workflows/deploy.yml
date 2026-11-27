@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - "monitor_dashboard/**"
+      - ".nvmrc"
       - "stats_api/**"
   workflow_dispatch:
 
@@ -30,6 +31,7 @@ jobs:
               - "stats_api/**"
             monitor_dashboard:
               - "monitor_dashboard/**"
+              - ".nvmrc"
 
   deploy_stats_api:
     needs: changes
@@ -71,6 +73,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+          cache-dependency-path: monitor_dashboard/package-lock.json
 
       - name: Build monitor-dashboard
         run: |

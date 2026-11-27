@@ -1,0 +1,18 @@
+# Used instead of a root .dockerignore when building stats_api/Dockerfile (BuildKit). Paths are
+# relative to the build context, the repository root. Only stats_api/ is sent, without local dotenv
+# files: the settings come from the container's environment (env_file in docker-compose.yml).
+*
+!stats_api
+
+# Secrets, as in the root .dockerignore, which this file replaces. The service reads its Firebase
+# credentials from FIREBASE_CREDENTIALS_JSON, so no such file belongs in the image.
+stats_api/**/.env
+stats_api/**/.env.*
+stats_api/**/firebase_credentials.json
+stats_api/**/*.pem
+
+# Local tooling and caches: the FastAPI Cloud CLI's deploy state, environments and bytecode.
+stats_api/**/.fastapicloud
+stats_api/**/.venv
+stats_api/**/node_modules
+stats_api/**/__pycache__

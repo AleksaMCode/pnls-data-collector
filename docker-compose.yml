@@ -1,3 +1,19 @@
+# Each service's own docker-compose.yml, so they can all be built and run from here, e.g.
+#   docker compose up -d --build --no-deps aggregator aggregator_worker flower
+# An included file keeps its own folder as its base: its paths, env_file and ${...} values (read from
+# that folder's .env) resolve as when it's run from its folder.
+include:
+  - aggregator/docker-compose.yml
+  - cloudflare_limit_notifier/docker-compose.yml
+  - collector_status_notifier/docker-compose.yml
+  - db_backup/docker-compose.yml
+  - firebase_housekeeping/docker-compose.yml
+  - firebase_limit_notifier/docker-compose.yml
+  - orchestrator/docker-compose.yml
+  - ssid_geo_mapper/docker-compose.yml
+  - stats/docker-compose.yml
+  - stats_api/docker-compose.yml
+
 services:
   monitor_dashboard:
     build:
@@ -29,6 +45,8 @@ services:
 volumes:
   uptime_kuma_data:
 
+# The network the services share. The included files define it exactly the same way, so each still runs
+# on its own; Compose refuses to merge definitions that differ (for example, one marked external).
 networks:
   pnls:
     name: pnls

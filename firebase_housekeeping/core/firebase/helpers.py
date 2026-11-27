@@ -42,9 +42,8 @@ def delete_all_by_nodes():
         logger.info("No data found in Firebase.")
     else:
         for key in top_level_nodes.keys():
-            if key != FIREBASE_STATISTICS_NODE:
-                logger.info(f"Deleting node: {key}")
-                ref.child(key).delete()
+            logger.info(f"Deleting node: {key}")
+            ref.child(key).delete()
         logger.info("Deleted all data from Firebase.")
 
 
@@ -78,8 +77,6 @@ def delete_all_by_smallest_nodes():
         deleted_nodes += 1
 
     for key in top_level_nodes.keys():
-        if key == FIREBASE_STATISTICS_NODE:
-            continue
         _delete_leaf_nodes(f"/{key}")
 
     logger.info(f"Deleted {deleted_nodes} smallest Firebase nodes.")
@@ -110,8 +107,6 @@ def delete_all_by_entry_nodes():
     today = datetime.now(ZoneInfo(TIMEZONE)).strftime(TIMESTAMP_FORMAT.split(" ")[0])
 
     for top_key in top_level_nodes.keys():
-        if top_key == FIREBASE_STATISTICS_NODE:
-            continue
         # Skip any top-level node that contains today's date (#281)
         if today in top_key:
             logger.info(f"Skipping today's node: {top_key}")

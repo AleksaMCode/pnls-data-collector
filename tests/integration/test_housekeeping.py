@@ -54,7 +54,8 @@ def seed_tree() -> dict:
     }
 
 
-AFTER_HOUSEKEEPING = {"stats": STATS, f"RPI-2-{TODAY}": seed_tree()[f"RPI-2-{TODAY}"]}
+# The statistics node is no longer used, so it's deleted with the rest.
+AFTER_HOUSEKEEPING = {f"RPI-2-{TODAY}": seed_tree()[f"RPI-2-{TODAY}"]}
 
 
 class FixedClock(datetime):
@@ -144,7 +145,7 @@ class TestFirebaseHelpersOnTheEmulator(FirebaseTestCase):
             },
         )
 
-    def test_delete_by_entry_nodes_keeps_statistics_and_today(self):
+    def test_delete_by_entry_nodes_keeps_only_today(self):
         firebase_helpers.delete_all_by_entry_nodes()
 
         self.assertEqual(self.firebase(), AFTER_HOUSEKEEPING)
@@ -165,15 +166,15 @@ class TestFirebaseHelpersOnTheEmulator(FirebaseTestCase):
 
         self.assertEqual(self.firebase(), AFTER_HOUSEKEEPING)
 
-    def test_delete_by_nodes_keeps_only_statistics(self):
+    def test_delete_by_nodes_deletes_everything(self):
         firebase_helpers.delete_all_by_nodes()
 
-        self.assertEqual(self.firebase(), {"stats": STATS})
+        self.assertEqual(self.firebase(), {})
 
-    def test_delete_by_smallest_nodes_keeps_only_statistics(self):
+    def test_delete_by_smallest_nodes_deletes_everything(self):
         firebase_helpers.delete_all_by_smallest_nodes()
 
-        self.assertEqual(self.firebase(), {"stats": STATS})
+        self.assertEqual(self.firebase(), {})
 
 
 class TestMongoHelpersOnMongo(MongoTestCase):

@@ -5,10 +5,12 @@ on:
     branches: [master]
     paths:
       - "monitor_dashboard/**"
+      - ".nvmrc"
   pull_request:
     branches: [master]
     paths:
       - "monitor_dashboard/**"
+      - ".nvmrc"
 
 jobs:
   prettier:
@@ -21,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: monitor_dashboard/.nvmrc
+          node-version-file: .nvmrc
           cache: "npm"
           cache-dependency-path: monitor_dashboard/package-lock.json
 

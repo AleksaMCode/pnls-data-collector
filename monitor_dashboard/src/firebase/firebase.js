@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
+  connectDatabaseEmulator,
   getDatabase,
   get,
   ref,
@@ -8,7 +9,8 @@ import {
   query,
   limitToLast,
   off,
-  child,
+  orderByKey,
+  startAfter,
 } from '@firebase/database';
 
 const firebaseConfig = {
@@ -23,24 +25,37 @@ const firebaseConfig = {
 
 const ONLINE_WINDOW_MS = 11 * 60 * 1000; // 11 minutes
 
+// Set only by the end-to-end tests, as "host:port", to use the Firebase emulators instead of the real
+// project. Production builds leave them unset.
+const authEmulatorHost = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST;
+const databaseEmulatorHost = import.meta.env
+  .VITE_FIREBASE_DATABASE_EMULATOR_HOST;
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-function getFirebaseDb() {
-  return getDatabase(app);
+if (authEmulatorHost) {
+  connectAuthEmulator(auth, `http://${authEmulatorHost}`, {
+    disableWarnings: true,
+  });
 }
 
-function getLastNDates(n) {
-  const dates = [];
-  const now = new Date();
+let database;
 
-  for (let i = 0; i < n; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i - 1);
-    dates.push(d.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }));
+function getFirebaseDb() {
+  if (!database) {
+    database = getDatabase(app);
+    if (databaseEmulatorHost) {
+      // The emulator must be connected before the first read, and only once.
+      const separator = databaseEmulatorHost.lastIndexOf(':');
+      connectDatabaseEmulator(
+        database,
+        databaseEmulatorHost.slice(0, separator),
+        Number(databaseEmulatorHost.slice(separator + 1)),
+      );
+    }
   }
-
-  return dates;
+  return database;
 }
 
 export async function fetchDeviceOnlineStatus(devices = []) {
@@ -123,448 +138,6 @@ export function subscribeToDeviceLiveData(deviceId, onRow) {
   return () => unsubscribe();
 }
 
-export async function fetchLast30DaysTotals() {
-  const db = getFirebaseDb();
-  const dates = getLastNDates(30);
-
-  let totalMac = 0;
-  let totalProbeRequests = 0;
-  let totalSsid = 0;
-
-  await Promise.all(
-    dates.map(async (dateStr) => {
-      const dayRef = ref(db, `stats/daily/${dateStr}`);
-      const snapshot = await get(dayRef);
-
-      if (!snapshot.exists()) return;
-
-      snapshot.forEach((deviceSnap) => {
-        const data = deviceSnap.val() || {};
-
-        totalMac += data.mac ?? 0;
-        totalProbeRequests += data.probe_requests ?? 0;
-        totalSsid += data.ssid ?? 0;
-      });
-    }),
-  );
-
-  return {
-    macCount: totalMac,
-    probeRequestCount: totalProbeRequests,
-    ssidCount: totalSsid,
-  };
-}
-
-export async function fetchLast30DaysTotalsWithSeries() {
-  const db = getFirebaseDb();
-  const dates = getLastNDates(30);
-
-  let totalMac = 0;
-  let totalProbeRequests = 0;
-  let totalSsid = 0;
-
-  const macSeries = [];
-  const probeSeries = [];
-  const ssidSeries = [];
-
-  await Promise.all(
-    dates.map(async (dateStr) => {
-      const dayRef = ref(db, `stats/daily/${dateStr}`);
-      const snapshot = await get(dayRef);
-
-      let dayMac = 0;
-      let dayProbe = 0;
-      let daySsid = 0;
-
-      if (snapshot.exists()) {
-        snapshot.forEach((deviceSnap) => {
-          const data = deviceSnap.val() || {};
-
-          dayMac += data.mac ?? 0;
-          dayProbe += data.probe_requests ?? 0;
-          daySsid += data.ssid ?? 0;
-        });
-      }
-
-      // per-day arrays
-      macSeries.push(dayMac);
-      probeSeries.push(dayProbe);
-      ssidSeries.push(daySsid);
-
-      // running totals
-      totalMac += dayMac;
-      totalProbeRequests += dayProbe;
-      totalSsid += daySsid;
-    }),
-  );
-
-  return {
-    totals: {
-      macCount: totalMac,
-      probeRequestCount: totalProbeRequests,
-      ssidCount: totalSsid,
-    },
-    series: {
-      macCount: macSeries.reverse(),
-      probeRequestCount: probeSeries.reverse(),
-      ssidCount: ssidSeries.reverse(),
-    },
-  };
-}
-
-export async function fetchProbeRequestsPerDeviceLastNDays(nDays = 30) {
-  const db = getFirebaseDb();
-  const dailyRef = ref(db, 'stats/daily');
-
-  const snapshot = await get(dailyRef);
-  if (!snapshot.exists()) return {};
-
-  // Get date keys, sorted ascending
-  const dateKeys = [];
-  snapshot.forEach((dateSnap) => {
-    dateKeys.push(dateSnap.key);
-  });
-
-  dateKeys.sort(); // YYYY-MM-DD sorts correctly
-
-  const today = new Date().toLocaleDateString('en-CA', {
-    timeZone: 'Europe/Paris',
-  });
-
-  const filteredDates = dateKeys.filter((d) => d !== today).slice(-nDays); // last N days only
-
-  const seriesPerDevice = {};
-
-  for (const date of filteredDates) {
-    const daySnap = snapshot.child(date);
-
-    daySnap.forEach((deviceSnap) => {
-      const device = deviceSnap.key;
-      const data = deviceSnap.val() || {};
-
-      if (!seriesPerDevice[device]) {
-        seriesPerDevice[device] = [];
-      }
-
-      seriesPerDevice[device].push(data.probe_requests ?? 0);
-    });
-  }
-
-  return seriesPerDevice;
-}
-
-export async function fetchMonthlyTotalsAllDevices() {
-  const db = getFirebaseDb();
-  const dailyRef = ref(db, 'stats/daily');
-
-  const snapshot = await get(dailyRef);
-  if (!snapshot.exists()) return {};
-
-  const monthlyTotals = {};
-
-  snapshot.forEach((dateSnap) => {
-    const dateKey = dateSnap.key; // e.g. "2024-03-14"
-    if (!dateKey) return;
-
-    // Extract YYYY-MM
-    const monthKey = dateKey.slice(0, 7); // "2024-03"
-
-    if (!monthlyTotals[monthKey]) {
-      monthlyTotals[monthKey] = {
-        probe_requests: 0,
-        ssid: 0,
-        mac: 0,
-      };
-    }
-
-    // Sum across all devices for this day
-    dateSnap.forEach((deviceSnap) => {
-      const data = deviceSnap.val() || {};
-
-      monthlyTotals[monthKey].probe_requests += data.probe_requests ?? 0;
-      monthlyTotals[monthKey].ssid += data.ssid ?? 0;
-      monthlyTotals[monthKey].mac += data.mac ?? 0;
-    });
-  });
-
-  return monthlyTotals;
-}
-
-export async function fetchAllDataSeries() {
-  const db = getFirebaseDb();
-
-  const dailyRef = ref(db, 'stats/daily');
-  const snapshot = await get(dailyRef);
-  if (!snapshot.exists())
-    return { macCount: [], probeRequestCount: [], ssidCount: [], dates: [] };
-
-  const dateKeys = Object.keys(snapshot.val()).sort(); // oldest → newest
-  const macSeries = [];
-  const probeSeries = [];
-  const ssidSeries = [];
-
-  const today = new Date();
-  const todayStr = today.toLocaleDateString('en-CA', {
-    timeZone: 'Europe/Paris',
-  });
-
-  for (const dateStr of dateKeys) {
-    // Skip today
-    if (dateStr === todayStr) {
-      continue;
-    }
-    const dayRef = child(dailyRef, dateStr);
-    const daySnap = await get(dayRef);
-
-    let dayMac = 0;
-    let dayProbe = 0;
-    let daySsid = 0;
-
-    if (daySnap.exists()) {
-      daySnap.forEach((deviceSnap) => {
-        const data = deviceSnap.val() || {};
-        dayMac += data.mac ?? 0;
-        dayProbe += data.probe_requests ?? 0;
-        daySsid += data.ssid ?? 0;
-      });
-    }
-
-    macSeries.push(dayMac);
-    probeSeries.push(dayProbe);
-    ssidSeries.push(daySsid);
-  }
-
-  return {
-    macCount: macSeries,
-    probeRequestCount: probeSeries,
-    ssidCount: ssidSeries,
-    dayCounts: dateKeys.length, // optional, useful for chart x-axis
-  };
-}
-
-export async function fetchDeviceDataSeries(deviceName) {
-  const db = getFirebaseDb();
-
-  const dailyRef = ref(db, 'stats/daily');
-  const snapshot = await get(dailyRef);
-
-  if (!snapshot.exists()) {
-    return {
-      macCount: [],
-      probeRequestCount: [],
-      ssidCount: [],
-      dates: [],
-    };
-  }
-
-  const dateKeys = Object.keys(snapshot.val()).sort(); // oldest → newest
-
-  const macSeries = [];
-  const probeSeries = [];
-  const ssidSeries = [];
-  let days = 0;
-
-  const todayStr = new Date().toLocaleDateString('en-CA', {
-    timeZone: 'Europe/Paris',
-  });
-
-  for (const dateStr of dateKeys) {
-    // Skip today
-    if (dateStr === todayStr) continue;
-
-    const deviceRef = ref(db, `stats/daily/${dateStr}/${deviceName}`);
-    const deviceSnap = await get(deviceRef);
-
-    if (deviceSnap.exists()) {
-      const data = deviceSnap.val() || {};
-
-      macSeries.push(data.mac ?? 0);
-      probeSeries.push(data.probe_requests ?? 0);
-      ssidSeries.push(data.ssid ?? 0);
-    } else {
-      // Push zeros to keep chart aligned for missing data (data will not be missing!)
-      macSeries.push(0);
-      probeSeries.push(0);
-      ssidSeries.push(0);
-    }
-
-    days += 1;
-  }
-
-  return {
-    macCount: macSeries,
-    probeRequestCount: probeSeries,
-    ssidCount: ssidSeries,
-    dayCounts: days,
-  };
-}
-
-export async function fetchTotalPerDeviceStats() {
-  const db = getFirebaseDb();
-  const devicesRef = ref(db, 'stats/devices');
-
-  const devicesSnapshot = await get(devicesRef);
-
-  const totalsPerDevice = {};
-
-  if (devicesSnapshot.exists()) {
-    devicesSnapshot.forEach((deviceSnap) => {
-      const deviceName = deviceSnap.key;
-      const data = deviceSnap.val() || {};
-      totalsPerDevice[deviceName] = {
-        mac: data.mac ?? 0,
-        // Backend publishes "probes" for stats/devices; keep UI key normalized.
-        probe_requests: data.probes ?? data.probe_requests ?? 0,
-        ssid: data.ssid ?? 0,
-        location: data.location ?? null,
-        coordinates: data.coordinates ?? null,
-      };
-    });
-  }
-
-  return totalsPerDevice;
-}
-
-export async function fetchPrevious30DaysTotals() {
-  const db = getFirebaseDb();
-
-  // get the 30 days before last 30 days
-  const today = new Date();
-  const dates = [];
-  for (let i = 59; i >= 30; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i - 1);
-    const dateStr = d.toISOString().slice(0, 10); // YYYY-MM-DD
-    dates.push(dateStr);
-  }
-
-  let totalMac = 0;
-  let totalProbeRequests = 0;
-  let totalSsid = 0;
-
-  await Promise.all(
-    dates.map(async (dateStr) => {
-      const dayRef = ref(db, `stats/daily/${dateStr}`);
-      const snapshot = await get(dayRef);
-
-      let dayMac = 0;
-      let dayProbe = 0;
-      let daySsid = 0;
-
-      if (snapshot.exists()) {
-        snapshot.forEach((deviceSnap) => {
-          const data = deviceSnap.val() || {};
-
-          dayMac += data.mac ?? 0;
-          dayProbe += data.probe_requests ?? 0;
-          daySsid += data.ssid ?? 0;
-        });
-      }
-
-      totalMac += dayMac;
-      totalProbeRequests += dayProbe;
-      totalSsid += daySsid;
-    }),
-  );
-
-  return {
-    totals: {
-      macCount: totalMac,
-      probeRequestCount: totalProbeRequests,
-      ssidCount: totalSsid,
-    },
-  };
-}
-
-export async function fetchTotalStats() {
-  const db = getFirebaseDb();
-
-  try {
-    const snapshot = await get(ref(db, 'stats'));
-
-    if (!snapshot.exists()) {
-      return {
-        macCount: 0,
-        ssidCount: 0,
-        probeRequestCount: 0,
-      };
-    }
-
-    const stats = snapshot.val();
-
-    return {
-      macCount: stats.mac_count.count,
-      ssidCount: stats.ssid_count.count,
-      probeRequestCount: stats.total_count.count,
-    };
-  } catch (error) {
-    console.error('Failed to fetch stats:', error);
-    throw error;
-  }
-}
-
-export async function fetchManufacturersData() {
-  const db = getFirebaseDb();
-
-  try {
-    const snapshot = await get(ref(db, 'stats/manufacturers'));
-
-    if (!snapshot.exists()) {
-      return [];
-    }
-
-    const manufacturers = [];
-    snapshot.forEach((companySnap) => {
-      const companyData = companySnap.val() || {};
-      manufacturers.push({
-        company: companySnap.key ?? '',
-        country: companyData.country ?? null,
-        count: Number(companyData.count ?? 0),
-        // Backward-compatible with older typo key.
-        percentage: Number(
-          companyData.percentage ?? companyData.percetage ?? 0,
-        ),
-      });
-    });
-
-    return manufacturers;
-  } catch (error) {
-    console.error('Failed to fetch manufacturers data:', error);
-    throw error;
-  }
-}
-
-export async function fetchSankeyData() {
-  const db = getFirebaseDb();
-
-  try {
-    const snapshot = await get(ref(db, 'stats/sankey'));
-
-    if (!snapshot.exists()) {
-      return {};
-    }
-
-    const sankeyData = {};
-
-    snapshot.forEach((deviceSnap) => {
-      const deviceKey = deviceSnap.key ?? '';
-      sankeyData[deviceKey] = {};
-
-      deviceSnap.forEach((manufacturerSnap) => {
-        const manufacturerData = manufacturerSnap.val() || {};
-        sankeyData[deviceKey][manufacturerSnap.key ?? ''] = {
-          country: manufacturerData.country ?? null,
-        };
-      });
-    });
-
-    return sankeyData;
-  } catch (error) {
-    console.error('Failed to fetch sankey data:', error);
-    throw error;
-  }
-}
-
 export async function subscribeToLiveProbeRequestCount(devices, callback) {
   const db = getFirebaseDb();
 
@@ -576,46 +149,39 @@ export async function subscribeToLiveProbeRequestCount(devices, callback) {
   const dateStr = `${yyyy}-${mm}-${dd}`;
   const listeners = [];
 
-  const initialCountsByDevice = await Promise.all(
+  const initialReads = await Promise.all(
     devices.map(async (device) => {
-      const path = `${device}-${dateStr}/data`;
-      const dataRef = ref(db, path);
+      const dataRef = ref(db, `${device}-${dateStr}/data`);
       const snapshot = await get(dataRef);
-      return { device, count: snapshot.size };
+      // The rows come in key order, and the devices push them, so the last key is the newest row.
+      let lastKey = null;
+      snapshot.forEach((child) => {
+        lastKey = child.key;
+      });
+      return { dataRef, count: snapshot.size, lastKey };
     }),
   );
 
-  const initialCount = initialCountsByDevice.reduce(
-    (sum, entry) => sum + entry.count,
-    0,
-  );
+  const initialCount = initialReads.reduce((sum, read) => sum + read.count, 0);
   let totalCount = initialCount;
 
   // Emit the initial aggregated total once; avoid duplicate startup reads.
   callback(totalCount);
-  const initialCountMap = new Map(
-    initialCountsByDevice.map(({ device, count }) => [device, count]),
-  );
 
-  devices.forEach((device) => {
-    const path = `${device}-${dateStr}/data`;
-    const dataRef = ref(db, path);
-
-    const futureRef = query(dataRef, limitToLast(1)); // only new children
-    const hadExistingData = (initialCountMap.get(device) ?? 0) > 0;
-    let ignoredInitialChild = false;
+  initialReads.forEach(({ dataRef, lastKey }) => {
+    // Every row after the ones counted above, so each child_added is a new row: those written
+    // while subscribing arrive with the listener's first data, the later ones as they come.
+    const newRows =
+      lastKey === null
+        ? query(dataRef, orderByKey())
+        : query(dataRef, orderByKey(), startAfter(lastKey));
     const listener = () => {
-      // Realtime DB emits one immediate child for limitToLast(1) when data exists.
-      if (hadExistingData && !ignoredInitialChild) {
-        ignoredInitialChild = true;
-        return;
-      }
       totalCount += 1;
       callback(totalCount);
     };
-    onChildAdded(futureRef, listener);
+    onChildAdded(newRows, listener);
 
-    listeners.push({ ref: futureRef, listener });
+    listeners.push({ ref: newRows, listener });
   });
   // return unsubscribe function
   return {

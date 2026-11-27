@@ -12,6 +12,9 @@ services:
       SERVER_URL: 0.0.0.0
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
+    # The code loads the credentials from its folder. The image doesn't contain them (see .dockerignore).
+    volumes:
+      - ./firebase_credentials.json:/firebase_housekeeping_service/firebase_housekeeping/firebase_credentials.json:ro
     # depends_on:
     #   mongodb:
     #     condition: service_healthy
@@ -47,4 +50,3 @@ networks:
   pnls:
     name: pnls
     driver: bridge
-    external: true
