@@ -8,15 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- `firebase-housekeeping` deletes now also delete the Firebase `stats` node, which nothing reads anymore. It's still left out of the MongoDB backup.
+- `firebase-housekeeping` deletes now also delete the Firebase `stats` node, which nothing reads anymore. It's still left out of the MongoDB backup. PR #496
 
 ### Deprecated
 
-- `aggregator` `publish_daily_stats_data` and `publish_daily_stats_capture_data`, which publish to the Firebase `stats` node, are now deprecated like the other Firebase stats publishers. Only the `aggregator` tools still call them.
+- `aggregator` `publish_daily_stats_data` and `publish_daily_stats_capture_data`, which publish to the Firebase `stats` node, are now deprecated like the other Firebase stats publishers. Only the `aggregator` tools still call them. PR #496
 
 ### Removed
 
-- `monitor-dashboard` no longer has the Firebase readers of the `stats` node (`fetchTotalStats`, `fetchSankeyData` and the other 10), which the `stats-api` client replaced. Only the live data (device heartbeats, live rows and the live probe request count) is still read from Firebase.
+- `monitor-dashboard` no longer has the Firebase readers of the `stats` node (`fetchTotalStats`, `fetchSankeyData` and the other 10), which the `stats-api` client replaced. Only the live data (device heartbeats, live rows and the live probe request count) is still read from Firebase. PR #496
 
 ## [3.3.0] - 2026-11-27
 
