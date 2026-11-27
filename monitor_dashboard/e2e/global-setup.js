@@ -43,7 +43,48 @@ async function exec(container, command) {
   return result.output;
 }
 
-async function startSupabase(network) {
+/**
+ * Collects how to stop each resource as it starts. Running it stops them newest first, so the
+ * network goes last, and keeps going when one of them fails to stop. It runs on a normal teardown
+ * and when the setup fails, since Playwright gets no teardown to call then.
+ */
+function createCleanup() {
+  const steps = [];
+  return {
+    add(step) {
+      steps.push(step);
+    },
+    async run() {
+      const errors = [];
+      while (steps.length > 0) {
+        try {
+          await steps.pop()();
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length > 0) {
+        throw new AggregateError(errors, 'Stopping the e2e resources failed');
+      }
+    },
+  };
+}
+
+/**
+ * Runs the tasks together. Unlike Promise.all, it waits for all of them before it rejects, so a
+ * task that succeeds after another failed has registered its cleanup. Each task is a function,
+ * so one that throws before it returns a promise still lets the others start and finish.
+ */
+async function allStarted(tasks) {
+  const results = await Promise.allSettled(tasks.map(async (task) => task()));
+  const failure = results.find((result) => result.status === 'rejected');
+  if (failure) {
+    throw failure.reason;
+  }
+  return results.map((result) => result.value);
+}
+
+async function startSupabase(network, cleanup) {
   const container = await new GenericContainer(SUPABASE_POSTGRES_IMAGE)
     .withNetwork(network)
     .withNetworkAliases('supabase')
@@ -53,6 +94,8 @@ async function startSupabase(network) {
       Wait.forLogMessage('database system is ready to accept connections', 2),
     )
     .start();
+  // Before the migrations, which can fail.
+  cleanup.add(() => container.stop());
 
   // Supabase CLI migrations are plain `<timestamp>_<name>.sql` files, applied in name order.
   const migrations = readdirSync(MIGRATIONS)
@@ -209,34 +252,61 @@ async function buildAndServeDashboard(env) {
 }
 
 export default async function globalSetup() {
-  const network = await new Network().start();
-  const [supabase, redis, firebase] = await Promise.all([
-    startSupabase(network),
-    startRedis(network),
-    startFirebaseEmulator(network),
-    buildStatsApiImage(),
+  const cleanup = createCleanup();
+  try {
+    await startAll(cleanup);
+  } catch (error) {
+    try {
+      await cleanup.run();
+    } catch (cleanupError) {
+      console.error(cleanupError);
+    }
+    throw error;
+  }
+  return () => cleanup.run();
+}
+
+async function startAll(cleanup) {
+  /** Waits for a resource to start, then registers how to stop it. */
+  const started = async (starting, stop) => {
+    const resource = await starting;
+    cleanup.add(() => stop(resource));
+    return resource;
+  };
+  const stopContainer = (container) => container.stop();
+
+  const network = await started(new Network().start(), (n) => n.stop());
+  const [supabase, , firebase] = await allStarted([
+    () => startSupabase(network, cleanup),
+    () => started(startRedis(network), stopContainer),
+    () => started(startFirebaseEmulator(network), (f) => f.container.stop()),
+    buildStatsApiImage,
   ]);
-  const statsApi = await startStatsApi(network);
+  const statsApi = await started(startStatsApi(network), stopContainer);
   await allowAllRules(firebase.databaseHost);
   await createTestUser(firebase.authHost);
 
   const statsApiUrl = `http://${statsApi.getHost()}:${statsApi.getMappedPort(9098)}`;
-  const server = await buildAndServeDashboard({
-    VITE_STATS_API_URL: statsApiUrl,
-    VITE_FIREBASE_API_KEY: 'test-api-key',
-    VITE_FIREBASE_AUTH_DOMAIN: `${PROJECT_ID}.firebaseapp.com`,
-    VITE_FIREBASE_DATABASE_URL: `https://${PROJECT_ID}-default-rtdb.firebaseio.com`,
-    VITE_FIREBASE_PROJECT_ID: PROJECT_ID,
-    VITE_FIREBASE_STORAGE_BUCKET: '',
-    VITE_FIREBASE_MESSAGING_SENDER_ID: '',
-    VITE_FIREBASE_APP_ID: '',
-    VITE_FIREBASE_AUTH_EMULATOR_HOST: firebase.authHost,
-    VITE_FIREBASE_DATABASE_EMULATOR_HOST: firebase.databaseHost,
-  });
+  await started(
+    buildAndServeDashboard({
+      VITE_STATS_API_URL: statsApiUrl,
+      VITE_FIREBASE_API_KEY: 'test-api-key',
+      VITE_FIREBASE_AUTH_DOMAIN: `${PROJECT_ID}.firebaseapp.com`,
+      VITE_FIREBASE_DATABASE_URL: `https://${PROJECT_ID}-default-rtdb.firebaseio.com`,
+      VITE_FIREBASE_PROJECT_ID: PROJECT_ID,
+      VITE_FIREBASE_STORAGE_BUCKET: '',
+      VITE_FIREBASE_MESSAGING_SENDER_ID: '',
+      VITE_FIREBASE_APP_ID: '',
+      VITE_FIREBASE_AUTH_EMULATOR_HOST: firebase.authHost,
+      VITE_FIREBASE_DATABASE_EMULATOR_HOST: firebase.databaseHost,
+    }),
+    (server) => new Promise((resolve) => server.httpServer.close(resolve)),
+  );
   // Last, so the seed date is as close as possible to the tests. Nothing has asked the stats API
   // for data yet, so its Redis cache is empty.
   const seedDay = await seed(supabase);
 
+  cleanup.add(() => rmSync(STATE_FILE, { force: true }));
   writeFileSync(
     STATE_FILE,
     JSON.stringify({
@@ -246,13 +316,4 @@ export default async function globalSetup() {
       authEmulatorHost: firebase.authHost,
     }),
   );
-
-  return async () => {
-    await new Promise((resolve) => server.httpServer.close(resolve));
-    await Promise.all(
-      [statsApi, supabase, redis, firebase.container].map((c) => c.stop()),
-    );
-    await network.stop();
-    rmSync(STATE_FILE, { force: true });
-  };
 }
