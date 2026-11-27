@@ -2,10 +2,18 @@
 // API's own test fixtures (tests/integration/stats_api_db.py), but are dated relative to the real
 // "today", because the stats API runs unchanged and reads the clock itself.
 
-/** "YYYY-MM-DD" in Paris, `days` days from today. */
+/**
+ * "YYYY-MM-DD" in Paris, `days` days from today. The days are counted on the calendar, not as
+ * 24-hour steps, which would skip or repeat a date around the daylight saving time changes.
+ */
 export function parisDay(days = 0) {
-  const date = new Date(Date.now() + days * 86_400_000);
-  return date.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' });
+  const today = new Date(Date.now()).toLocaleDateString('en-CA', {
+    timeZone: 'Europe/Paris',
+  });
+  const [year, month, day] = today.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days))
+    .toISOString()
+    .slice(0, 10);
 }
 
 const sql = (value) =>
