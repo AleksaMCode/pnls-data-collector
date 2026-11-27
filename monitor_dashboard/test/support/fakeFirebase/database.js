@@ -209,6 +209,8 @@ export function off(target, _eventType, callback) {
 export const fakeDatabase = {
   reset() {
     root = {};
+    // Like off(), so a listener whose first delivery is still queued gets nothing after the reset.
+    for (const listener of listeners) listener.active = false;
     listeners = [];
     pushCounter = 0;
     onNextListen = null;
