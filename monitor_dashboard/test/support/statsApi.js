@@ -389,8 +389,11 @@ export async function settleStatsApi({ timeout = 5000 } = {}) {
     await nextTask();
     quietChecks = pendingRequests.size ? 0 : quietChecks + 1;
     if (performance.now() > deadline) {
+      const stuck = pendingRequests.size;
+      // Forgotten, so the next tests aren't failed by this test's requests as well.
+      pendingRequests.clear();
       throw new Error(
-        `${pendingRequests.size} stats API request(s) still pending after the test`,
+        `${stuck} stats API request(s) still pending after the test`,
       );
     }
   }

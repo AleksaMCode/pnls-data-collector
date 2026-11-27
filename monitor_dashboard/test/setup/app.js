@@ -35,12 +35,17 @@ afterEach(async () => {
   // before the next test. This runs before the cleanup in dom.js, as Vitest runs the afterEach
   // hooks in reverse order.
   cleanup();
-  await settleStatsApi();
-  server.resetHandlers();
-  resetStatsApi();
-  fakeAuth.reset();
-  fakeDatabase.reset();
-  vi.useRealTimers();
+  try {
+    await settleStatsApi();
+  } finally {
+    // Also when a request is still pending, so the next test doesn't inherit this one's routes,
+    // data or clock. The settling error, if any, still fails this test.
+    server.resetHandlers();
+    resetStatsApi();
+    fakeAuth.reset();
+    fakeDatabase.reset();
+    vi.useRealTimers();
+  }
 });
 
 afterAll(() => {
