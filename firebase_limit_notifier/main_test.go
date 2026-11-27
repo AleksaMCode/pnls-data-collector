@@ -451,6 +451,11 @@ func TestMainReportsAFailedCheckWhenFirebaseIsDown(t *testing.T) {
 
 	result := runMainInChild(t, dir, "http://localhost:"+port+"/check")
 
+	// main must have started and answered the check. Otherwise, e.g. when another process took the port, nothing was
+	// checked, and the expected failure below would pass for the wrong reason.
+	if result.ExitCode != 0 || !strings.Contains(result.Stdout, "reply: ") {
+		t.Fatalf("expected main to answer the check, got exit code %d:\n%s", result.ExitCode, result.Output())
+	}
 	reason := "When every Firebase read fails, the check reports 0.00 MB and answers 200."
 	testutil.ExpectFailure(t, reason, func(t testutil.TB) {
 		if !strings.Contains(result.Stdout, "reply: 502") {
@@ -526,6 +531,12 @@ func TestMainWithoutWebhookFatal(t *testing.T) {
 
 	result := runMainInChild(t, dir, "")
 
+	// Today main starts without the webhook. An exit for another reason, e.g. a port another process took, would make
+	// the expected failure below pass for the wrong reason.
+	if result.ExitCode != 0 && !strings.Contains(result.Output(), "MATTERMOST_WEBHOOK_URL") {
+		t.Fatalf("expected main to start, or to exit naming the variable, got exit code %d:\n%s",
+			result.ExitCode, result.Output())
+	}
 	testutil.ExpectFailure(t, "A missing MATTERMOST_WEBHOOK_URL isn't caught at startup.", func(t testutil.TB) {
 		if result.ExitCode != 1 || !strings.Contains(result.Output(), "MATTERMOST_WEBHOOK_URL") {
 			t.Errorf(
