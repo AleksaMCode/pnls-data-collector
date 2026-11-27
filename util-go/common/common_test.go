@@ -105,7 +105,8 @@ func TestGetPercentage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := GetPercentage(tt.part, tt.whole)
-			if math.Abs(result-tt.expected) > 1e-9 {
+			// A NaN result compares false with everything, so the tolerance check alone would let it pass.
+			if math.IsNaN(result) || math.Abs(result-tt.expected) > 1e-9 {
 				t.Errorf("expected %f, got %f", tt.expected, result)
 			}
 		})

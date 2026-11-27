@@ -264,8 +264,12 @@ func TestGetDiskUsageLeavesOutReservedSpace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read the disk usage in the test: %v", err)
 	}
-	if stats.Total-stats.Free == stats.Used {
-		t.Skip("this filesystem reserves no space for root, so the bug doesn't show here")
+	// The space in use can change between the two reads, so the check below allows 1 MB.
+	const tolerance = 1 << 20
+	// The bug only shows when the reserved space is larger than that, even after the usage moves by up to 1 MB
+	// between the reads. With less, the check can't tell the bug from a fix.
+	if reserved := float64(stats.Total-stats.Free) - float64(stats.Used); reserved <= 2*tolerance {
+		t.Skipf("this filesystem reserves %.0f bytes for root, too little for the bug to show here", reserved)
 	}
 
 	usage, err := getDiskUsage(mountPath)
@@ -275,8 +279,7 @@ func TestGetDiskUsageLeavesOutReservedSpace(t *testing.T) {
 
 	reason := "getDiskUsage counts the space reserved for root as used, so the report shows more than df."
 	testutil.ExpectFailure(t, reason, func(t testutil.TB) {
-		// The space can change between the two reads, so allow 1 MB.
-		if diff := usage.UsedBytes - float64(stats.Used); diff > 1<<20 || diff < -(1<<20) {
+		if diff := usage.UsedBytes - float64(stats.Used); diff > tolerance || diff < -tolerance {
 			t.Errorf("UsedBytes = %.0f, want %d as df shows", usage.UsedBytes, stats.Used)
 		}
 	})
