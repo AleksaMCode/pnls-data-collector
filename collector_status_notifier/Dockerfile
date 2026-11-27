@@ -11,7 +11,9 @@ RUN go mod download \
 
 FROM alpine:3.22
 
-RUN apk --no-cache add ca-certificates tzdata
+# The base image can lag behind Alpine's security fixes, so the installed packages are upgraded too.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 
