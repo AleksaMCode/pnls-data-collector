@@ -199,7 +199,8 @@ class TestPublishDailyStats(FirebaseDbMixin, unittest.TestCase):
         return SimpleNamespace(date=day, device=device, ssid=3, mac=7, probe_request=42)
 
     def test_capture_is_written_under_date_and_device(self):
-        helpers.publish_daily_stats_capture_data(self.capture())
+        with self.assertWarns(DeprecationWarning):
+            helpers.publish_daily_stats_capture_data(self.capture())
 
         self.assertEqual(
             self.updates(),
@@ -213,7 +214,10 @@ class TestPublishDailyStats(FirebaseDbMixin, unittest.TestCase):
         )
 
     def test_every_capture_is_published(self):
-        helpers.publish_daily_stats_data([self.capture("RPI-1"), self.capture("RPI-2")])
+        with self.assertWarns(DeprecationWarning):
+            helpers.publish_daily_stats_data(
+                [self.capture("RPI-1"), self.capture("RPI-2")]
+            )
 
         self.assertEqual(
             set(self.updates()),

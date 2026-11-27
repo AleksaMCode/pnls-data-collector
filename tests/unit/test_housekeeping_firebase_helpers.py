@@ -116,12 +116,12 @@ class TestDownloadAll(FirebaseHelpersTestCase):
 
 
 class TestDeleteAllByEntryNodes(FirebaseHelpersTestCase):
-    def test_only_statistics_and_todays_nodes_are_kept(self):
+    def test_only_todays_nodes_are_kept(self):
+        # The statistics node is no longer used, so it's deleted too.
         helpers.delete_all_by_entry_nodes()
 
         self.assertEqual(
-            self.firebase.tree,
-            {"stats": STATS, f"RPI-2-{TODAY}": seed_tree()[f"RPI-2-{TODAY}"]},
+            self.firebase.tree, {f"RPI-2-{TODAY}": seed_tree()[f"RPI-2-{TODAY}"]}
         )
 
     def test_today_is_the_date_in_the_collector_time_zone(self):
@@ -138,6 +138,8 @@ class TestDeleteAllByEntryNodes(FirebaseHelpersTestCase):
         self.assertEqual(
             deletes,
             [
+                "/stats/devices",
+                "/stats/total_count",
                 f"/RPI-1-{YESTERDAY}/data",
                 f"/RPI-1-{YESTERDAY}/status",
                 f"/RPI-2-{YESTERDAY}/data",
@@ -145,11 +147,11 @@ class TestDeleteAllByEntryNodes(FirebaseHelpersTestCase):
         )
 
     def test_node_without_children_is_deleted_whole(self):
-        self.use_tree({f"RPI-3-{YESTERDAY}": "leaf", "stats": STATS})
+        self.use_tree({f"RPI-3-{YESTERDAY}": "leaf", f"RPI-2-{TODAY}": "leaf"})
 
         helpers.delete_all_by_entry_nodes()
 
-        self.assertEqual(self.firebase.tree, {"stats": STATS})
+        self.assertEqual(self.firebase.tree, {f"RPI-2-{TODAY}": "leaf"})
 
     def test_failed_bulk_delete_falls_back_to_batches_of_entries(self):
         self.use_tree({f"RPI-1-{YESTERDAY}": {"data": entries(5)}})
@@ -188,7 +190,7 @@ class TestDeleteAllByEntryNodes(FirebaseHelpersTestCase):
 
         helpers.delete_all_by_entry_nodes()
 
-        self.assertEqual(sorted(self.firebase.tree), [f"RPI-2-{TODAY}", "stats"])
+        self.assertEqual(sorted(self.firebase.tree), [f"RPI-2-{TODAY}"])
 
     def test_empty_firebase_deletes_nothing(self):
         self.use_tree({})
@@ -201,10 +203,10 @@ class TestDeleteAllByEntryNodes(FirebaseHelpersTestCase):
 
 
 class TestDeleteAllByNodes(FirebaseHelpersTestCase):
-    def test_every_node_but_statistics_is_deleted(self):
+    def test_every_node_is_deleted(self):
         helpers.delete_all_by_nodes()
 
-        self.assertEqual(self.firebase.tree, {"stats": STATS})
+        self.assertEqual(self.firebase.tree, {})
 
     def test_empty_firebase_deletes_nothing(self):
         self.use_tree({})
@@ -215,10 +217,10 @@ class TestDeleteAllByNodes(FirebaseHelpersTestCase):
 
 
 class TestDeleteAllBySmallestNodes(FirebaseHelpersTestCase):
-    def test_every_leaf_but_statistics_is_deleted(self):
+    def test_every_leaf_is_deleted(self):
         helpers.delete_all_by_smallest_nodes()
 
-        self.assertEqual(self.firebase.tree, {"stats": STATS})
+        self.assertEqual(self.firebase.tree, {})
 
     def test_leaves_are_deleted_one_by_one(self):
         self.use_tree({f"RPI-1-{YESTERDAY}": {"data": {"e0": {"ssid": "CERN"}}}})

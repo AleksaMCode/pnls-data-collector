@@ -133,7 +133,8 @@ class TestFirebaseHelpers(unittest.TestCase):
             ),
         ]
 
-        self.helpers.publish_daily_stats_data(captures)
+        with self.assertWarns(DeprecationWarning):
+            self.helpers.publish_daily_stats_data(captures)
 
         self.assertEqual(
             self.read(f"/{self.stats}/daily/2026-06-14"),
@@ -146,11 +147,16 @@ class TestFirebaseHelpers(unittest.TestCase):
     def test_daily_stats_update_keeps_other_fields(self):
         self.seed(f"/{self.stats}/daily/2026-06-14/RPI-1", {"note": "kept"})
 
-        self.helpers.publish_daily_stats_capture_data(
-            SimpleNamespace(
-                date=date(2026, 6, 14), device="RPI-1", ssid=1, mac=1, probe_request=1
+        with self.assertWarns(DeprecationWarning):
+            self.helpers.publish_daily_stats_capture_data(
+                SimpleNamespace(
+                    date=date(2026, 6, 14),
+                    device="RPI-1",
+                    ssid=1,
+                    mac=1,
+                    probe_request=1,
+                )
             )
-        )
 
         self.assertEqual(
             self.read(f"/{self.stats}/daily/2026-06-14/RPI-1")["note"], "kept"

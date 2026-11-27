@@ -130,6 +130,7 @@ def fetch_data(target_date: date):
     return results
 
 
+@deprecated("This is no longer used as this data is published to Supabase.")
 @yaspin(text="Publishing daily stats data to Firebase...")
 def publish_daily_stats_data(data: list[DailyCapturedPerDevice]):
     for capture in tqdm(data, desc="Importing stats capture records", unit="record"):
@@ -137,6 +138,7 @@ def publish_daily_stats_data(data: list[DailyCapturedPerDevice]):
     logger.info("Finished publishing daily stats data.")
 
 
+@deprecated("This is no longer used as this data is published to Supabase.")
 def publish_daily_stats_capture_data(capture: DailyCapturedPerDevice):
     db.reference(
         f"/{FIREBASE_STATISTICS_NODE}/daily/{capture.date}/{capture.device}"
