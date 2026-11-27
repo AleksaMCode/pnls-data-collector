@@ -6,13 +6,35 @@ import {
   query,
   ref,
 } from '@firebase/database';
-import { afterEach, describe, expect, inject, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  inject,
+  it,
+  vi,
+} from 'vitest';
 import * as firebase from '../../src/firebase/firebase';
 import { pushValue, setValue } from '../support/emulator';
-import { deviceNode, parisDate, parisWallTime } from '../support/paris';
+import {
+  deviceNode,
+  parisDate,
+  parisInstant,
+  parisWallTime,
+} from '../support/paris';
 
 const host = inject('databaseEmulatorHost');
 const unsubscribes = [];
+// A Paris daytime, away from midnight and the DST changes, so the dates and wall times the tests
+// write don't depend on when they run.
+const START = parisInstant('2026-06-15T10:00:00');
+
+beforeEach(() => {
+  // Only Date is faked, and it keeps advancing from START. The emulator traffic and the SDK's
+  // listeners keep real timers. test/setup/emulator.js restores the real Date after each test.
+  vi.useFakeTimers({ toFake: ['Date'], now: START, shouldAdvanceTime: true });
+});
 
 afterEach(() => {
   while (unsubscribes.length) unsubscribes.pop()();
@@ -74,6 +96,13 @@ function addProbe(device, ssid = 'CERN-Guest', date = today()) {
   });
 }
 
+it('runs at the pinned time, with a clock that still advances', async () => {
+  expect(parisWallTime(new Date())).toMatch(/^2026-06-15 10:00:0/);
+  const before = Date.now();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  expect(Date.now()).toBeGreaterThan(before);
+});
+
 it('reads through the emulator, not a real database', () => {
   const db = firebase.getFirebaseDb();
 
@@ -93,6 +122,23 @@ describe('fetchDeviceOnlineStatus', () => {
       firebase.fetchDeviceOnlineStatus(['RPI-1', 'RPI-2', 'RPI-3']),
     ).resolves.toEqual({ 'RPI-1': true, 'RPI-2': false, 'RPI-3': false });
   });
+
+  // Known bug: heartbeats are compared as Paris wall times, so a DST change shifts their age by an
+  // hour. At 03:01 on the spring-forward day, a heartbeat from 2 minutes ago reads 01:59, 62 minutes
+  // earlier, and the device shows offline until its next heartbeat.
+  it.fails(
+    'keeps a device online across the spring-forward change',
+    async () => {
+      vi.setSystemTime(new Date('2026-03-29T01:01:00Z')); // 03:01 in Paris
+      await setValue(host, `${deviceNode('RPI-1', today())}/status`, {
+        timestamp: minutesAgo(2),
+      });
+
+      await expect(
+        firebase.fetchDeviceOnlineStatus(['RPI-1']),
+      ).resolves.toEqual({ 'RPI-1': true });
+    },
+  );
 });
 
 describe('subscribeToLiveProbeRequestCount', () => {
