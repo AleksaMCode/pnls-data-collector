@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Root `docker-compose.yml` now includes every service's own `docker-compose.yml`, so all services can be built and started from the repository root. Each included file keeps its own folder for its paths, `env_file` and `${...}` values. PR #496
+- Root `docker-compose.yml` now includes every service's own `docker-compose.yml`, so all services can be built and started from the repository root. Each included file keeps its own folder for its paths, `env_file` and `${...}` values. Starting any service from the root, the dashboard alone included, now needs every service folder's `.env` file, which can be created from its `.env.template`. PR #496
 
 ### Changed
 
