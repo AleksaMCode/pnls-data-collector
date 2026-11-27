@@ -53,17 +53,24 @@ function sortedKeys(value) {
   return value && typeof value === 'object' ? Object.keys(value).sort() : [];
 }
 
+/**
+ * Like the SDK's snapshots, it keeps the data as it was when it was read: the value is copied once,
+ * here, and every field and method uses that copy, so later writes don't show through.
+ */
 function snapshot(path, value) {
   const key = segments(path).at(-1) ?? null;
+  const data =
+    value === undefined || value === null ? null : structuredClone(value);
   return {
     key,
-    exists: () => value !== null && value !== undefined,
-    val: () => (value === undefined ? null : structuredClone(value)),
-    size: sortedKeys(value).length,
+    exists: () => data !== null,
+    // A copy again, so a caller that changes the result doesn't change the snapshot.
+    val: () => structuredClone(data),
+    size: sortedKeys(data).length,
     forEach(callback) {
-      for (const childKey of sortedKeys(value)) {
+      for (const childKey of sortedKeys(data)) {
         if (
-          callback(snapshot(`${path}/${childKey}`, value[childKey])) === true
+          callback(snapshot(`${path}/${childKey}`, data[childKey])) === true
         ) {
           return true;
         }
