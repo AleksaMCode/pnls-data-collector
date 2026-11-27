@@ -206,6 +206,11 @@ func TestInitSentryNamesTheWorker(t *testing.T) {
 
 func TestConfigurationErrorsFromTheEnvFileReachSentry(t *testing.T) {
 	if testutil.InChild(t) {
+		// childEnv sets every variable, and godotenv never replaces one that is set, even when it's empty. The DSN
+		// must come from the .env file, so it is the one variable left unset.
+		if err := os.Unsetenv("SENTRY_DSN"); err != nil {
+			t.Fatalf("failed to unset SENTRY_DSN: %v", err)
+		}
 		t.Chdir(os.Getenv(workDirEnv))
 		main()
 		return
