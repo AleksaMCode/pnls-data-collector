@@ -18,6 +18,7 @@ Dockerfile
 *.sh
 Makefile
 .env
+.env.*
 .prettierrc
 .prettierignore
 !README.md

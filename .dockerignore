@@ -1,0 +1,12 @@
+# Applies to every image built with the repository root as its context. stats_api/Dockerfile has its own stats_api/Dockerfile.dockerignore, which is used instead.
+
+# Secrets. The services get them at run time from their docker-compose.yml: settings through env_file, files through read-only mounts.
+**/.env
+**/.env.*
+**/firebase_credentials.json
+**/*.pem
+
+# Local tooling and caches, never needed in an image.
+**/node_modules
+**/.venv
+**/__pycache__

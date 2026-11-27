@@ -19,6 +19,6 @@ RUN apk upgrade --no-cache \
 
 WORKDIR /app
 COPY --from=builder /bin/cloudflare-limit-notifier /usr/local/bin/cloudflare-limit-notifier
-COPY cloudflare_limit_notifier/.env /app/.env
+# The .env file the service loads at start-up is mounted by docker-compose.yml, not copied.
 
 ENTRYPOINT ["cloudflare-limit-notifier"]

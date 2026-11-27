@@ -10,4 +10,7 @@ services:
       TZ: Europe/Paris
     ports:
       - "${HTTP_PORT}:${HTTP_PORT}"
+    # The service stops at start-up without a .env file, which the image doesn't contain.
+    volumes:
+      - ./.env:/app/.env:ro
     restart: unless-stopped

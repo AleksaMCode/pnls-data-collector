@@ -1,13 +1,24 @@
+# The aggregator, its Celery worker and Flower run the same image. Only `aggregator` builds it, so it is
+# built once; the other two use the image it tags.
+x-aggregator-image: &aggregator-image
+  image: pnls-aggregator
+  networks:
+    - pnls
+  env_file:
+    - ./.env
+  # The secret files the code loads from its folder. The image doesn't contain them (see .dockerignore).
+  volumes:
+    - ./firebase_credentials.json:/aggregator_service/aggregator/firebase_credentials.json:ro
+    - ./private_key.pem:/aggregator_service/aggregator/private_key.pem:ro
+
 services:
   aggregator:
+    <<: *aggregator-image
     build:
       context: ..
       dockerfile: aggregator/Dockerfile
+    pull_policy: build
     container_name: aggregator
-    networks:
-      - pnls
-    env_file:
-      - ./.env
     environment:
       SERVER_URL: 0.0.0.0
     ports:
@@ -20,14 +31,10 @@ services:
     restart: unless-stopped
 
   aggregator_worker:
-    build:
-      context: ..
-      dockerfile: aggregator/Dockerfile
+    <<: *aggregator-image
+    # Built by `aggregator`. A missing image is an error, not a pull from Docker Hub.
+    pull_policy: never
     container_name: aggregator_worker
-    networks:
-      - pnls
-    env_file:
-      - ./.env
     depends_on:
       redis:
         condition: service_healthy
@@ -110,14 +117,9 @@ services:
         condition: service_healthy
 
   flower:
-    build:
-      context: ..
-      dockerfile: aggregator/Dockerfile
+    <<: *aggregator-image
+    pull_policy: never
     container_name: flower
-    networks:
-      - pnls
-    env_file:
-      - ./.env
     ports:
       - "${FLOWER_PORT}:5555"
     depends_on:

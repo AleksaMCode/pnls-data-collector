@@ -138,4 +138,3 @@ networks:
   pnls:
     name: pnls
     driver: bridge
-    external: true
