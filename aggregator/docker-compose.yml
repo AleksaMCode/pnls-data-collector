@@ -1,7 +1,10 @@
-# The aggregator, its Celery worker and Flower run the same image. Only `aggregator` builds it, so it is
-# built once; the other two use the image it tags.
+# The aggregator, its Celery worker and Flower run the same code. Each builds it, so each can be built
+# on its own; built in one command, BuildKit runs the shared steps once, also with --no-cache. They
+# have no shared image tag: three builds writing one tag fail on a host with nothing cached.
 x-aggregator-image: &aggregator-image
-  image: pnls-aggregator
+  build:
+    context: ..
+    dockerfile: aggregator/Dockerfile
   networks:
     - pnls
   env_file:
@@ -14,10 +17,6 @@ x-aggregator-image: &aggregator-image
 services:
   aggregator:
     <<: *aggregator-image
-    build:
-      context: ..
-      dockerfile: aggregator/Dockerfile
-    pull_policy: build
     container_name: aggregator
     environment:
       SERVER_URL: 0.0.0.0
@@ -32,8 +31,6 @@ services:
 
   aggregator_worker:
     <<: *aggregator-image
-    # Built by `aggregator`. A missing image is an error, not a pull from Docker Hub.
-    pull_policy: never
     container_name: aggregator_worker
     depends_on:
       redis:
@@ -118,7 +115,6 @@ services:
 
   flower:
     <<: *aggregator-image
-    pull_policy: never
     container_name: flower
     ports:
       - "${FLOWER_PORT}:5555"
