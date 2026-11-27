@@ -36,6 +36,8 @@ type fakeCloudflare struct {
 	operations []fakeAnswer
 	storage    []fakeAnswer
 	calls      []graphqlCall
+	// timer records the delays of the retries, when useFakeCloudflare set the fake up.
+	timer *recordingTimer
 }
 
 func newFakeCloudflare(t *testing.T) *fakeCloudflare {
@@ -148,16 +150,51 @@ func storageBody(points ...point) string {
 
 const noAccounts = `{"data":{"viewer":{"accounts":[]}}}`
 
-// useFakeCloudflare points the client at a fake Cloudflare API, with fast retries, until the test ends.
+// recordingTimer stands in for retry-go's timer: it records each delay retry-go asks for, and fires at once.
+type recordingTimer struct {
+	mu     sync.Mutex
+	delays []time.Duration
+}
+
+func (r *recordingTimer) After(delay time.Duration) <-chan time.Time {
+	r.mu.Lock()
+	r.delays = append(r.delays, delay)
+	r.mu.Unlock()
+
+	fired := make(chan time.Time, 1)
+	fired <- time.Now()
+	return fired
+}
+
+func (r *recordingTimer) requested() []time.Duration {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return slices.Clone(r.delays)
+}
+
+// useRecordingTimer makes the retries record their delays instead of waiting, until the test ends.
+func useRecordingTimer(t *testing.T) *recordingTimer {
+	t.Helper()
+
+	timer := &recordingTimer{}
+	original := retryTimer
+	retryTimer = timer
+	t.Cleanup(func() { retryTimer = original })
+	return timer
+}
+
+// useFakeCloudflare points the client at a fake Cloudflare API until the test ends. The retries don't wait: the
+// delays they ask for are recorded by the returned timer.
 func useFakeCloudflare(t *testing.T) *fakeCloudflare {
 	t.Helper()
 
 	fake := newFakeCloudflare(t)
+	fake.timer = useRecordingTimer(t)
 	restoreConfig(t)
 	CLOUDFLARE_GRAPHQL_ENDPOINT = fake.server.URL + "/client/v4/graphql"
 	CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID = "token", "0123abcd"
 	CLOUDFLARE_R2_BUCKET_FILTER = ""
-	GRAPHQL_RETRY_ATTEMPTS, GRAPHQL_RETRY_DELAY, GRAPHQL_RETRY_MAX_DELAY = 3, 1, 1
+	GRAPHQL_RETRY_ATTEMPTS, GRAPHQL_RETRY_DELAY, GRAPHQL_RETRY_MAX_DELAY = 3, 1, 30
 	return fake
 }
 
@@ -479,6 +516,9 @@ func TestQueryRetriesServerErrors(t *testing.T) {
 			t.Errorf("expected %q in the log, got:\n%s", want, logs.String())
 		}
 	}
+	if delays := fake.timer.requested(); len(delays) != 2 {
+		t.Errorf("expected a delay before each of the two retries, got %v", delays)
+	}
 }
 
 func TestQueryGivesUpAfterTheAttempts(t *testing.T) {
@@ -496,52 +536,92 @@ func TestQueryGivesUpAfterTheAttempts(t *testing.T) {
 	if calls := len(fake.received()); calls != 2 {
 		t.Errorf("expected two requests, got %d", calls)
 	}
+	// The last attempt isn't followed by a delay.
+	if delays := fake.timer.requested(); len(delays) != 1 {
+		t.Errorf("expected one delay, got %v", delays)
+	}
+}
+
+func TestQueryBacksOffExponentiallyUpToTheMaxDelay(t *testing.T) {
+	testutil.CaptureLog(t)
+	fake := useFakeCloudflare(t)
+	GRAPHQL_RETRY_ATTEMPTS, GRAPHQL_RETRY_MAX_DELAY = 5, 10
+	fake.answerStorage(failure(http.StatusServiceUnavailable, "busy"))
+	var out storageData
+
+	if err := newCloudflareClient().query(r2StorageAccountQuery, nil, &out); err == nil {
+		t.Fatal("expected the last error")
+	}
+
+	want := []time.Duration{2 * time.Second, 4 * time.Second, 8 * time.Second, 10 * time.Second}
+	if delays := fake.timer.requested(); !slices.Equal(delays, want) {
+		t.Fatalf("delays = %v, want %v, doubling and capped at the 10 second max delay", delays, want)
+	}
 }
 
 func TestQueryWaitsForRetryAfter(t *testing.T) {
 	testutil.CaptureLog(t)
 	fake := useFakeCloudflare(t)
-	GRAPHQL_RETRY_MAX_DELAY = 30
 	// Without the header, the first retry waits 2 seconds.
 	fake.answerStorage(
-		fakeAnswer{status: http.StatusTooManyRequests, body: "slow down", retryAfter: "3"},
+		fakeAnswer{status: http.StatusTooManyRequests, body: "slow down", retryAfter: "7"},
 		ok(storageBody()),
 	)
 	var out storageData
 
-	started := time.Now()
 	if err := newCloudflareClient().query(r2StorageAccountQuery, nil, &out); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if waited := time.Since(started); waited < 3*time.Second || waited > 5*time.Second {
-		t.Errorf("waited %s, want the 3 seconds of Retry-After", waited)
+	if delays := fake.timer.requested(); !slices.Equal(delays, []time.Duration{7 * time.Second}) {
+		t.Fatalf("delays = %v, want the 7 seconds of Retry-After", delays)
 	}
 }
 
 func TestQueryRetryAfterIsCappedByTheMaxDelay(t *testing.T) {
 	testutil.CaptureLog(t)
 	fake := useFakeCloudflare(t)
+	GRAPHQL_RETRY_MAX_DELAY = 5
 	fake.answerStorage(
 		fakeAnswer{status: http.StatusTooManyRequests, body: "slow down", retryAfter: "120"},
 		ok(storageBody()),
 	)
 	var out storageData
 
-	started := time.Now()
 	if err := newCloudflareClient().query(r2StorageAccountQuery, nil, &out); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if waited := time.Since(started); waited > 3*time.Second {
-		t.Errorf("waited %s, want at most the 1 second max delay", waited)
+	if delays := fake.timer.requested(); !slices.Equal(delays, []time.Duration{5 * time.Second}) {
+		t.Fatalf("delays = %v, want the 5 second max delay", delays)
 	}
 }
 
 func TestQueryUsesTheConfiguredRetryDelay(t *testing.T) {
 	testutil.CaptureLog(t)
 	fake := useFakeCloudflare(t)
-	GRAPHQL_RETRY_DELAY, GRAPHQL_RETRY_MAX_DELAY = 4, 30
+	GRAPHQL_RETRY_DELAY = 4
+	fake.answerStorage(failure(http.StatusServiceUnavailable, "busy"), ok(storageBody()))
+	var out storageData
+
+	if err := newCloudflareClient().query(r2StorageAccountQuery, nil, &out); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	delays := fake.timer.requested()
+
+	reason := "the custom retry.DelayType waits 2^n seconds, so CLOUDFLARE_GRAPHQL_RETRY_DELAY_SECONDS is ignored."
+	testutil.ExpectFailure(t, reason, func(t testutil.TB) {
+		if len(delays) != 1 || delays[0] < 4*time.Second {
+			t.Errorf("delays = %v, want the first retry to wait at least the configured 4 seconds", delays)
+		}
+	})
+}
+
+func TestQueryWaitsForRealWithoutATestTimer(t *testing.T) {
+	testutil.CaptureLog(t)
+	fake := useFakeCloudflare(t)
+	// As in production: retry-go's own timer, with the delay capped at 1 second to keep the test short.
+	retryTimer, GRAPHQL_RETRY_MAX_DELAY = nil, 1
 	fake.answerStorage(failure(http.StatusServiceUnavailable, "busy"), ok(storageBody()))
 	var out storageData
 
@@ -549,14 +629,11 @@ func TestQueryUsesTheConfiguredRetryDelay(t *testing.T) {
 	if err := newCloudflareClient().query(r2StorageAccountQuery, nil, &out); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	waited := time.Since(started)
 
-	reason := "the custom retry.DelayType waits 2^n seconds, so CLOUDFLARE_GRAPHQL_RETRY_DELAY_SECONDS is ignored."
-	testutil.ExpectFailure(t, reason, func(t testutil.TB) {
-		if waited < 4*time.Second {
-			t.Errorf("waited %s before the retry, want the configured 4 seconds", waited)
-		}
-	})
+	// Only a lower bound: a slow machine can make the wait longer, never shorter.
+	if waited := time.Since(started); waited < time.Second {
+		t.Fatalf("waited %s before the retry, want the 1 second delay", waited)
+	}
 }
 
 func TestQueryWhenCloudflareCantBeReached(t *testing.T) {
