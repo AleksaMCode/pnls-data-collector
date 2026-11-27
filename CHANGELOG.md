@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.3.0] - 2026-11-27
 
 ### Added
 
@@ -32,6 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - New `Secret Scan` GitHub workflow that runs Gitleaks over the full git history on every pull request, every push to `master`, on a weekly schedule and on demand. Accepted findings are listed in `.gitleaksignore`, and a Gitleaks pre-commit hook scans staged changes. PR #426
 - Prettier and markdownlint for the Markdown files, installed from a root `package.json`, with a new `Markdown Code Style Check` GitHub workflow. The `npm audit` job of the `Security` GitHub workflow also audits the root `package-lock.json`. PR #426
 - Hadolint for the Dockerfiles, with a new `Docker Code Style Check` GitHub workflow and a pre-commit hook that both run the pinned `hadolint/hadolint` Docker image. Ignored rules are listed in `.hadolint.yaml`. PR #426
+- `util-go` has a new `objectstore` package for uploads to S3-compatible storage such as Cloudflare R2, which `db-backup` and `firebase-limit-notifier` now use. PR #428
+- Root `Makefile` `test` target, which runs the Python and Go tests, with `test-python`, `test-python-unit`, `test-python-integration`, `test-go`, `test-go-unit` and `test-go-integration` targets. The Go modules with integration tests have a `test-integration` Makefile target. PR #428
+- Root `.python-version` file, which the Python GitHub workflows read their Python version from. PR #428
 
 ### Changed
 
@@ -68,6 +71,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Prettier was upgraded to `3.10.1` for `monitor-dashboard`. PR #426
 - Go code style workflow now runs one `golangci-lint run` step for all modules, which checks both formatting and linting. PR #426
 - `formatter-go.sh` and `formatter-python.sh` were replaced by the `fmt` targets of the root `Makefile`, and the deprecated `start_aggregator.sh` was removed. PR #426
+- `db-backup` now uses the `util-go` `logging` and `objectstore` packages instead of its own `internal/logging` and `internal/storage` packages, and its Docker image builds from the repository root so it can include `util-go`. PR #428
+- `firebase-limit-notifier` now uploads its charts with the `util-go` `objectstore` package. PR #428
+- Go Docker images (`cloudflare-limit-notifier`, `collector-status-notifier`, `db-backup` and `firebase-limit-notifier`) now upgrade the Alpine packages at build time, so they get security fixes before a new `alpine:3.22` image is released, such as OpenSSL `3.5.9-r2` for CVE-2026-124709. PR #428
+- `aggregator` Postgres is pinned to `postgres:16` instead of `postgres:latest`, as Postgres can't start on data created by an older major version. `firebase-housekeeping` MongoDB is pinned to `mongo:8.2.3` instead of `mongo:latest`. PR #428
+- `aggregator` pins `packaging` to `25.0`, which Celery's Redis transport imports but not every `kombu` release declares. PR #428
+- All GitHub workflows now use `actions/checkout` v7, and the Python workflows `actions/setup-python` v7. PR #428
 
 ### Fixed
 
@@ -87,6 +96,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `db-backup` compress step now fails when the archive file can't be closed, instead of reporting a possibly incomplete archive as successful. PR #426
 - `monitor-dashboard` stat cards now update their trend when only the `trend` value changes. PR #426
 - `aggregator` Firebase helper that deletes the sankey data is now named `delete_sankey`; it was defined as a second `delete_manufacturers` and replaced the first one. PR #426
+- `aggregator` migration `000001` now adds the unique constraint on `location_mapping.device` that the `ON CONFLICT (device)` upsert in migration `000002` and the `LocationMapping` model rely on; it was missing from the original dump, so a database built from the migrations could not be seeded. PR #428
+- `firebase-limit-notifier` no longer exits when it can't set up the R2 client; the usage report is still sent to Mattermost, without the chart. PR #428
 
 ## [3.2.0] - 2026-08-09
 
