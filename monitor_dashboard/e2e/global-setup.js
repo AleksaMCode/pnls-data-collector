@@ -20,7 +20,7 @@ import { GenericContainer, Network, Wait } from 'testcontainers';
 import { build, preview } from 'vite';
 import { allowAllRules } from '../test/support/emulator.js';
 import { startFirebaseEmulator } from '../test/setup/emulatorGlobal.js';
-import { seedSql } from './support/seed.js';
+import { msUntilParisMidnight, parisDay, seedSql } from './support/seed.js';
 import { PREVIEW_PORT, STATE_FILE, TEST_USER } from './support/state.js';
 
 const DASHBOARD = fileURLToPath(new URL('..', import.meta.url));
@@ -31,6 +31,8 @@ const SUPABASE_POSTGRES_IMAGE = 'postgres:17.6';
 const REDIS_IMAGE = 'redis:8.8.0';
 const STATS_API_IMAGE = 'pnls-stats-api:e2e';
 const PROJECT_ID = 'demo-pnls';
+// The tests take a few minutes, well within this.
+const DAY_CHANGE_MARGIN_MS = 15 * 60_000;
 
 async function exec(container, command) {
   const result = await container.exec(command);
@@ -55,29 +57,51 @@ async function startSupabase(network) {
   const migrations = readdirSync(MIGRATIONS)
     .filter((name) => name.endsWith('.sql'))
     .sort();
-  await container.copyContentToContainer([
-    ...migrations.map((name) => ({
+  await container.copyContentToContainer(
+    migrations.map((name) => ({
       content: readFileSync(join(MIGRATIONS, name), 'utf8'),
       target: `/migrations/${name}`,
     })),
-    { content: seedSql(), target: '/seed.sql' },
-  ]);
-  for (const file of [
-    ...migrations.map((name) => `/migrations/${name}`),
-    '/seed.sql',
-  ]) {
-    await exec(container, [
-      'psql',
-      '-U',
-      'postgres',
-      '-v',
-      'ON_ERROR_STOP=1',
-      '-q',
-      '-f',
-      file,
-    ]);
+  );
+  for (const name of migrations) {
+    await runSqlFile(container, `/migrations/${name}`);
   }
   return container;
+}
+
+function runSqlFile(container, file) {
+  return exec(container, [
+    'psql',
+    '-U',
+    'postgres',
+    '-v',
+    'ON_ERROR_STOP=1',
+    '-q',
+    '-f',
+    file,
+  ]);
+}
+
+/**
+ * Inserts the seed rows, dated relative to today in Paris, and returns that date. The stats API
+ * works out "today" itself on each request, so the run must not cross Paris midnight after
+ * seeding: when midnight is close, this waits for it to pass first. Each test checks the date
+ * is unchanged (see e2e/support/fixtures.js).
+ */
+async function seed(container) {
+  const untilMidnight = msUntilParisMidnight();
+  if (untilMidnight < DAY_CHANGE_MARGIN_MS) {
+    console.log(
+      `Paris midnight is ${Math.ceil(untilMidnight / 60_000)} min away; waiting for it before seeding.`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, untilMidnight + 5000));
+  }
+  const seedDay = parisDay();
+  await container.copyContentToContainer([
+    { content: seedSql(), target: '/seed.sql' },
+  ]);
+  await runSqlFile(container, '/seed.sql');
+  return seedDay;
 }
 
 function startRedis(network) {
@@ -203,10 +227,14 @@ export default async function globalSetup() {
     VITE_FIREBASE_AUTH_EMULATOR_HOST: firebase.authHost,
     VITE_FIREBASE_DATABASE_EMULATOR_HOST: firebase.databaseHost,
   });
+  // Last, so the seed date is as close as possible to the tests. Nothing has asked the stats API
+  // for data yet, so its Redis cache is empty.
+  const seedDay = await seed(supabase);
 
   writeFileSync(
     STATE_FILE,
     JSON.stringify({
+      seedDay,
       statsApiUrl,
       databaseEmulatorHost: firebase.databaseHost,
       authEmulatorHost: firebase.authHost,

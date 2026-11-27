@@ -16,6 +16,19 @@ export function parisDay(days = 0) {
     .slice(0, 10);
 }
 
+/**
+ * Milliseconds until the Paris date changes. Counted from the Paris wall time, so it's an hour off
+ * between midnight and 3:00 on the days daylight saving time starts or ends, but exact near
+ * midnight, which is when it matters.
+ */
+export function msUntilParisMidnight() {
+  const [hours, minutes, seconds] = new Date(Date.now())
+    .toLocaleTimeString('en-GB', { timeZone: 'Europe/Paris', hour12: false })
+    .split(':')
+    .map(Number);
+  return (86_400 - (hours * 3600 + minutes * 60 + seconds)) * 1000;
+}
+
 const sql = (value) =>
   value === null || value === undefined
     ? 'NULL'

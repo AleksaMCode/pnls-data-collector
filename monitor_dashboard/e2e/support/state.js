@@ -12,7 +12,7 @@ export const TEST_USER = {
   password: 'e2e-password',
 };
 
-/** The addresses the global setup saved: the stats API and the emulators. */
+/** What the global setup saved: the seed date, and the addresses of the stats API and the emulators. */
 export function state() {
   return JSON.parse(readFileSync(STATE_FILE, 'utf8'));
 }

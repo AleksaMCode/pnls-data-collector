@@ -4,6 +4,7 @@ import {
   pushValue,
   setValue,
 } from '../../test/support/emulator.js';
+import { parisDay } from './seed.js';
 import { state, TEST_USER } from './state.js';
 
 /** "YYYY-MM-DD HH:MM:SS" in Paris, the format the collector writes. */
@@ -44,6 +45,20 @@ export const test = base.extend({
     );
     await use(page);
   },
+  // The seed rows are dated relative to the day the global setup seeded them, and the stats API
+  // works out "today" itself, so the expected numbers only hold on that day.
+  seedDay: [
+    async ({}, use) => {
+      const { seedDay } = state();
+      if (parisDay() !== seedDay) {
+        throw new Error(
+          `The Paris date changed from ${seedDay} to ${parisDay()} since the seed rows were written. Run the tests again.`,
+        );
+      }
+      await use(seedDay);
+    },
+    { auto: true },
+  ],
   // Every test starts with no device data in Firebase.
   firebaseData: [
     async ({}, use) => {
