@@ -5,6 +5,7 @@ package containers
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -106,5 +107,33 @@ func TestPostgresIsSharedButDatabasesAreNot(t *testing.T) {
 	}
 	if a, b := first.CreateDatabase(t, "same"), first.CreateDatabase(t, "same"); a == b {
 		t.Fatalf("expected two databases, got %s twice", a)
+	}
+}
+
+func TestRedisStoresKeysInTheTestsDatabase(t *testing.T) {
+	server := StartRedis(t)
+	database := server.NewDatabase(t)
+
+	if reply := server.Command(t, database, "SET", "RPI-1", "offline"); !strings.Contains(reply, "OK") {
+		t.Fatalf("SET answered %q", reply)
+	}
+	if reply := server.Command(t, database, "GET", "RPI-1"); strings.TrimSpace(reply) != "offline" {
+		t.Fatalf("GET answered %q", reply)
+	}
+}
+
+func TestRedisIsSharedButDatabasesAreNot(t *testing.T) {
+	first, second := StartRedis(t), StartRedis(t)
+	if first != second {
+		t.Fatal("expected one Redis server for the test binary")
+	}
+	a, b := first.NewDatabase(t), first.NewDatabase(t)
+	if a == b || a == 0 || b == 0 {
+		t.Fatalf("expected two databases other than 0, got %d and %d", a, b)
+	}
+
+	first.Command(t, a, "SET", "RPI-1", "offline")
+	if reply := first.Command(t, b, "EXISTS", "RPI-1"); strings.TrimSpace(reply) != "0" {
+		t.Fatalf("expected the key only in database %d, EXISTS in %d answered %q", a, b, reply)
 	}
 }
