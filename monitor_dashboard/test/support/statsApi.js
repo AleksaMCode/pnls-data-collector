@@ -332,12 +332,15 @@ export function failRoute(path, status = 500) {
   );
 }
 
-/** Keeps every request to a path pending until `release()` is called. */
+const heldRoutes = new Set();
+
+/** Keeps every request to a path pending until `release()` is called, or the test ends. */
 export function holdRoute(path) {
   let release;
   const released = new Promise((resolve) => {
     release = resolve;
   });
+  heldRoutes.add(release);
   server.use(
     http.get(`${API}${path}`, async () => {
       await released;
@@ -349,3 +352,38 @@ export function holdRoute(path) {
 }
 
 export const server = setupServer(...handlers);
+
+const pendingRequests = new Set();
+server.events.on('request:start', ({ requestId }) =>
+  pendingRequests.add(requestId),
+);
+server.events.on('request:end', ({ requestId }) =>
+  pendingRequests.delete(requestId),
+);
+
+const nextTask = () => new Promise((resolve) => setTimeout(resolve, 10));
+
+/**
+ * Answers the held requests, then resolves once every request to the fake stats API has been
+ * answered and the app has read the answers. The app's stats client shares a pending request
+ * with any identical one made before it's answered, so one left pending at the end of a test
+ * would answer the next test's request, or be logged in its requests.
+ */
+export async function settleStatsApi({ timeout = 5000 } = {}) {
+  heldRoutes.forEach((release) => release());
+  heldRoutes.clear();
+  // Date is frozen in the integration tests, so the deadline uses performance.now().
+  const deadline = performance.now() + timeout;
+  // A request waiting for its ID token reaches MSW a moment later, so the requests must stay
+  // answered over two checks in a row.
+  let quietChecks = 0;
+  while (quietChecks < 2) {
+    await nextTask();
+    quietChecks = pendingRequests.size ? 0 : quietChecks + 1;
+    if (performance.now() > deadline) {
+      throw new Error(
+        `${pendingRequests.size} stats API request(s) still pending after the test`,
+      );
+    }
+  }
+}
