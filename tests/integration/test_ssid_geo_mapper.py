@@ -215,7 +215,8 @@ class TestInsertSsidGeoBatch(SsidGeoDatabaseTestCase):
         helpers.insert_ssid_geo_batch(home, [GENEVA, PARIS], [GENEVA, PARIS])
         helpers.insert_ssid_geo_batch(cafe, [PARIS], [PARIS])
 
-        self.assertEqual(
+        # The views have no order, so only the rows are compared, not their order.
+        self.assertCountEqual(
             self.rows(
                 "SELECT ssid, country, country_alpha3 FROM ssid_geo_reduced_resolved"
             ),
@@ -385,8 +386,8 @@ class TestMappingEndToEnd(SsidGeoDatabaseTestCase):
         self.assertEqual(
             self.rows("SELECT count(*) FROM ssid_geo WHERE ssid = :id", id=home), [(3,)]
         )
-        # Meyrin is ~6 km from Geneva, within the 27 km reduction threshold.
-        self.assertEqual(
+        # Meyrin is ~6 km from Geneva, within the 27 km reduction threshold. The view has no order.
+        self.assertCountEqual(
             self.rows("SELECT country FROM ssid_geo_reduced_resolved"),
             [("Switzerland",), ("France",)],
         )
