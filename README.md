@@ -26,7 +26,7 @@ width="100%"
 class="center"
 />
 <p align="center">
-    <label><b>Fig. 1</b>: PNLS-DC <code>3.2.0</code> system overview</label>
+    <label><b>Fig. 1</b>: PNLS-DC <code>3.3.0</code> system overview</label>
     </p>
 </p>
 
@@ -115,7 +115,7 @@ class="center"
         </p>
     </p>
 
-   - Weekly Cloudflare usage reporting (`cloudflare_limit_notifier`).
+   - Weekly Cloudflare usage reporting (`cloudflare-limit-notifier`).
      - It computes the current R2 usage (storage usage and class A and B operations) in order to stay within the [free limits](https://developers.cloudflare.com/r2/pricing/#free-tier).
 
     <p align="center">
@@ -126,7 +126,7 @@ class="center"
     class="center"
     />
     <p align="center">
-        <label><b>Fig. 6</b>: Example <code>cloudflare_limit_notifier</code> Mattermost message</label>
+        <label><b>Fig. 6</b>: Example <code>cloudflare-limit-notifier</code> Mattermost message</label>
         </p>
     </p>
 
@@ -137,7 +137,7 @@ class="center"
      - Schema definition (`aggregator/migrations`) and migration done using [migrate](https://github.com/golang-migrate/migrate).
    - MongoDB used by archive flow.
 
-5. **Database Backup Service (`db_backup`)**
+5. **Database Backup Service (`db-backup`)**
    - Provides a PostgreSQL backup workflow orchestrated by [Netflix Conductor](<https://en.wikipedia.org/wiki/Conductor_(software)>).
    - This workflow is triggered every day as the last part of the aggregation workflow triggered by the Apache Airflow `orchestrator`.
    - Pipeline tasks:
@@ -147,7 +147,7 @@ class="center"
      4. `upload_to_r2_task` - upload artifact to Cloudflare R2/S3-compatible storage
      5. `cleanup` - removed local copy of the encrypted DB.
 
-6. **Frontend (`monitor_dashboard`)**
+6. **Frontend (`monitor-dashboard`)**
    - React UI with [Firebase Authentication](https://firebase.google.com/docs/auth).
    - Reads daily statistics written by `stats` service for the analytics dashboard.
    - Real-time and daily aggregated analytics views.
@@ -169,7 +169,7 @@ class="center"
    - [Sentry](https://docs.sentry.io/product/explore/logs/) for centralized error tracking.
      - Using both Mattermost notifications (compatible with Slack-style webhooks from Sentry) and email notifications.
    - Datadog for edge devices (`collector`) metrics dashboard tracking.
-     - The same metrics agent (`collector_metrics_agent`) also runs on the home server.
+     - The same metrics agent (`collector-metrics-agent`) also runs on the home server.
 
     <p align="center">
     <img
@@ -186,7 +186,7 @@ class="center"
    - Pydantic's [Logfires](https://github.com/pydantic/logfire), an observability platform built on OpenTelemetry, is used for tracking of `stats-api`.
    - [Uptime Kuma](https://github.com/louislam/uptime-kuma) for uptime monitoring of the services running on the home server with webhook notifications.
      - It is defined in the root `docker-compose.yml` and its web UI is served on port `3001`.
-     - Services with an HTTP port are checked with TCP port monitors, or an HTTP monitor where a health endpoint exists (the Conductor server of `db_backup`).
+     - Services with an HTTP port are checked with TCP port monitors, or an HTTP monitor where a health endpoint exists (the Conductor server of `db-backup`).
      - `collector-status-notifier` has no HTTP port, so it sends a push heartbeat to Uptime Kuma after every status check.
      - `stats-api`, the client-facing API of the monitoring dashboard, is the only monitored service that doesn't run on the home server. Its public `/health` endpoint on FastAPI Cloud is checked with an HTTP monitor.
 
