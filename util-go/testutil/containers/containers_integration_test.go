@@ -5,6 +5,7 @@ package containers
 import (
 	"bytes"
 	"context"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -135,5 +136,31 @@ func TestRedisIsSharedButDatabasesAreNot(t *testing.T) {
 	first.Command(t, a, "SET", "RPI-1", "offline")
 	if reply := first.Command(t, b, "EXISTS", "RPI-1"); strings.TrimSpace(reply) != "0" {
 		t.Fatalf("expected the key only in database %d, EXISTS in %d answered %q", a, b, reply)
+	}
+}
+
+func TestRedisReleasesDatabasesWhenTestsEnd(t *testing.T) {
+	server := StartRedis(t)
+	held := server.NewDatabase(t)
+
+	// More tests than Redis has databases, one after another, each with a database of its own while it runs.
+	var leased []int
+	for i := range redisDatabases + 4 {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			database := server.NewDatabase(t)
+			if database == held {
+				t.Fatalf("got database %d, which the parent test still holds", held)
+			}
+			// The previous test left a key here, which the lease emptied.
+			if reply := server.Command(t, database, "EXISTS", "RPI-1"); strings.TrimSpace(reply) != "0" {
+				t.Fatalf("expected an empty database %d, EXISTS answered %q", database, reply)
+			}
+			server.Command(t, database, "SET", "RPI-1", "offline")
+			leased = append(leased, database)
+		})
+	}
+
+	if len(leased) != redisDatabases+4 || leased[0] != leased[len(leased)-1] {
+		t.Fatalf("expected the released database to be leased again, got %v", leased)
 	}
 }

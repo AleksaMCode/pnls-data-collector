@@ -30,7 +30,8 @@ type Redis struct {
 
 	container tc.Container
 	mu        sync.Mutex
-	nextDB    int
+	// leased marks the databases tests are using. Database 0 is left to anything that doesn't choose one.
+	leased [redisDatabases]bool
 }
 
 var redisServer shared[*Redis]
@@ -59,25 +60,44 @@ func StartRedis(t *testing.T) *Redis {
 		if err != nil {
 			return nil, err
 		}
-		// Database 0 is left to anything that doesn't choose one.
-		return &Redis{Host: host, Port: port.Port(), container: container, nextDB: 1}, nil
+		return &Redis{Host: host, Port: port.Port(), container: container}, nil
 	})
 }
 
-// NewDatabase returns the number of a logical database no other test of this binary uses, emptied for the test.
+// NewDatabase leases a logical database that no running test uses, emptied for the test. The database is released
+// when the test ends, after the cleanups the test registered later, such as closing its clients, so a later test can
+// lease it again.
 func (r *Redis) NewDatabase(t *testing.T) int {
 	t.Helper()
 
-	r.mu.Lock()
-	database := r.nextDB
-	r.nextDB++
-	r.mu.Unlock()
-	if database >= redisDatabases {
-		t.Fatalf("all %d Redis databases are used by the tests of this binary", redisDatabases)
+	database := r.lease()
+	if database == 0 {
+		t.Fatalf("all %d Redis databases are leased by running tests", redisDatabases-1)
 	}
+	t.Cleanup(func() { r.release(database) })
 
 	r.Command(t, database, "FLUSHDB")
 	return database
+}
+
+// lease marks the lowest free database as used and returns it, or 0 when none is free.
+func (r *Redis) lease() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for database := 1; database < redisDatabases; database++ {
+		if !r.leased[database] {
+			r.leased[database] = true
+			return database
+		}
+	}
+	return 0
+}
+
+func (r *Redis) release(database int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.leased[database] = false
 }
 
 // Command runs a redis-cli command in a database, inside the container, and returns its output.
