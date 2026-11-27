@@ -39,12 +39,22 @@ func TestGetFirebaseClientReadsFromTheGivenDatabase(t *testing.T) {
 	}
 }
 
+// withoutEmulatorHost clears FIREBASE_DATABASE_EMULATOR_HOST until the test ends, and so in the children it starts.
+// With it set, the SDK makes an emulator client, which reads no credentials and accepts any database URL, so the
+// failures these tests expect never happen.
+func withoutEmulatorHost(t *testing.T) {
+	t.Helper()
+
+	t.Setenv("FIREBASE_DATABASE_EMULATOR_HOST", "")
+}
+
 func TestGetFirebaseClientMissingCredentialsFatal(t *testing.T) {
 	if testutil.InChild(t) {
 		GetFirebaseClient(context.Background(), "definitely-missing-creds.json", "https://example.firebaseio.com")
 		return
 	}
 
+	withoutEmulatorHost(t)
 	result := testutil.RunInChild(t)
 
 	if result.ExitCode != 1 {
@@ -64,6 +74,7 @@ func TestGetFirebaseClientInvalidDatabaseURLFatal(t *testing.T) {
 		return
 	}
 
+	withoutEmulatorHost(t)
 	result := testutil.RunInChild(t)
 
 	if result.ExitCode != 1 {
@@ -82,6 +93,7 @@ func TestGetFirebaseClientFailureIsReportedToSentry(t *testing.T) {
 	}
 
 	sentry := testutil.NewFakeSentry(t)
+	withoutEmulatorHost(t)
 	testutil.RunInChild(t, testutil.SentryDSNEnv+"="+sentry.DSN())
 
 	testutil.ExpectFailure(t, "GetFirebaseClient exits with log.Fatalf, which skips Sentry.", func(t testutil.TB) {
