@@ -88,20 +88,38 @@ function selectedKeys(path, limit) {
 }
 
 /**
- * Tells each listener at the parent about a new child, if it entered the listener's query result.
- * Under limitToLast, a child older than the ones selected stays out, as it does in the SDK.
+ * Reports a new child to a listener, if it entered the listener's query result. Under limitToLast,
+ * a child older than the ones selected stays out, as it does in the SDK.
+ */
+function deliverChildAdded(listener, change) {
+  const entered =
+    !listener.results.has(change.childKey) &&
+    change.selected.includes(change.childKey);
+  listener.results = new Set(change.selected);
+  if (entered) {
+    listener.callback(change.snapshot);
+  }
+}
+
+/**
+ * Tells each listener at the parent about a new child. A listener still waiting for its existing
+ * children gets it after them, so it sees them first, as the header describes.
  */
 function notifyChildAdded(parentPath, childKey) {
   const parent = normalize(parentPath);
-  const value = readPath(`${parent}/${childKey}`);
+  const childPath = `${parent}/${childKey}`;
   for (const listener of [...listeners]) {
     if (listener.path !== parent) continue;
-    const selected = selectedKeys(parent, listener.limit);
-    const entered =
-      !listener.results.has(childKey) && selected.includes(childKey);
-    listener.results = new Set(selected);
-    if (entered) {
-      listener.callback(snapshot(`${parent}/${childKey}`, value));
+    // Taken now, so a queued change is judged against the data as it was when it was written.
+    const change = {
+      childKey,
+      selected: selectedKeys(parent, listener.limit),
+      snapshot: snapshot(childPath, readPath(childPath)),
+    };
+    if (listener.queued) {
+      listener.queued.push(change);
+    } else {
+      deliverChildAdded(listener, change);
     }
   }
 }
@@ -139,25 +157,37 @@ export function onChildAdded(target, callback) {
     hook(target.path);
   }
 
-  const initial = selectedKeys(target.path, target.limit);
+  const initialKeys = selectedKeys(target.path, target.limit);
+  const initial = initialKeys.map((childKey) =>
+    snapshot(
+      `${target.path}/${childKey}`,
+      readPath(`${target.path}/${childKey}`),
+    ),
+  );
   const listener = {
     path: target.path,
     limit: target.limit,
     callback,
     active: true,
     // The children in the query result, so that later children are only reported on entering it.
-    results: new Set(initial),
+    results: new Set(initialKeys),
+    // Children added before the existing ones are delivered; null once they are.
+    queued: [],
   };
   listeners.push(listener);
 
-  // Existing children arrive asynchronously, as they do from the real SDK.
+  // Existing children arrive asynchronously, as they do from the real SDK, and before any child
+  // added in the meantime.
   queueMicrotask(() => {
-    for (const childKey of initial) {
+    for (const child of initial) {
       if (!listener.active) return;
-      // Pushed out of a limitToLast result by a child added in the meantime.
-      if (!listener.results.has(childKey)) continue;
-      const value = readPath(`${target.path}/${childKey}`);
-      callback(snapshot(`${target.path}/${childKey}`, value));
+      callback(child);
+    }
+    const queued = listener.queued;
+    listener.queued = null;
+    for (const change of queued) {
+      if (!listener.active) return;
+      deliverChildAdded(listener, change);
     }
   });
 
