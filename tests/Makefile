@@ -2,6 +2,10 @@
 
 REPO_ROOT := $(abspath ..)
 
+# Under ENV=test, the services skip their runtime setup on import (database sessions, Firebase, MongoDB, Datadog) and
+# the tests give them stubs or test containers instead. CI sets it too (see .github/workflows/python-tests.yml).
+export ENV := test
+
 audit:
 	python -m pip_audit -r requirements.txt
 
