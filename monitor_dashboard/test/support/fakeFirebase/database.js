@@ -1,7 +1,8 @@
 // An in-memory stand-in for the parts of `@firebase/database` the dashboard uses.
 //
 // Like the real SDK, a `child_added` listener first gets the children that already exist (only the last
-// N of them under `limitToLast(N)`), asynchronously, and then every child added later.
+// N of them under `limitToLast(N)`), asynchronously, and then every child added later that enters the
+// query result: under `limitToLast(N)`, only one that is among the last N keys.
 
 let root = {};
 let listeners = [];
@@ -80,11 +81,26 @@ function snapshot(path, value) {
   };
 }
 
+/** The keys a query selects now: all the children, or the last `limit` of them in key order. */
+function selectedKeys(path, limit) {
+  const keys = sortedKeys(readPath(path));
+  return limit ? keys.slice(-limit) : keys;
+}
+
+/**
+ * Tells each listener at the parent about a new child, if it entered the listener's query result.
+ * Under limitToLast, a child older than the ones selected stays out, as it does in the SDK.
+ */
 function notifyChildAdded(parentPath, childKey) {
   const parent = normalize(parentPath);
   const value = readPath(`${parent}/${childKey}`);
   for (const listener of [...listeners]) {
-    if (listener.path === parent) {
+    if (listener.path !== parent) continue;
+    const selected = selectedKeys(parent, listener.limit);
+    const entered =
+      !listener.results.has(childKey) && selected.includes(childKey);
+    listener.results = new Set(selected);
+    if (entered) {
       listener.callback(snapshot(`${parent}/${childKey}`, value));
     }
   }
@@ -123,15 +139,23 @@ export function onChildAdded(target, callback) {
     hook(target.path);
   }
 
-  const listener = { path: target.path, callback, active: true };
+  const initial = selectedKeys(target.path, target.limit);
+  const listener = {
+    path: target.path,
+    limit: target.limit,
+    callback,
+    active: true,
+    // The children in the query result, so that later children are only reported on entering it.
+    results: new Set(initial),
+  };
   listeners.push(listener);
 
   // Existing children arrive asynchronously, as they do from the real SDK.
-  const existing = sortedKeys(readPath(target.path));
-  const initial = target.limit ? existing.slice(-target.limit) : existing;
   queueMicrotask(() => {
     for (const childKey of initial) {
       if (!listener.active) return;
+      // Pushed out of a limitToLast result by a child added in the meantime.
+      if (!listener.results.has(childKey)) continue;
       const value = readPath(`${target.path}/${childKey}`);
       callback(snapshot(`${target.path}/${childKey}`, value));
     }
