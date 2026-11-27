@@ -1,4 +1,4 @@
-.PHONY: lint fmt run test test-coverage test-coverage-view test-coverage-view-browser audit audit-fix
+.PHONY: lint fmt run test test-integration test-coverage test-coverage-view test-coverage-view-browser audit audit-fix
 
 fmt:
 	golangci-lint fmt
@@ -11,6 +11,9 @@ run:
 
 test:
 	go test ./...
+
+test-integration:
+	go test -tags integration ./...
 
 test-coverage:
 	go test -coverprofile=coverage ./...

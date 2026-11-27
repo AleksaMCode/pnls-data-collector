@@ -1,7 +1,8 @@
 PYTHON_SERVICES := aggregator collector collector_metrics_agent firebase_housekeeping orchestrator ssid_geo_mapper stats stats_api tests util
 GO_MODULES := cloudflare_limit_notifier collector_status_notifier db_backup firebase_limit_notifier home_server_limit_notifier util-go
 # Go modules with tests behind the `integration` build tag. Their `test-integration` target runs all their tests.
-GO_INTEGRATION_MODULES := db_backup firebase_limit_notifier
+# Keep in sync with the modules .github/workflows/go-tests.yml runs with -tags=integration.
+GO_INTEGRATION_MODULES := collector_status_notifier db_backup firebase_limit_notifier util-go
 
 AUDIT_TARGETS := $(addprefix audit-,$(PYTHON_SERVICES))
 AUDIT_FIX_TARGETS := $(addprefix audit-fix-,$(PYTHON_SERVICES))
