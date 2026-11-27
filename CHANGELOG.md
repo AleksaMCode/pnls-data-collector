@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- `aggregator`, its Celery worker and Flower now share one `pnls-aggregator` image, built once by the `aggregator` service instead of three times. PR #496
+- `aggregator`, its Celery worker and Flower now share one build configuration. Built in one command, BuildKit runs its steps once instead of three times, also with `--no-cache`, and each service can still be built on its own. PR #496
 - Every `docker-compose.yml` defines the shared `pnls` network the same way. `firebase-housekeeping` and `orchestrator` no longer mark it `external`, which the root file's `include` can't merge. PR #496
 - `firebase-housekeeping` deletes now also delete the Firebase `stats` node, which nothing reads anymore. It's still left out of the MongoDB backup. PR #496
 
@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- `monitor-dashboard` live probe request count no longer misses rows written while it subscribes. It skipped the first row each device's listener reported, assuming it was the last row already counted, so a row written before the listener's first data was lost. The listener now gets only the rows after the last one counted, and counts each of them. PR #496
 - `stats-api` Docker image no longer includes local dotenv files (`.env`, `.env.local` and other variants). A new `stats_api/Dockerfile.dockerignore` leaves them out of the build, and the settings come from the container's environment, as `env_file` in `docker-compose.yml` already provides them. Git now also ignores `.env.*` files, except the `.env.template` ones. PR #496
 - Docker images built from the repository root no longer include local secret files. A new root `.dockerignore` leaves out `.env` files, `firebase_credentials.json` and `*.pem` keys. `aggregator` (with its worker and Flower) and `firebase-housekeeping` now mount their `firebase_credentials.json`, and `aggregator` its `private_key.pem`, read-only. `cloudflare-limit-notifier` mounts its `.env` instead of copying it, like the other Go notifiers. PR #496
 - `monitor-dashboard` `.Dockerignore` is renamed to `.dockerignore`, the only name Docker reads on a case-sensitive file system, so its rules now apply on Linux. It also leaves out `.env.*` files. PR #496
