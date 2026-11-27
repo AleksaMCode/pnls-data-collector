@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Keep the version in sync with .pre-commit-config.yaml.
       # Ignored rules are listed in .hadolint.yaml.

@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout repository
         if: github.event_name == 'push'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Detect changed paths
         id: filter
@@ -40,7 +40,7 @@ jobs:
         working-directory: stats_api
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -70,7 +70,7 @@ jobs:
         working-directory: monitor_dashboard
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Build monitor-dashboard
         run: |
