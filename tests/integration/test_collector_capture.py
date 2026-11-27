@@ -143,9 +143,13 @@ class TestCollectorFirebase(CollectorCaptureTestCase):
         self.assertEqual([data[key] for key in sorted(data)], [first, second])
 
     def test_device_status(self):
-        self.collector_firebase.update_device_status()
-
         today = datetime.now(PARIS).date()
+        # The status is written with a second read of the clock, which must fall on the same day.
+        with mock.patch.object(
+            self.collector_firebase, "datetime", frozen_host_clock(today)
+        ):
+            self.collector_firebase.update_device_status()
+
         status = self.db.reference(f"/RPI-1-{today}/status").get()
         self.assertEqual(status["status"], "working")
         self.assertTrue(status["timestamp"].startswith(str(today)))
@@ -155,7 +159,8 @@ class TestOfflineCapture(CollectorCaptureTestCase):
     def test_captured_frames_reach_firebase(self):
         today = date.today()
 
-        self.capture(sample_capture(today))
+        # The parser reads the clock again for each frame, so it is frozen on the same day.
+        self.capture(sample_capture(today), day=today)
 
         records = self.firebase_records(f"RPI-1-{today}")
         self.assertEqual(
@@ -177,7 +182,8 @@ class TestOfflineCapture(CollectorCaptureTestCase):
     def test_local_backup_matches_firebase(self):
         today = date.today()
 
-        self.capture(sample_capture(today))
+        # The parser reads the clock again for each frame, so it is frozen on the same day.
+        self.capture(sample_capture(today), day=today)
 
         backup_file = self.folder / f"{today}-data.json"
         backed_up = [
