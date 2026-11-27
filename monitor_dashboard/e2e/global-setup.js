@@ -6,6 +6,7 @@
 // The browser reaches them on their mapped ports. Their addresses are saved in e2e/.state.json.
 import { generateKeyPairSync } from 'node:crypto';
 import {
+  copyFileSync,
   cpSync,
   mkdtempSync,
   readdirSync,
@@ -131,13 +132,18 @@ function fakeServiceAccount() {
 }
 
 async function buildStatsApiImage() {
-  // The image's build context is the repository root. Only stats_api/ is copied into a temporary
-  // context, without a local .env, so no developer secrets reach the image.
+  // The image's build context is the repository root, but it only uses stats_api/, so a temporary
+  // context with just that folder keeps the rest of the repository (node_modules, .venv) from
+  // being read. Testcontainers reads only a .dockerignore at the context's root, not
+  // stats_api/Dockerfile.dockerignore, so that file is copied there to leave out the local .env files.
   const context = mkdtempSync(join(tmpdir(), 'pnls-stats-api-'));
   cpSync(join(REPO, 'stats_api'), join(context, 'stats_api'), {
     recursive: true,
-    filter: (source) => !/[\\/](\.env|__pycache__)$/.test(source),
   });
+  copyFileSync(
+    join(REPO, 'stats_api', 'Dockerfile.dockerignore'),
+    join(context, '.dockerignore'),
+  );
   try {
     await GenericContainer.fromDockerfile(
       context,

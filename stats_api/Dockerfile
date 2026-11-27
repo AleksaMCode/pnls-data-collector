@@ -17,6 +17,7 @@ RUN pip install -r requirements.txt \
 
 # Keep stats_api as a standalone app root so imports like
 # "from core...", "from routers...", "from middleware..." work.
+# Local .env files are left out by Dockerfile.dockerignore.
 COPY stats_api /stats_api_service/stats_api
 
 WORKDIR /stats_api_service/stats_api

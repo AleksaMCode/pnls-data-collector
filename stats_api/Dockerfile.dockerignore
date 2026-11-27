@@ -1,0 +1,8 @@
+# Used instead of a root .dockerignore when building stats_api/Dockerfile (BuildKit). Paths are
+# relative to the build context, the repository root. Only stats_api/ is sent, without local dotenv
+# files: the settings come from the container's environment (env_file in docker-compose.yml).
+*
+!stats_api
+stats_api/**/.env
+stats_api/**/.env.*
+stats_api/**/__pycache__
