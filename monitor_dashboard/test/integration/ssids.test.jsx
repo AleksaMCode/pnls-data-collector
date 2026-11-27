@@ -165,6 +165,22 @@ describe('SSID table', () => {
         sort_order: 'desc',
       }),
     );
+    // Every third SSID has a geolocation. Within that group the most recently seen come first;
+    // Network-15 to Network-30 share their last_seen, so the SSID orders those.
+    await waitFor(() =>
+      expect(ssidColumn().slice(0, 10)).toEqual([
+        'Network-15',
+        'Network-18',
+        'Network-21',
+        'Network-24',
+        'Network-27',
+        'Network-30',
+        'Network-12',
+        'Network-09',
+        'Network-06',
+        'Network-03',
+      ]),
+    );
   });
 
   it('pages through the results on the server', async () => {

@@ -222,10 +222,14 @@ function ssidPage(url) {
   const matching = fixtures.ssids
     .filter((item) => item.ssid.toLowerCase().includes(search))
     .sort((a, b) => {
-      const order = a[sortBy] < b[sortBy] ? -1 : a[sortBy] > b[sortBy] ? 1 : 0;
-      // Ties are broken by SSID, as the API does.
-      const tie = a.ssid.localeCompare(b.ssid);
-      return (sortOrder === 'asc' ? order : -order) || tie;
+      const compare = (key) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0);
+      const order = compare(sortBy);
+      const primary = sortOrder === 'asc' ? order : -order;
+      // As the API does for has_geo: the most recently seen first within each group, in either
+      // order, then by SSID. The API sets no tie-breaker for the other columns; SSID keeps the
+      // fake's pages stable.
+      const lastSeen = sortBy === 'has_geo' ? -compare('last_seen') : 0;
+      return primary || lastSeen || a.ssid.localeCompare(b.ssid);
     });
 
   return {
