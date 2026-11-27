@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -264,7 +265,8 @@ func newFakeFirebase(t *testing.T, nodes map[string]any) (*testutil.FakeRealtime
 	return fake, firebase.GetFirebaseClient(context.Background(), fake.CredentialsFile(), fake.DatabaseURL())
 }
 
-// fakeKuma is an Uptime Kuma push monitor that counts the pushes.
+// fakeKuma is an Uptime Kuma push monitor that counts the pushes, and tells the count at /pushes, so a child process
+// can wait for its push to arrive.
 type fakeKuma struct {
 	server *httptest.Server
 	mu     sync.Mutex
@@ -276,9 +278,13 @@ func useFakeKuma(t *testing.T) *fakeKuma {
 	t.Helper()
 
 	fake := &fakeKuma{}
-	fake.server = httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+	fake.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fake.mu.Lock()
 		defer fake.mu.Unlock()
+		if r.URL.Path == "/pushes" {
+			_, _ = fmt.Fprint(w, fake.pushes)
+			return
+		}
 		fake.pushes++
 	}))
 	t.Cleanup(fake.server.Close)
@@ -291,4 +297,27 @@ func (f *fakeKuma) count() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.pushes
+}
+
+// pushesURL is where the fake tells how many pushes it received.
+func (f *fakeKuma) pushesURL() string {
+	return f.server.URL + "/pushes"
+}
+
+// kumaPushes asks a fake Kuma at pushesURL how many pushes it received, or returns -1 when it can't be asked.
+func kumaPushes(pushesURL string) int {
+	response, err := http.Get(pushesURL) //nolint:gosec,noctx // G107: the URL is the test's fake Kuma.
+	if err != nil {
+		return -1
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return -1
+	}
+	count, err := strconv.Atoi(string(body))
+	if err != nil {
+		return -1
+	}
+	return count
 }

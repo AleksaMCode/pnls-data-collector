@@ -141,34 +141,39 @@ func TestCheckDevicesStatusReportsAFailedCheckToSentry(t *testing.T) {
 	})
 }
 
-// workDirEnv passes the folder main runs in to the child process.
-const workDirEnv = "COLLSTATNOT_TEST_WORK_DIR"
+// workDirEnv passes the folder main runs in to the child process, and kumaPushesEnv where the child can ask the fake
+// Kuma for its pushes.
+const (
+	workDirEnv    = "COLLSTATNOT_TEST_WORK_DIR"
+	kumaPushesEnv = "COLLSTATNOT_TEST_KUMA_PUSHES"
+)
 
 // runMainInChild runs main in a child process, in the folder. main checks once, then waits 5 minutes for the next
-// check, so the child ends when every device was checked once, or when main exits.
-func runMainInChild(t *testing.T, dir string) testutil.ChildResult {
+// check, so the child ends once every device was checked and, with a kumaPushesURL, the fake Kuma received the push
+// that follows the check. It also ends when main exits, and gives up after 20 seconds.
+func runMainInChild(t *testing.T, dir, kumaPushesURL string) testutil.ChildResult {
 	t.Helper()
 
 	if !testutil.InChild(t) {
-		return testutil.RunInChild(t, workDirEnv+"="+dir)
+		return testutil.RunInChild(t, workDirEnv+"="+dir, kumaPushesEnv+"="+kumaPushesURL)
 	}
 
 	unsetConfigEnv(t)
 	t.Chdir(os.Getenv(workDirEnv))
+	kumaPushesURL = os.Getenv(kumaPushesEnv)
 	go main()
 
-	// main sends the log to stdout and to its log file, which is read here.
 	deadline := time.Now().Add(20 * time.Second)
 	for time.Now().Before(deadline) {
 		time.Sleep(50 * time.Millisecond)
+		// main sends the log to stdout and to its log file, which is read here.
 		logged, _ := os.ReadFile(LOG_FILE)
-		if strings.Count(string(logged), "is online and has no offline cache state") == len(Devices) {
-			// Leave time for the Kuma push, which follows the checks.
-			time.Sleep(500 * time.Millisecond)
+		checked := strings.Count(string(logged), "is online and has no offline cache state") == len(Devices)
+		if checked && (kumaPushesURL == "" || kumaPushes(kumaPushesURL) > 0) {
 			os.Exit(0)
 		}
 	}
-	fmt.Println("main neither checked the devices nor exited")
+	fmt.Println("main neither checked the devices and pushed to Kuma, nor exited")
 	os.Exit(3)
 	return testutil.ChildResult{}
 }
@@ -194,7 +199,7 @@ func serviceDir(t *testing.T, values map[string]string, credentials string) stri
 
 func TestMainChecksTheDevices(t *testing.T) {
 	if testutil.InChild(t) {
-		runMainInChild(t, "")
+		runMainInChild(t, "", "")
 		return
 	}
 	datadog := newFakeDatadog(t)
@@ -219,7 +224,7 @@ func TestMainChecksTheDevices(t *testing.T) {
 		"KUMA_PUSH_URL":            KUMA_PUSH_URL,
 	}, firebase.CredentialsFile())
 
-	result := runMainInChild(t, dir)
+	result := runMainInChild(t, dir, kuma.pushesURL())
 
 	if result.ExitCode != 0 {
 		t.Fatalf("expected main to check the devices, got exit code %d:\n%s", result.ExitCode, result.Output())
@@ -240,7 +245,7 @@ func TestMainChecksTheDevices(t *testing.T) {
 
 func TestMainWithoutRedisFatal(t *testing.T) {
 	if testutil.InChild(t) {
-		runMainInChild(t, "")
+		runMainInChild(t, "", "")
 		return
 	}
 
@@ -253,7 +258,7 @@ func TestMainWithoutRedisFatal(t *testing.T) {
 	}
 
 	for want, values := range testCases {
-		result := runMainInChild(t, serviceDir(t, values, ""))
+		result := runMainInChild(t, serviceDir(t, values, ""), "")
 
 		if result.ExitCode != 1 || !strings.Contains(result.Output(), want) {
 			t.Errorf("expected %q and exit code 1, got %d:\n%s", want, result.ExitCode, result.Output())
