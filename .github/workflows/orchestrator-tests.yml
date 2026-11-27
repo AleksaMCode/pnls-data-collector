@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version-file: .python-version
 
@@ -44,6 +44,7 @@ jobs:
         run: python -m pip install -r orchestrator/requirements-test.txt
 
       - name: Run unit tests with coverage
+        id: unit-tests
         run: python -m coverage run --rcfile=orchestrator/.coveragerc -m unittest discover -v -s orchestrator/tests/unit -t .
 
       # Runs even when a unit test failed, so both results show in one CI run.
@@ -52,12 +53,17 @@ jobs:
         if: ${{ !cancelled() }}
         run: python -m coverage run --rcfile=orchestrator/.coveragerc --append -m unittest discover -v -s orchestrator/tests/integration -t .
 
+      # Runs even when a suite failed, so the coverage both suites measured is still reported. The unit tests write the
+      # coverage data whether or not they pass, so the report only needs them to have run.
       - name: Create coverage report
+        id: coverage-report
+        if: ${{ !cancelled() && (steps.unit-tests.outcome == 'success' || steps.unit-tests.outcome == 'failure') }}
         run: |
           python -m coverage report --rcfile=orchestrator/.coveragerc
           python -m coverage xml --rcfile=orchestrator/.coveragerc
 
       - name: Upload coverage to Codecov
+        if: ${{ !cancelled() && steps.coverage-report.outcome == 'success' }}
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
