@@ -11,10 +11,11 @@ const n = (value) => value.toLocaleString();
 // get the first one's, which is never answered.
 describe('a stats request left pending by a test', () => {
   it('is pending when the test ends', async () => {
-    holdRoute('/stats/total');
+    const { started } = holdRoute('/stats/total');
     renderApp();
 
-    await screen.findAllByRole('progressbar');
+    // The request has reached the fake API and is held there, not just about to be sent.
+    await started;
   });
 
   it('is answered before the next test, which sends its own', async () => {

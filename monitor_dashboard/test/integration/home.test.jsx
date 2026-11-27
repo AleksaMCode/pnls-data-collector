@@ -108,7 +108,7 @@ describe('stat cards', () => {
   });
 
   it('show spinners on the total and average cards while loading', async () => {
-    const release = holdRoute('/stats/total');
+    const { release } = holdRoute('/stats/total');
     renderApp();
 
     await waitFor(() =>
@@ -127,7 +127,7 @@ describe('stat cards', () => {
   it.fails(
     'show spinners on the last-30-days cards while loading. Known bug: they show 0 and a made-up sparkline',
     async () => {
-      const release = holdRoute('/stats/last-30-days/totals-with-series');
+      const { release } = holdRoute('/stats/last-30-days/totals-with-series');
       renderApp();
       await waitForStats();
 
@@ -277,7 +277,7 @@ describe('device grid', () => {
   it.fails(
     'shows no made-up numbers while loading. Known bug: the hardcoded rows are shown until the data arrives',
     async () => {
-      const release = holdRoute('/stats/probe-requests-per-device');
+      const { release } = holdRoute('/stats/probe-requests-per-device');
       renderApp();
       await waitFor(() => expect(deviceRow('RPI-1')).toBeInTheDocument());
 

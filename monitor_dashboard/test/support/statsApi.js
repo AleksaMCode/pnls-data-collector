@@ -334,21 +334,29 @@ export function failRoute(path, status = 500) {
 
 const heldRoutes = new Set();
 
-/** Keeps every request to a path pending until `release()` is called, or the test ends. */
+/**
+ * Keeps every request to a path pending until `release()` is called, or the test ends.
+ * `started` resolves once the first request has reached the handler and is held there.
+ */
 export function holdRoute(path) {
   let release;
   const released = new Promise((resolve) => {
     release = resolve;
   });
+  let markStarted;
+  const started = new Promise((resolve) => {
+    markStarted = resolve;
+  });
   heldRoutes.add(release);
   server.use(
     http.get(`${API}${path}`, async () => {
+      markStarted();
       await released;
       // Falls through to the default handler, which logs and answers the request.
       return undefined;
     }),
   );
-  return () => release();
+  return { release: () => release(), started };
 }
 
 export const server = setupServer(...handlers);
