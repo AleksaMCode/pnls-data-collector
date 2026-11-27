@@ -60,11 +60,6 @@ function snapshot(path, value) {
     exists: () => value !== null && value !== undefined,
     val: () => (value === undefined ? null : structuredClone(value)),
     size: sortedKeys(value).length,
-    child: (childPath) =>
-      snapshot(
-        `${path}/${childPath}`,
-        readPath(`${normalize(path)}/${childPath}`),
-      ),
     forEach(callback) {
       for (const childKey of sortedKeys(value)) {
         if (
@@ -99,10 +94,6 @@ export function connectDatabaseEmulator() {}
 export function ref(_db, path = '') {
   const normalized = normalize(path);
   return { path: normalized, key: segments(normalized).at(-1) ?? null };
-}
-
-export function child(parent, path) {
-  return ref(null, `${parent.path}/${path}`);
 }
 
 export function limitToLast(limit) {
