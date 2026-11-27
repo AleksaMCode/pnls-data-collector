@@ -5,7 +5,7 @@ authors:
     family-names: Majkić
     email: aleksamcode@gmail.com
 title: "Preferred Network List Sniffer Data Collector"
-version: 1.0.0
+version: 3.3.0
 type: software
 date-released: 2026-05-30
 url: "https://github.com/AleksaMCode/pnls-data-collector"
