@@ -13,6 +13,11 @@ on:
       - "ssid_geo_mapper/**/*.py"
       - "firebase_housekeeping/**/*.py"
       - "collector_metrics_agent/**/*.py"
+      # The tests run with settings modules copied from these templates (see "Prepare settings modules").
+      - "aggregator/settings.py.template"
+      - "firebase_housekeeping/settings.py.template"
+      - "collector/settings.py.template"
+      - "collector_metrics_agent/settings.py.template"
       - "tests/requirements.txt"
       # The integration tests build the database from the migrations, seed fixtures and run the Firebase emulator image.
       - "aggregator/migrations/**"
@@ -34,6 +39,11 @@ on:
       - "ssid_geo_mapper/**/*.py"
       - "firebase_housekeeping/**/*.py"
       - "collector_metrics_agent/**/*.py"
+      # The tests run with settings modules copied from these templates (see "Prepare settings modules").
+      - "aggregator/settings.py.template"
+      - "firebase_housekeeping/settings.py.template"
+      - "collector/settings.py.template"
+      - "collector_metrics_agent/settings.py.template"
       - "tests/requirements.txt"
       # The integration tests build the database from the migrations, seed fixtures and run the Firebase emulator image.
       - "aggregator/migrations/**"
