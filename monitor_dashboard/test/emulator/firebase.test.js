@@ -44,10 +44,13 @@ function today() {
   return parisDate(new Date());
 }
 
-/** The query subscribeToLiveProbeRequestCount listens to for a device. */
-function liveCountQuery(device) {
+/**
+ * The query subscribeToLiveProbeRequestCount and subscribeToDeviceLiveData listen to for a device,
+ * on today's node unless another date is given.
+ */
+function liveCountQuery(device, date = today()) {
   return query(
-    ref(firebase.getFirebaseDb(), `${deviceNode(device, today())}/data`),
+    ref(firebase.getFirebaseDb(), `${deviceNode(device, date)}/data`),
     limitToLast(1),
   );
 }
@@ -71,12 +74,12 @@ function liveCountListenersReady(devices) {
 
 /**
  * Resolves once the SDK has delivered the row with `key` to listeners on the device's
- * live-count query. Events of one query reach all its listeners together, so a listener that
- * was still attached would have been called by then.
+ * live-count query for `date`. Events of one query reach all its listeners together, so a
+ * listener that was still attached would have been called by then.
  */
-function rowDelivered(device, key) {
+function rowDelivered(device, key, date = today()) {
   return new Promise((resolve) => {
-    const stop = onChildAdded(liveCountQuery(device), (snapshot) => {
+    const stop = onChildAdded(liveCountQuery(device, date), (snapshot) => {
       if (snapshot.key === key) {
         stop();
         resolve();
@@ -220,9 +223,13 @@ describe('subscribeToDeviceLiveData', () => {
       ),
     );
 
-    await addProbe('RPI-2', 'Other device');
-    await addProbe('RPI-1', 'Yesterday', '2000-01-01');
+    const otherDevice = await addProbe('RPI-2', 'Other device');
+    const otherDay = await addProbe('RPI-1', 'Other day', '2000-01-01');
     await addProbe('RPI-1', 'Mine');
+    // Once the SDK has delivered the excluded rows on their own queries, a listener on the wrong
+    // device or date would have been called too, so it can't add its row after the check passes.
+    await rowDelivered('RPI-2', otherDevice);
+    await rowDelivered('RPI-1', otherDay, '2000-01-01');
 
     await vi.waitFor(() => expect(ssids).toEqual(['Mine']), { timeout: 5000 });
   });
