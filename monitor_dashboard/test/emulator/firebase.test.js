@@ -173,6 +173,8 @@ describe('subscribeToLiveProbeRequestCount', () => {
       ['RPI-1'],
       (count) => counts.push(count),
     );
+    // So the listeners are detached even if a step below times out. Detaching twice does nothing.
+    unsubscribes.push(result.unsubscribe);
     await liveCountListenersReady(['RPI-1']);
     await addProbe('RPI-1');
     await vi.waitFor(() => expect(counts).toEqual([0, 1]), { timeout: 5000 });
