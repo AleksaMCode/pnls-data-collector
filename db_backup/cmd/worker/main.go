@@ -5,24 +5,30 @@ import (
 	"db_backup/internal/backup"
 	"db_backup/internal/conductor"
 	"db_backup/internal/config"
-	applog "db_backup/internal/logging"
-	"db_backup/internal/storage"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	conductorclient "github.com/conductor-sdk/conductor-go/sdk/client"
 	conductormodel "github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/worker"
+
+	"github.com/AleksaMCode/pnls-data-collector/util-go/logging"
+	"github.com/AleksaMCode/pnls-data-collector/util-go/objectstore"
 )
 
+// defaultServiceName names the worker in Sentry when SERVICE_NAME isn't set.
+const defaultServiceName = "db_backup_worker"
+
 func main() {
-	applog.InitSentry(os.Getenv("SENTRY_DSN"), os.Getenv("SERVICE_NAME"))
+	initSentry(os.Getenv("SENTRY_DSN"), os.Getenv("SERVICE_NAME"))
 
 	cfg, err := config.Load()
 	if err != nil {
-		applog.Fatalf("configuration error: %v", err)
+		logging.Fatal(fmt.Sprintf("configuration error: %v", err))
 	}
 
 	// Keep SDK config in sync with local config values.
@@ -33,14 +39,14 @@ func main() {
 	apiClient := conductorclient.NewAPIClientFromEnv()
 
 	if err := conductor.RegisterAll(ctx, cfg, apiClient); err != nil {
-		applog.Fatalf("registration error: %v", err)
+		logging.Fatal(fmt.Sprintf("registration error: %v", err))
 	}
 
-	uploader, err := storage.NewR2Uploader(cfg)
+	store, err := objectstore.New(ctx, cfg.ObjectStore())
 	if err != nil {
-		applog.Fatalf("r2 client init error: %v", err)
+		logging.Fatal(fmt.Sprintf("r2 client init error: %v", err))
 	}
-	pipeline := backup.NewPipeline(cfg, uploader)
+	pipeline := backup.NewPipeline(cfg, store)
 
 	taskRunner := worker.NewTaskRunnerWithApiClient(apiClient)
 	pgDumpHandler := func(task *conductormodel.Task) (any, error) {
@@ -89,7 +95,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		applog.Fatalf("pg_dump worker start error: %v", err)
+		logging.Fatal(fmt.Sprintf("pg_dump worker start error: %v", err))
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskEncryptName,
@@ -97,7 +103,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		applog.Fatalf("encryption worker start error: %v", err)
+		logging.Fatal(fmt.Sprintf("encryption worker start error: %v", err))
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskCompressName,
@@ -105,7 +111,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		applog.Fatalf("compress worker start error: %v", err)
+		logging.Fatal(fmt.Sprintf("compress worker start error: %v", err))
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskUploadName,
@@ -113,7 +119,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		applog.Fatalf("upload worker start error: %v", err)
+		logging.Fatal(fmt.Sprintf("upload worker start error: %v", err))
 	}
 	if err := taskRunner.StartWorker(
 		backup.TaskCleanupName,
@@ -121,7 +127,7 @@ func main() {
 		cfg.WorkerCount,
 		cfg.PollInterval,
 	); err != nil {
-		applog.Fatalf("cleanup worker start error: %v", err)
+		logging.Fatal(fmt.Sprintf("cleanup worker start error: %v", err))
 	}
 
 	log.Printf(
@@ -144,4 +150,16 @@ func main() {
 	taskRunner.Shutdown(backup.TaskUploadName)
 	taskRunner.Shutdown(backup.TaskCleanupName)
 	taskRunner.WaitWorkers()
+}
+
+// initSentry turns Sentry on when a DSN is set. Without SERVICE_NAME, events are tagged db_backup_worker.
+func initSentry(sentryDSN string, serviceName string) {
+	if strings.TrimSpace(sentryDSN) == "" {
+		log.Print("sentry disabled: SENTRY_DSN is empty")
+		return
+	}
+	if strings.TrimSpace(serviceName) == "" {
+		serviceName = defaultServiceName
+	}
+	logging.InitSentry(sentryDSN, serviceName)
 }

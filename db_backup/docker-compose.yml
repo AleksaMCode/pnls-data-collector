@@ -17,7 +17,8 @@ services:
 
   db-backup-worker:
     build:
-      context: .
+      context: ..
+      dockerfile: ./db_backup/Dockerfile
     container_name: db_backup_worker
     depends_on: [conductor]
     env_file:

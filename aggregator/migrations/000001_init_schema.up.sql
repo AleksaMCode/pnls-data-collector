@@ -820,6 +820,16 @@ ALTER TABLE ONLY public.location_mapping
 
 
 --
+-- Name: location_mapping location_mapping_device_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+-- Needed by the `ON CONFLICT (device)` upsert in 000002 and declared by the LocationMapping model.
+-- Missing from the original dump, so a database built from these migrations could not be seeded.
+ALTER TABLE ONLY public.location_mapping
+    ADD CONSTRAINT location_mapping_device_key UNIQUE (device);
+
+
+--
 -- Name: location location_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 

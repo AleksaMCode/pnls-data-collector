@@ -295,3 +295,9 @@ go.work.sum
 
 # Node (repo-wide Markdown tools)
 node_modules/
+
+# FastAPI Cloud CLI
+.fastapicloud/
+
+# Ruff cache
+.ruff_cache/

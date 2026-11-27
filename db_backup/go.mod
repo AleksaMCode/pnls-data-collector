@@ -3,16 +3,10 @@ module db_backup
 go 1.27.4
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.48.0
-	github.com/aws/aws-sdk-go-v2/config v1.33.21
-	github.com/aws/aws-sdk-go-v2/credentials v1.21.3
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.116.0
+	github.com/AleksaMCode/pnls-data-collector/util-go v0.0.0
 	github.com/conductor-sdk/conductor-go v1.10.3
-	github.com/getsentry/sentry-go v0.50.0
 	github.com/joho/godotenv v1.5.1
 	github.com/testcontainers/testcontainers-go v0.45.0
-	github.com/testcontainers/testcontainers-go/modules/minio v0.45.0
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.45.0
 )
 
 require (
@@ -20,7 +14,10 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc // indirect
 	github.com/Microsoft/go-winio v0.6.4 // indirect
 	github.com/antihax/optional v1.0.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.48.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.27 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.33.21 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.21.3 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.12 // indirect
@@ -29,6 +26,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.116.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.14.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.39.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.44.5 // indirect
@@ -47,6 +45,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.11.3 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
+	github.com/getsentry/sentry-go v0.50.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -76,6 +75,8 @@ require (
 	github.com/shirou/gopsutil/v4 v4.26.10 // indirect
 	github.com/sirupsen/logrus v1.10.2 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
+	github.com/testcontainers/testcontainers-go/modules/minio v0.45.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.45.0 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
@@ -92,4 +93,7 @@ require (
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
+
+replace github.com/AleksaMCode/pnls-data-collector/util-go => ../util-go

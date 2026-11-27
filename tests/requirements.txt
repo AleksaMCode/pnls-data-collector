@@ -11,3 +11,17 @@ yaspin==3.4.0
 tqdm==4.67.1
 httpx==0.28.1
 coverage==7.17.5
+firebase-admin==7.1.0
+fastapi==0.135.1
+celery==5.6.3
+# kombu's Redis transport (used by Celery) imports packaging, but not every kombu release declares it.
+packaging==25.0
+geopy==2.5.0
+datadog==0.52.1
+psutil==7.2.2
+pymongo==4.18.3
+fastapi-cache2==0.2.2
+# fastapi-cache2 imports starlette.templating, which needs jinja2 (stats_api gets it from fastapi[standard]).
+jinja2==3.1.6
+logfire[fastapi,redis,sqlalchemy]==5.2.0
+opentelemetry-api==1.45.2

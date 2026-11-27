@@ -1,0 +1,45 @@
+{
+  "_comment": [
+    "Firebase data for the aggregator workflow tests (tests/integration/test_aggregator_workflow.py).",
+    "Every node becomes `<device>-<date>` in the Firebase emulator, with `date` = today - days_ago.",
+    "MAC addresses are stored in plain text here and encrypted with a throwaway key when seeded.",
+    "RPI-3 has no nodes, so the import also runs through the 'missing node' path."
+  ],
+  "ieee": [
+    { "registry": "MA-L", "assignment": "001A2B", "org": "Example Org" }
+  ],
+  "nodes": [
+    {
+      "device": "RPI-1",
+      "days_ago": 2,
+      "records": [
+        { "mac": "00:1A:2B:00:00:01", "ssid": "CERN-Guest", "channel": 1, "time": "08:00:00.000000" },
+        { "mac": "00:1A:2B:00:00:02", "ssid": "CERN-Guest", "channel": 6, "time": "08:05:00.000000" },
+        { "mac": "02:00:00:00:00:03", "ssid": "eduroam", "channel": 11, "time": "09:00:00.000000" },
+        { "_skip": "channel 15 is outside 1-14", "mac": "00:1A:2B:00:00:04", "ssid": "CERN-Guest", "channel": 15, "time": "09:30:00.000000" }
+      ]
+    },
+    {
+      "device": "RPI-2",
+      "days_ago": 2,
+      "records": [
+        { "mac": "00:1A:2B:00:00:01", "ssid": "eduroam", "channel": 6, "time": "10:00:00.000000" },
+        { "_skip": "SSID is empty after removing control characters", "mac": "00:1A:2B:00:00:05", "ssid": "\u0000", "channel": 6, "time": "10:30:00.000000" }
+      ]
+    },
+    {
+      "device": "RPI-1",
+      "days_ago": 1,
+      "records": [
+        { "mac": "00:1A:2B:00:00:02", "ssid": "CERN-Guest", "channel": 1, "time": "12:00:00.000000" }
+      ]
+    },
+    {
+      "device": "RPI-2",
+      "days_ago": 1,
+      "records": [
+        { "mac": "F4:00:00:00:00:08", "ssid": "Home", "channel": 13, "time": "13:00:00.000000" }
+      ]
+    }
+  ]
+}

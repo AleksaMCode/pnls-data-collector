@@ -291,8 +291,20 @@ func (c *cloudflareClient) query(query string, variables map[string]any, out any
 		retry.OnRetry(func(n uint, err error) {
 			log.Printf("Cloudflare GraphQL retry attempt %d due to error: %v", n+1, err)
 		}),
+		withRetryTimer(),
 	)
 	return err
+}
+
+// retryTimer waits between the retries of a query. When it is nil, retry-go waits with time.After. The tests set a
+// timer that records the delays without waiting.
+var retryTimer retry.Timer
+
+func withRetryTimer() retry.Option {
+	if retryTimer == nil {
+		return func(*retry.Config) {}
+	}
+	return retry.WithTimer(retryTimer)
 }
 
 func isRetryableHTTPStatus(statusCode int) bool {

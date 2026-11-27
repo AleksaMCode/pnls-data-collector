@@ -13,7 +13,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/cloudflare-limit-notifier .
 
 FROM alpine:3.22
 
-RUN apk add --no-cache ca-certificates tzdata
+# The base image can lag behind Alpine's security fixes, so the installed packages are upgraded too.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 COPY --from=builder /bin/cloudflare-limit-notifier /usr/local/bin/cloudflare-limit-notifier
