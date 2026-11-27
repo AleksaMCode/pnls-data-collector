@@ -5,6 +5,8 @@ package objectstore_test
 import (
 	"context"
 	"errors"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -93,6 +95,13 @@ func TestUploadToAMissingBucket(t *testing.T) {
 
 func TestUploadWithoutPathStyleCantReachALocalServer(t *testing.T) {
 	t.Setenv("AWS_MAX_ATTEMPTS", "1")
+	silo := containers.StartSilo(t)
+	// An IP address has no host name to put the bucket in, so the SDK falls back to path-style requests, which Silo
+	// answers. That happens with an IP Docker host, e.g. TESTCONTAINERS_HOST_OVERRIDE=127.0.0.1, and is covered by
+	// TestUploadWithoutPathStyleToAnIPAddressUsesThePath.
+	if endpoint, err := url.Parse(silo.Endpoint); err != nil || net.ParseIP(endpoint.Hostname()) != nil {
+		t.Skipf("the Silo endpoint %s is an IP address, where the SDK uses path-style requests anyway", silo.Endpoint)
+	}
 	store, _ := siloStore(t, func(cfg *objectstore.Config) { cfg.UsePathStyle = false })
 
 	// The bucket goes into the host name, <bucket>.localhost, which the local server doesn't answer for.

@@ -313,3 +313,29 @@ func TestUploadFileMissingFile(t *testing.T) {
 		t.Errorf("expected no request, got %+v", fake.requests)
 	}
 }
+
+func TestUploadWithoutPathStyleToAnIPAddressUsesThePath(t *testing.T) {
+	// The fake listens on 127.0.0.1. An IP address has no host name to put the bucket in, so the SDK puts it in the
+	// path, as with UsePathStyle.
+	_, fake := newFakeS3Store(t, http.StatusOK)
+	cfg := Config{
+		Endpoint:  fake.server.URL,
+		AccessKey: "access",
+		SecretKey: "secret",
+		Region:    R2Region,
+		Bucket:    "pnls-charts",
+	}
+	store, err := New(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := store.Upload(context.Background(), "firebase-limit/usage.png", strings.NewReader("png"),
+		UploadOptions{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if path := fake.onlyRequest(t).path; path != "/pnls-charts/firebase-limit/usage.png" {
+		t.Fatalf("path = %q, want the bucket in the path", path)
+	}
+}
