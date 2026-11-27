@@ -134,9 +134,8 @@ test.describe('home page', () => {
 
     await liveSwitch(page).check();
     await expect(live).toContainText('2');
-    // Gives the listeners their first data; see the start-up race ticket.
-    await page.waitForTimeout(1000);
 
+    // Written right away, also before the listeners have their first data; those count too.
     await devices.probe('RPI-1', 'Home_5G');
     await devices.probe('RPI-3', 'Cafe');
     await expect(live).toContainText('4');
@@ -165,12 +164,17 @@ test.describe('device page', () => {
     await page.goto('/device/RPI-1');
     await expect(page.getByText('Device: RPI-1')).toBeVisible();
 
+    await devices.probe('RPI-1', 'Seed-Network');
     await liveSwitch(page).check();
-    await page.waitForTimeout(1000);
+    const table = page.getByRole('table');
+    // The latest row is the listener's first data, so once it shows, the rows below arrive live.
+    await expect(
+      table.getByRole('cell', { name: 'Seed-Network' }),
+    ).toBeVisible();
+
     await devices.probe('RPI-1', 'CERN');
     await devices.probe('RPI-1', 'E2E-Network');
 
-    const table = page.getByRole('table');
     await expect(
       table.getByRole('cell', { name: 'E2E-Network' }),
     ).toBeVisible();

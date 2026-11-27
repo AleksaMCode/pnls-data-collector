@@ -1,7 +1,8 @@
 // An in-memory stand-in for the parts of `@firebase/database` the dashboard uses.
 //
-// Like the real SDK, a `child_added` listener first gets the children that already exist (only the last
-// N of them under `limitToLast(N)`), asynchronously, and then every child added later that enters the
+// Like the real SDK, a `child_added` listener first gets the children that already exist (only those
+// after the key under `startAfter(key)`, and only the last N of them under `limitToLast(N)`),
+// asynchronously, and then every child added later that enters the
 // query result: under `limitToLast(N)`, only one that is among the last N keys.
 
 let root = {};
@@ -81,9 +82,14 @@ function snapshot(path, value) {
   };
 }
 
-/** The keys a query selects now: all the children, or the last `limit` of them in key order. */
-function selectedKeys(path, limit) {
-  const keys = sortedKeys(readPath(path));
+/**
+ * The keys a query selects now, in key order: the children after `startAfter`, if it is set, and
+ * of those the last `limit`, if it is set.
+ */
+function selectedKeys(path, { limit, startAfter } = {}) {
+  const keys = sortedKeys(readPath(path)).filter(
+    (key) => startAfter === undefined || key > startAfter,
+  );
   return limit ? keys.slice(-limit) : keys;
 }
 
@@ -113,7 +119,7 @@ function notifyChildAdded(parentPath, childKey) {
     // Taken now, so a queued change is judged against the data as it was when it was written.
     const change = {
       childKey,
-      selected: selectedKeys(parent, listener.limit),
+      selected: selectedKeys(parent, listener),
       snapshot: snapshot(childPath, readPath(childPath)),
     };
     if (listener.queued) {
@@ -141,9 +147,19 @@ export function limitToLast(limit) {
   return { type: 'limitToLast', limit };
 }
 
+/** The fake always orders children by key, so this only marks the query, as the SDK needs. */
+export function orderByKey() {
+  return { type: 'orderByKey' };
+}
+
+export function startAfter(value) {
+  return { type: 'startAfter', value };
+}
+
 export function query(target, ...constraints) {
   const limit = constraints.find((c) => c.type === 'limitToLast')?.limit;
-  return { path: target.path, key: target.key, limit };
+  const after = constraints.find((c) => c.type === 'startAfter')?.value;
+  return { path: target.path, key: target.key, limit, startAfter: after };
 }
 
 export async function get(target) {
@@ -157,7 +173,7 @@ export function onChildAdded(target, callback) {
     hook(target.path);
   }
 
-  const initialKeys = selectedKeys(target.path, target.limit);
+  const initialKeys = selectedKeys(target.path, target);
   const initial = initialKeys.map((childKey) =>
     snapshot(
       `${target.path}/${childKey}`,
@@ -167,6 +183,7 @@ export function onChildAdded(target, callback) {
   const listener = {
     path: target.path,
     limit: target.limit,
+    startAfter: target.startAfter,
     callback,
     active: true,
     // The children in the query result, so that later children are only reported on entering it.

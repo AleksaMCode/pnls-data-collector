@@ -261,7 +261,7 @@ describe('subscribeToLiveProbeRequestCount', () => {
     result.unsubscribe();
   });
 
-  it("listens to the last row of each device's node for today in Paris", async () => {
+  it("listens to each device's node for today in Paris", async () => {
     useViewerTimezone('America/Los_Angeles');
     setNow(`${TODAY}T08:00:00`); // Still June 14 in Los Angeles.
     const result = await firebase.subscribeToLiveProbeRequestCount(
@@ -310,24 +310,53 @@ describe('subscribeToLiveProbeRequestCount', () => {
     },
   );
 
-  it.fails(
-    'counts a row written while subscribing. Known bug: it is taken for the row already counted',
-    async () => {
+  it('counts a row written while subscribing', async () => {
+    addProbe('RPI-1');
+    // The device writes between the initial read and the listener.
+    fakeDatabase.beforeNextListen(() => addProbe('RPI-1'));
+    const callback = vi.fn();
+
+    const result = await firebase.subscribeToLiveProbeRequestCount(
+      ['RPI-1'],
+      callback,
+    );
+    await flush();
+
+    expect(callback.mock.calls).toEqual([[1], [2]]);
+    result.unsubscribe();
+  });
+
+  it('counts every row written while subscribing, not only the newest', async () => {
+    addProbe('RPI-1');
+    fakeDatabase.beforeNextListen(() => {
       addProbe('RPI-1');
-      // The device writes between the initial read and the listener.
-      fakeDatabase.beforeNextListen(() => addProbe('RPI-1'));
-      const callback = vi.fn();
+      addProbe('RPI-1');
+    });
+    const callback = vi.fn();
 
-      const result = await firebase.subscribeToLiveProbeRequestCount(
-        ['RPI-1'],
-        callback,
-      );
-      await flush();
+    const result = await firebase.subscribeToLiveProbeRequestCount(
+      ['RPI-1'],
+      callback,
+    );
+    await flush();
 
-      expect(callback).toHaveBeenLastCalledWith(2);
-      result.unsubscribe();
-    },
-  );
+    expect(callback.mock.calls).toEqual([[1], [2], [3]]);
+    result.unsubscribe();
+  });
+
+  it('counts the rows written while subscribing on a device that had none', async () => {
+    fakeDatabase.beforeNextListen(() => addProbe('RPI-1'));
+    const callback = vi.fn();
+
+    const result = await firebase.subscribeToLiveProbeRequestCount(
+      ['RPI-1'],
+      callback,
+    );
+    await flush();
+
+    expect(callback.mock.calls).toEqual([[0], [1]]);
+    result.unsubscribe();
+  });
 });
 
 describe('subscribeToDeviceLiveData', () => {

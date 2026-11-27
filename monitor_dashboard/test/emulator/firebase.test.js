@@ -2,7 +2,7 @@
 import {
   limitToLast,
   onChildAdded,
-  onValue,
+  orderByKey,
   query,
   ref,
 } from '@firebase/database';
@@ -44,42 +44,28 @@ function today() {
   return parisDate(new Date());
 }
 
-/**
- * The query subscribeToLiveProbeRequestCount and subscribeToDeviceLiveData listen to for a device,
- * on today's node unless another date is given.
- */
-function liveCountQuery(device, date = today()) {
-  return query(
-    ref(firebase.getFirebaseDb(), `${deviceNode(device, date)}/data`),
-    limitToLast(1),
-  );
+function rowsRef(device, date = today()) {
+  return ref(firebase.getFirebaseDb(), `${deviceNode(device, date)}/data`);
+}
+
+/** The query subscribeToDeviceLiveData listens to, on today's node unless another date is given. */
+function deviceLiveQuery(device, date = today()) {
+  return query(rowsRef(device, date), limitToLast(1));
+}
+
+/** The query subscribeToLiveProbeRequestCount listens to for a device that had no rows yet. */
+function newRowsQuery(device) {
+  return query(rowsRef(device), orderByKey());
 }
 
 /**
- * Resolves once the SDK has the first data of each device's live-count query. The SDK shares one
- * server listen per query and raises a query's value event only after its first data, and after
- * its child events, so by then the dashboard's listeners on those queries have had their first
- * events too.
+ * Resolves once the SDK has delivered the row with `key` to listeners on `rowsQuery`. Events of
+ * one query reach all its listeners together, so a listener that was still attached would have
+ * been called by then.
  */
-function liveCountListenersReady(devices) {
-  return Promise.all(
-    devices.map(
-      (device) =>
-        new Promise((resolve) =>
-          onValue(liveCountQuery(device), resolve, { onlyOnce: true }),
-        ),
-    ),
-  );
-}
-
-/**
- * Resolves once the SDK has delivered the row with `key` to listeners on the device's
- * live-count query for `date`. Events of one query reach all its listeners together, so a
- * listener that was still attached would have been called by then.
- */
-function rowDelivered(device, key, date = today()) {
+function rowDelivered(rowsQuery, key) {
   return new Promise((resolve) => {
-    const stop = onChildAdded(liveCountQuery(device, date), (snapshot) => {
+    const stop = onChildAdded(rowsQuery, (snapshot) => {
       if (snapshot.key === key) {
         stop();
         resolve();
@@ -157,16 +143,15 @@ describe('subscribeToLiveProbeRequestCount', () => {
     );
     unsubscribes.push(result.unsubscribe);
     expect(result.initialCount).toBe(3);
-    // A row written before the listeners get their first data is lost (see the start-up race
-    // ticket), so the test waits for that first data before writing.
-    await liveCountListenersReady(['RPI-1', 'RPI-2', 'RPI-3']);
 
+    // Written right away, likely before the listeners have their first data, which is when the
+    // rows used to be lost.
     await addProbe('RPI-2');
     await addProbe('RPI-3');
     await addProbe('RPI-1');
 
     await vi.waitFor(() => expect(counts.at(-1)).toBe(6), { timeout: 5000 });
-    // The first event of each device that already had rows is skipped, so nothing is counted twice.
+    // The rows read at the start aren't counted again.
     expect(counts).toEqual([3, 4, 5, 6]);
   });
 
@@ -178,7 +163,6 @@ describe('subscribeToLiveProbeRequestCount', () => {
     );
     // So the listeners are detached even if a step below times out. Detaching twice does nothing.
     unsubscribes.push(result.unsubscribe);
-    await liveCountListenersReady(['RPI-1']);
     await addProbe('RPI-1');
     await vi.waitFor(() => expect(counts).toEqual([0, 1]), { timeout: 5000 });
 
@@ -186,7 +170,7 @@ describe('subscribeToLiveProbeRequestCount', () => {
     const key = await addProbe('RPI-1');
     // Waits until the SDK has delivered the new row, which it would have done to the
     // dashboard's listener as well, had it still been attached.
-    await rowDelivered('RPI-1', key);
+    await rowDelivered(newRowsQuery('RPI-1'), key);
 
     expect(counts).toEqual([0, 1]);
   });
@@ -228,8 +212,8 @@ describe('subscribeToDeviceLiveData', () => {
     await addProbe('RPI-1', 'Mine');
     // Once the SDK has delivered the excluded rows on their own queries, a listener on the wrong
     // device or date would have been called too, so it can't add its row after the check passes.
-    await rowDelivered('RPI-2', otherDevice);
-    await rowDelivered('RPI-1', otherDay, '2000-01-01');
+    await rowDelivered(deviceLiveQuery('RPI-2'), otherDevice);
+    await rowDelivered(deviceLiveQuery('RPI-1', '2000-01-01'), otherDay);
 
     await vi.waitFor(() => expect(ssids).toEqual(['Mine']), { timeout: 5000 });
   });

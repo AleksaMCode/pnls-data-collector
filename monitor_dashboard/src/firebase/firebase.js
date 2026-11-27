@@ -9,6 +9,8 @@ import {
   query,
   limitToLast,
   off,
+  orderByKey,
+  startAfter,
 } from '@firebase/database';
 
 const firebaseConfig = {
@@ -147,46 +149,39 @@ export async function subscribeToLiveProbeRequestCount(devices, callback) {
   const dateStr = `${yyyy}-${mm}-${dd}`;
   const listeners = [];
 
-  const initialCountsByDevice = await Promise.all(
+  const initialReads = await Promise.all(
     devices.map(async (device) => {
-      const path = `${device}-${dateStr}/data`;
-      const dataRef = ref(db, path);
+      const dataRef = ref(db, `${device}-${dateStr}/data`);
       const snapshot = await get(dataRef);
-      return { device, count: snapshot.size };
+      // The rows come in key order, and the devices push them, so the last key is the newest row.
+      let lastKey = null;
+      snapshot.forEach((child) => {
+        lastKey = child.key;
+      });
+      return { dataRef, count: snapshot.size, lastKey };
     }),
   );
 
-  const initialCount = initialCountsByDevice.reduce(
-    (sum, entry) => sum + entry.count,
-    0,
-  );
+  const initialCount = initialReads.reduce((sum, read) => sum + read.count, 0);
   let totalCount = initialCount;
 
   // Emit the initial aggregated total once; avoid duplicate startup reads.
   callback(totalCount);
-  const initialCountMap = new Map(
-    initialCountsByDevice.map(({ device, count }) => [device, count]),
-  );
 
-  devices.forEach((device) => {
-    const path = `${device}-${dateStr}/data`;
-    const dataRef = ref(db, path);
-
-    const futureRef = query(dataRef, limitToLast(1)); // only new children
-    const hadExistingData = (initialCountMap.get(device) ?? 0) > 0;
-    let ignoredInitialChild = false;
+  initialReads.forEach(({ dataRef, lastKey }) => {
+    // Every row after the ones counted above, so each child_added is a new row: those written
+    // while subscribing arrive with the listener's first data, the later ones as they come.
+    const newRows =
+      lastKey === null
+        ? query(dataRef, orderByKey())
+        : query(dataRef, orderByKey(), startAfter(lastKey));
     const listener = () => {
-      // Realtime DB emits one immediate child for limitToLast(1) when data exists.
-      if (hadExistingData && !ignoredInitialChild) {
-        ignoredInitialChild = true;
-        return;
-      }
       totalCount += 1;
       callback(totalCount);
     };
-    onChildAdded(futureRef, listener);
+    onChildAdded(newRows, listener);
 
-    listeners.push({ ref: futureRef, listener });
+    listeners.push({ ref: newRows, listener });
   });
   // return unsubscribe function
   return {
