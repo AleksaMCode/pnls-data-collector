@@ -1,4 +1,11 @@
 // The dashboard's Firebase readers against the real Realtime Database emulator and the real SDK.
+import {
+  limitToLast,
+  onChildAdded,
+  onValue,
+  query,
+  ref,
+} from '@firebase/database';
 import { afterEach, describe, expect, inject, it, vi } from 'vitest';
 import * as firebase from '../../src/firebase/firebase';
 import { pushValue, setValue } from '../support/emulator';
@@ -11,13 +18,49 @@ afterEach(() => {
   while (unsubscribes.length) unsubscribes.pop()();
 });
 
-/** Gives the SDK's listeners time to get their first data from the emulator. */
-function settle() {
-  return new Promise((resolve) => setTimeout(resolve, 1000));
-}
-
 function today() {
   return parisDate(new Date());
+}
+
+/** The query subscribeToLiveProbeRequestCount listens to for a device. */
+function liveCountQuery(device) {
+  return query(
+    ref(firebase.getFirebaseDb(), `${deviceNode(device, today())}/data`),
+    limitToLast(1),
+  );
+}
+
+/**
+ * Resolves once the SDK has the first data of each device's live-count query. The SDK shares one
+ * server listen per query and raises a query's value event only after its first data, and after
+ * its child events, so by then the dashboard's listeners on those queries have had their first
+ * events too.
+ */
+function liveCountListenersReady(devices) {
+  return Promise.all(
+    devices.map(
+      (device) =>
+        new Promise((resolve) =>
+          onValue(liveCountQuery(device), resolve, { onlyOnce: true }),
+        ),
+    ),
+  );
+}
+
+/**
+ * Resolves once the SDK has delivered the row with `key` to listeners on the device's
+ * live-count query. Events of one query reach all its listeners together, so a listener that
+ * was still attached would have been called by then.
+ */
+function rowDelivered(device, key) {
+  return new Promise((resolve) => {
+    const stop = onChildAdded(liveCountQuery(device), (snapshot) => {
+      if (snapshot.key === key) {
+        stop();
+        resolve();
+      }
+    });
+  });
 }
 
 function minutesAgo(minutes) {
@@ -67,7 +110,7 @@ describe('subscribeToLiveProbeRequestCount', () => {
     expect(result.initialCount).toBe(3);
     // A row written before the listeners get their first data is lost (see the start-up race
     // ticket), so the test waits for that first data before writing.
-    await settle();
+    await liveCountListenersReady(['RPI-1', 'RPI-2', 'RPI-3']);
 
     await addProbe('RPI-2');
     await addProbe('RPI-3');
@@ -84,14 +127,15 @@ describe('subscribeToLiveProbeRequestCount', () => {
       ['RPI-1'],
       (count) => counts.push(count),
     );
-    await settle();
+    await liveCountListenersReady(['RPI-1']);
     await addProbe('RPI-1');
     await vi.waitFor(() => expect(counts).toEqual([0, 1]), { timeout: 5000 });
 
     result.unsubscribe();
-    await addProbe('RPI-1');
-    // Gives a late event time to arrive.
-    await settle();
+    const key = await addProbe('RPI-1');
+    // Waits until the SDK has delivered the new row, which it would have done to the
+    // dashboard's listener as well, had it still been attached.
+    await rowDelivered('RPI-1', key);
 
     expect(counts).toEqual([0, 1]);
   });
