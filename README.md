@@ -218,6 +218,7 @@ class="center"
 
 - Dashboard is deployed via Firebase Hosting and `stats-api` is deployed via [FastAPI Cloud](https://fastapicloud.com/) using deploy GitHub workflow.
 - Python and Go services can run as standalone processes or containers.
+- The root `docker-compose.yml` includes each service's own `docker-compose.yml`, so services can be built and started from the repository root, e.g. `docker compose up -d --build aggregator aggregator_worker`.
 - `db_backup/docker-compose.yml` runs Conductor + backup worker stack.
 - `orchestrator` runs the aggregation workflow with Firebase cleanup, stats service and it triggers `db-backup`.
 
